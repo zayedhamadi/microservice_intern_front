@@ -1,0 +1,339 @@
+<!-- signup.component.html -->
+<div class="auth-wrapper">
+
+    <!-- Left Panel -->
+    <div class="auth-left">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <path d="M8 8L16 4L24 8V16C24 21 16 28 16 28C16 28 8 21 8 16V8Z" fill="white" fill-opacity="0.9" />
+                    <path d="M12 16L15 19L20 13" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </div>
+            <span class="brand-name">SkillExchange</span>
+        </div>
+
+        <div class="left-content">
+            <h1 class="left-title">
+                Partagez vos<br>
+                <span class="accent">compétences</span><br>
+                avec le monde
+            </h1>
+            <p class="left-sub">Rejoignez des milliers d'apprenants et d'experts sur notre plateforme collaborative.</p>
+            <div class="stats">
+                <div class="stat"><span class="stat-num">12K+</span><span class="stat-label">Utilisateurs</span></div>
+                <div class="stat"><span class="stat-num">500+</span><span class="stat-label">Compétences</span></div>
+                <div class="stat"><span class="stat-num">98%</span><span class="stat-label">Satisfaction</span></div>
+            </div>
+        </div>
+
+        <div class="left-deco">
+            <div class="deco-circle c1"></div>
+            <div class="deco-circle c2"></div>
+            <div class="deco-circle c3"></div>
+        </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="auth-right">
+        <div class="form-container">
+
+            <div class="form-header">
+                <h2>Créer un compte</h2>
+                <p>Déjà membre ? <a routerLink="/signin" class="link">Se connecter</a></p>
+            </div>
+
+            <!-- Google Button -->
+            <button type="button" class="btn-google" (click)="onGoogleSignup()">
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                Continuer avec Google
+            </button>
+
+            <div class="divider"><span>ou créer avec email</span></div>
+
+            <!-- Alerts -->
+            <div class="alert alert-error" *ngIf="errorMessage">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+                {{ errorMessage }}
+            </div>
+            <div class="alert alert-success" *ngIf="successMessage">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {{ successMessage }}
+            </div>
+
+            <!-- ═══════════════ FORM ═══════════════ -->
+            <form [formGroup]="form" (ngSubmit)="onRegister()" class="form" novalidate>
+
+                <!-- Nom + Prénom -->
+                <div class="form-row">
+
+                    <!-- Nom -->
+                    <div class="field">
+                        <label for="nom">Nom <span class="req">*</span></label>
+                        <input id="nom" type="text" formControlName="nom" placeholder="Votre nom"
+                            [class.error]="showError('nom')" [class.valid]="f('nom').valid && f('nom').dirty" />
+                        <span class="field-error" *ngIf="showError('nom')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                            <span style="color: red;">{{ getError('nom') }}</span>
+                        </span>
+                    </div>
+
+                    <!-- Prénom -->
+                    <div class="field">
+                        <label for="prenom">Prénom <span class="req">*</span></label>
+                        <input id="prenom" type="text" formControlName="prenom" placeholder="Votre prénom"
+                            [class.error]="showError('prenom')"
+                            [class.valid]="f('prenom').valid && f('prenom').dirty" />
+                        <span class="field-error" *ngIf="showError('prenom')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                            {{ getError('prenom') }}
+                        </span>
+                    </div>
+
+                </div>
+
+                <!-- Email -->
+                <div class="field">
+                    <label for="email">Email <span class="req">*</span></label>
+                    <div class="input-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                            <polyline points="22,6 12,13 2,6" />
+                        </svg>
+                        <input id="email" type="email" formControlName="email" placeholder="votre@email.com"
+                            [class.error]="showError('email')" [class.valid]="f('email').valid && f('email').dirty" />
+                    </div>
+                    <span class="field-error" *ngIf="showError('email')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        {{ getError('email') }}
+                    </span>
+                </div>
+
+                <!-- Rôle -->
+            
+            <div class="field">
+                <label>Je suis <span class="req">*</span></label>
+                <div class="role-selector">
+            
+                    <label class="role-option" [class.selected]="f('role').value === 'EMPLOYEE'">
+                        <input type="radio" formControlName="role" value="EMPLOYEE" />
+                        <div class="role-card">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            <span>Employé</span>
+                        </div>
+                    </label>
+            
+                    <label class="role-option" [class.selected]="f('role').value === 'RH'">
+                        <input type="radio" formControlName="role" value="RH" />
+                        <div class="role-card">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                            </svg>
+                            <span>RH</span>
+                        </div>
+                    </label>
+            
+                    <label class="role-option" [class.selected]="f('role').value === 'CANDIDAT'">
+                        <input type="radio" formControlName="role" value="CANDIDAT" />
+                        <div class="role-card">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="2" y="7" width="20" height="14" rx="2" />
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                            </svg>
+                            <span>Candidat</span>
+                        </div>
+                    </label>
+            
+                </div>
+            </div>
+
+                <!-- Mot de passe -->
+                <div class="field">
+                    <label for="password">Mot de passe <span class="req">*</span></label>
+                    <div class="input-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        <input id="password" [type]="showPwd ? 'text' : 'password'" formControlName="password"
+                            placeholder="Minimum 8 caractères" [class.error]="showError('password')"
+                            [class.valid]="f('password').valid && f('password').dirty" />
+                        <button type="button" class="eye-btn" (click)="showPwd = !showPwd"
+                            [attr.aria-label]="showPwd ? 'Masquer' : 'Afficher'">
+                            <svg *ngIf="!showPwd" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <svg *ngIf="showPwd" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="pwd-strength" *ngIf="f('password').value">
+                        <div class="strength-bar">
+                            <div class="strength-fill" [style.width]="pwdStrength + '%'" [class]="pwdClass"></div>
+                        </div>
+                        <span class="strength-label" [class]="pwdClass">{{ pwdLabel }}</span>
+                    </div>
+
+                    <span class="field-error" *ngIf="showError('password')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        {{ getError('password') }}
+                    </span>
+                </div>
+
+
+
+
+                <div class="pwd-requirements" *ngIf="f('password').value">
+
+                    <div class="req-item" [class.ok]="f('password').value?.length >= 8"
+                        [class.error]="!(f('password').value?.length >= 8)">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <polyline *ngIf="f('password').value?.length >= 8" points="20 6 9 17 4 12" />
+                            <path *ngIf="!(f('password').value?.length >= 8)" d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        8 caractères minimum
+                    </div>
+
+                    <div class="req-item" [class.ok]="hasUpper(f('password').value)"
+                        [class.error]="!hasUpper(f('password').value)">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <polyline *ngIf="hasUpper(f('password').value)" points="20 6 9 17 4 12" />
+                            <path *ngIf="!hasUpper(f('password').value)" d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        Une lettre majuscule
+                    </div>
+
+                    <div class="req-item" [class.ok]="hasNumber(f('password').value)"
+                        [class.error]="!hasNumber(f('password').value)">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <polyline *ngIf="hasNumber(f('password').value)" points="20 6 9 17 4 12" />
+                            <path *ngIf="!hasNumber(f('password').value)" d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        Un chiffre
+                    </div>
+
+                    <div class="req-item" [class.ok]="hasSpecial(f('password').value)"
+                        [class.error]="!hasSpecial(f('password').value)">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <polyline *ngIf="hasSpecial(f('password').value)" points="20 6 9 17 4 12" />
+                            <path *ngIf="!hasSpecial(f('password').value)" d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        Un symbole (!&#64;#$%^&*)
+                    </div>
+
+                </div>
+                <!-- Confirmer mot de passe -->
+                <div class="field">
+                    <label for="confirmPassword">Confirmer mot de passe <span class="req">*</span></label>
+                    <div class="input-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        <input id="confirmPassword" [type]="showConfirm ? 'text' : 'password'"
+                            formControlName="confirmPassword" placeholder="Répétez le mot de passe"
+                            [class.error]="showError('confirmPassword') || (f('confirmPassword').dirty && form.hasError('passwordMismatch'))"
+                            [class.valid]="f('confirmPassword').valid && f('confirmPassword').dirty && !form.hasError('passwordMismatch')" />
+                        <button type="button" class="eye-btn" (click)="showConfirm = !showConfirm"
+                            [attr.aria-label]="showConfirm ? 'Masquer' : 'Afficher'">
+                            <svg *ngIf="!showConfirm" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <svg *ngIf="showConfirm" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                        </button>
+                    </div>
+                    <span class="field-error"
+                        *ngIf="(showError('confirmPassword') || (f('confirmPassword').dirty && form.hasError('passwordMismatch')))">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <ng-container *ngIf="f('confirmPassword').hasError('required'); else mismatch">
+                            Veuillez confirmer le mot de passe.
+                        </ng-container>
+                        <ng-template #mismatch>Les mots de passe ne correspondent pas.</ng-template>
+                    </span>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" class="btn-submit" [disabled]="isLoading">
+                    <span *ngIf="!isLoading">Créer mon compte</span>
+                    <span *ngIf="isLoading" class="loading">
+                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                    </span>
+                </button>
+
+            </form>
+
+            <p class="terms">
+                En vous inscrivant, vous acceptez nos
+                <a href="#" class="link">Conditions d'utilisation</a> et notre
+                <a href="#" class="link">Politique de confidentialité</a>
+            </p>
+
+        </div>
+    </div>
+</div>
