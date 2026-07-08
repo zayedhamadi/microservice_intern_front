@@ -1,1 +1,304 @@
-<p>complete-profile works!</p>
+<div class="complete-wrapper" *ngIf="!isInitializing">
+    <div>
+        <button class="btn-logout" (click)="logout()">Se déconnecter</button>
+    </div>
+
+    <!-- Progress Header -->
+    <div class="progress-header">
+        <div class="brand">
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                <path d="M8 8L16 4L24 8V16C24 21 16 28 16 28C16 28 8 21 8 16V8Z" fill="#4f46e5" />
+                <path d="M12 16L15 19L20 13" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+            </svg>
+            <span>SkillExchange</span>
+        </div>
+
+        <div class="steps">
+            <ng-container *ngIf="!hasExistingRole">
+                <div class="step" [class.active]="currentStep >= 1" [class.done]="currentStep > 1">
+                    <div class="step-dot"><span>1</span></div>
+                    <span class="step-label">Rôle</span>
+                </div>
+                <div class="step-line" [class.done]="currentStep > 1"></div>
+            </ng-container>
+
+            <div class="step" [class.active]="currentStep >= 2" [class.done]="currentStep > 2">
+                <div class="step-dot"><span>{{ hasExistingRole ? 1 : 2 }}</span></div>
+                <span class="step-label">Infos</span>
+            </div>
+
+            <div class="step-line" [class.done]="currentStep > 2"></div>
+
+            <div class="step" [class.active]="currentStep >= 3">
+                <div class="step-dot"><span>{{ hasExistingRole ? 2 : 3 }}</span></div>
+                <span class="step-label">Bio</span>
+            </div>
+
+            <ng-container *ngIf="f('role').value === 'EMPLOYEE' || f('role').value === 'CANDIDAT'">
+                <div class="step-line" [class.done]="currentStep > 3"></div>
+                <div class="step" [class.active]="currentStep >= 4">
+                    <div class="step-dot"><span>{{ hasExistingRole ? 3 : 4 }}</span></div>
+                    <span class="step-label">Études</span>
+                </div>
+            </ng-container>
+        </div>
+
+        <button class="skip-btn" (click)="onSkip()">Passer →</button>
+    </div>
+
+    <!-- Content -->
+    <div class="complete-content">
+        <div class="welcome-text">
+            <h1>Bienvenue<span *ngIf="userName">, {{ userName }}</span> ! 👋</h1>
+            <p>Complétez votre profil pour une meilleure expérience</p>
+        </div>
+
+        <form [formGroup]="form" novalidate>
+            <!-- ══ ÉTAPE 1 — Rôle (uniquement si pas encore assigné) ══ -->
+            <div class="step-content" *ngIf="!hasExistingRole && currentStep === 1">
+                <h2>Vous êtes...</h2>
+                <p class="step-desc">Choisissez votre rôle sur la plateforme</p>
+
+                <div class="role-grid">
+                    <label class="role-card-big" [class.selected]="f('role').value === 'CANDIDAT'">
+                        <input type="radio" [checked]="f('role').value === 'CANDIDAT'"
+                            (change)="onRoleSelected('CANDIDAT')" />
+                        <div class="role-icon">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                        </div>
+                        <h3>Candidat</h3>
+                        <p>Je recherche une opportunité professionnelle</p>
+                        <ul>
+                            <li>✓ Postuler aux offres</li>
+                            <li>✓ Suivi de candidatures</li>
+                            <li>✓ CV en ligne</li>
+                        </ul>
+                    </label>
+
+                    <label class="role-card-big" [class.selected]="f('role').value === 'EMPLOYEE'">
+                        <input type="radio" [checked]="f('role').value === 'EMPLOYEE'"
+                            (change)="onRoleSelected('EMPLOYEE')" />
+                        <div class="role-icon">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                            </svg>
+                        </div>
+                        <h3>Employé</h3>
+                        <p>Je fais partie de l'équipe</p>
+                        <ul>
+                            <li>✓ Gestion des congés</li>
+                            <li>✓ Profil RH</li>
+                            <li>✓ Historique de poste</li>
+                        </ul>
+                    </label>
+
+                    <label class="role-card-big" [class.selected]="f('role').value === 'RH'">
+                        <input type="radio" [checked]="f('role').value === 'RH'" (change)="onRoleSelected('RH')" />
+                        <div class="role-icon">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <rect x="2" y="7" width="20" height="14" rx="2" />
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                            </svg>
+                        </div>
+                        <h3>RH</h3>
+                        <p>Je gère les ressources humaines</p>
+                        <ul>
+                            <li>✓ Gestion des employés</li>
+                            <li>✓ Validation des congés</li>
+                            <li>✓ Tableau de bord RH</li>
+                        </ul>
+                    </label>
+                </div>
+
+                <span class="field-error" *ngIf="showError('role')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    {{ getError('role') }}
+                </span>
+            </div>
+
+            <!-- ══ ÉTAPE 2 — Infos personnelles (commun à tous les rôles) ══ -->
+            <div class="step-content" *ngIf="currentStep === 2">
+                <h2>Informations personnelles</h2>
+                <p class="step-desc">Ces informations sont requises quel que soit votre rôle</p>
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Genre <span class="req">*</span></label>
+                        <div class="gender-selector">
+                            <label class="gender-opt" [class.sel]="f('genre').value === 'HOMME'"
+                                [class.error-border]="showError('genre')">
+                                <input type="radio" formControlName="genre" value="HOMME" />
+                                <span>👨 Homme</span>
+                            </label>
+                            <label class="gender-opt" [class.sel]="f('genre').value === 'FEMME'"
+                                [class.error-border]="showError('genre')">
+                                <input type="radio" formControlName="genre" value="FEMME" />
+                                <span>👩 Femme</span>
+                            </label>
+                        </div>
+                        <span class="field-error" *ngIf="showError('genre')">{{ getError('genre') }}</span>
+                    </div>
+
+                    <div class="field">
+                        <label>Date de naissance <span class="req">*</span></label>
+                        <input type="date" formControlName="dateNaissance" [class.error]="showError('dateNaissance')"
+                            [class.valid]="f('dateNaissance').valid && f('dateNaissance').dirty" />
+                        <span class="field-error" *ngIf="showError('dateNaissance')">{{ getError('dateNaissance')
+                            }}</span>
+                    </div>
+
+                    <div class="field">
+                        <label>Téléphone <span class="req">*</span></label>
+                        <div class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                            </svg>
+                            <input type="text" formControlName="num_Tel" placeholder="Ex: 55123456" maxlength="8"
+                                [class.error]="showError('num_Tel')"
+                                [class.valid]="f('num_Tel').valid && f('num_Tel').dirty" />
+                        </div>
+                        <span class="field-error" *ngIf="showError('num_Tel')">{{ getError('num_Tel') }}</span>
+                    </div>
+
+                    <div class="field full">
+                        <label>Adresse <span class="req">*</span></label>
+                        <div class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            <input type="text" formControlName="adresse" placeholder="Tunis, Sfax..."
+                                [class.error]="showError('adresse')"
+                                [class.valid]="f('adresse').valid && f('adresse').dirty" />
+                        </div>
+                        <span class="field-error" *ngIf="showError('adresse')">{{ getError('adresse') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ ÉTAPE 3 — Photo & Bio (commun, optionnel) ══ -->
+            <div class="step-content" *ngIf="currentStep === 3">
+                <h2>Parlez-nous de vous</h2>
+                <p class="step-desc">Optionnel — ajoutez une photo et une bio</p>
+
+                <div class="photo-upload-section">
+                    <div class="photo-preview" (click)="fileInput.click()">
+                        <img *ngIf="imagePreview" [src]="imagePreview" alt="Photo profil" class="preview-img" />
+                        <div *ngIf="!imagePreview" class="upload-placeholder">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            <span>Ajouter une photo</span>
+                        </div>
+                        <div class="upload-overlay" *ngIf="imagePreview">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                            <span>Modifier</span>
+                        </div>
+                    </div>
+
+                    <input #fileInput type="file" accept="image/*" style="display:none"
+                        (change)="onImageSelected($event)" />
+
+                    <div class="photo-info">
+                        <p class="photo-hint">JPG, PNG, GIF — Max 2MB</p>
+                        <p class="photo-error" *ngIf="imageError">{{ imageError }}</p>
+                        <button *ngIf="imagePreview" type="button" class="btn-remove-photo" (click)="removeImage()">
+                            🗑 Supprimer la photo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field" style="margin-top: 28px">
+                    <label>Bio / Description</label>
+                    <textarea formControlName="description" placeholder="Ex: Développeur full-stack..." rows="4"
+                        maxlength="300" [class.error]="showError('description')"></textarea>
+                    <span class="char-count">{{ f('description').value?.length || 0 }}/300 caractères</span>
+                    <span class="field-error" *ngIf="showError('description')">{{ getError('description') }}</span>
+                </div>
+
+                <div class="form-grid" style="margin-top: 16px">
+                    <div class="field">
+                        <label>LinkedIn</label>
+                        <input type="url" formControlName="linkedin" placeholder="https://linkedin.com/in/..." />
+                    </div>
+                    <div class="field">
+                        <label>Twitter</label>
+                        <input type="url" formControlName="twitter" placeholder="https://twitter.com/..." />
+                    </div>
+                    <div class="field">
+                        <label>Site web</label>
+                        <input type="url" formControlName="siteweb" placeholder="https://monsite.com" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ ÉTAPE 4 — Parcours académique (EMPLOYEE / CANDIDAT uniquement) ══ -->
+            <div class="step-content"
+                *ngIf="currentStep === 4 && (f('role').value === 'EMPLOYEE' || f('role').value === 'CANDIDAT')">
+                <h2>Votre parcours académique</h2>
+                <p class="step-desc">Requis pour les rôles Employé et Candidat</p>
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Spécialité d'étude <span class="req">*</span></label>
+                        <input type="text" formControlName="specialiteEtude" placeholder="Ex: Informatique, Finance..."
+                            [class.error]="showError('specialiteEtude')"
+                            [class.valid]="f('specialiteEtude').valid && f('specialiteEtude').dirty" />
+                        <span class="field-error" *ngIf="showError('specialiteEtude')">{{ getError('specialiteEtude')
+                            }}</span>
+                    </div>
+
+                    <div class="field">
+                        <label>Niveau d'étude <span class="req">*</span></label>
+                        <select formControlName="niveauEtude" [class.error]="showError('niveauEtude')"
+                            [class.valid]="f('niveauEtude').valid && f('niveauEtude').dirty">
+                            <option value="">-- Sélectionner --</option>
+                            <option *ngFor="let n of niveauxEtude" [value]="n.value">{{ n.label }}</option>
+                        </select>
+                        <span class="field-error" *ngIf="showError('niveauEtude')">{{ getError('niveauEtude') }}</span>
+                    </div>
+
+                    <div class="field">
+                        <label>Années d'expérience</label>
+                        <input type="number" formControlName="anneesExperience" min="0" max="60" placeholder="Ex: 5"
+                            [class.error]="showError('anneesExperience')" />
+                        <span class="field-error" *ngIf="showError('anneesExperience')">{{ getError('anneesExperience')
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="btn-back" *ngIf="currentStep > (hasExistingRole ? 2 : 1)" (click)="prevStep()">←
+                Précédent</button>
+            <button class="btn-next" *ngIf="currentStep < totalSteps" (click)="nextStep()">Suivant →</button>
+            <button class="btn-complete" *ngIf="currentStep === totalSteps" (click)="onComplete()"
+                [disabled]="isLoading">
+                <span *ngIf="!isLoading">✓ Terminer</span>
+                <span *ngIf="isLoading">Enregistrement...</span>
+            </button>
+        </div>
+    </div>
+</div>

@@ -173,11 +173,6 @@ export class SignupComponent implements OnInit {
     return 'Fort';
   }
 
-  /**
-   * Flow simplifié : inscription -> connexion automatique -> complétion du profil.
-   * Pas de vérification par code (le backend ne l'expose plus) ni d'abonnement
-   * (hors périmètre de ce projet).
-   */
   onRegister(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
@@ -194,7 +189,7 @@ export class SignupComponent implements OnInit {
           this.notify.toastSuccess('Compte créé ! Connexion en cours…');
           this.autoLoginAfterRegister(email, password);
         },
-        error: (err:any) => {
+        error: (err: any) => {
           console.log('Signup error:', err);
           this.isLoading = false;
 
@@ -228,7 +223,7 @@ export class SignupComponent implements OnInit {
         });
 
         this.isLoading = false;
-        this.router.navigate(['/complete-profile']);
+        this.router.navigate(['/callback']); 
       },
       error: (err: any) => {
         console.log('Signup error:', err);

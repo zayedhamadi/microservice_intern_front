@@ -1,1 +1,97 @@
-<p>forget-paswword works!</p>
+<div class="fp-shell">
+
+    <div class="noise"></div>
+
+    <!-- LEFT PANEL -->
+    <aside class="fp-panel">
+        <div class="panel-inner">
+
+            <a class="brand" routerLink="/home">
+                <span class="brand-mark">
+                    <svg width="22" height="22" viewBox="0 0 32 32">
+                        <path d="M8 8L16 4L24 8V16C24 21 16 28 16 28S8 21 8 16V8Z" fill="currentColor" />
+                        <path d="M12 16L15 19L20 13" stroke="white" stroke-width="2.5" />
+                    </svg>
+                </span>
+                <span class="brand-name">SkillExchange</span>
+            </a>
+
+            <div class="panel-copy">
+                <p class="panel-eyebrow">Sécurité du compte</p>
+                <h1 class="panel-title">Récupérez<br>votre <em>accès</em></h1>
+                <p class="panel-body">
+                    Entrez votre email pour recevoir un lien sécurisé.
+                </p>
+            </div>
+
+            <ul class="panel-steps">
+                <li class="step active"><span class="step-num">01</span>Email</li>
+                <li class="step"><span class="step-num">02</span>Lien</li>
+                <li class="step"><span class="step-num">03</span>Nouveau mot de passe</li>
+            </ul>
+
+        </div>
+    </aside>
+
+    <main class="fp-form-area">
+        <div class="fp-card">
+
+            <div class="card-icon">
+                🔐
+            </div>
+
+            <h2 class="card-title">Mot de passe oublié ?</h2>
+            <p class="card-sub">Nous vous enverrons un lien</p>
+
+            <div class="fp-alert fp-alert--success" *ngIf="successMessage">
+                <strong>Email envoyé !</strong>
+                <p>{{ successMessage }}</p>
+            </div>
+
+            <div class="fp-alert fp-alert--error" *ngIf="errorMessage">
+                {{ errorMessage }}
+            </div>
+
+            <form class="fp-form" [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!successMessage">
+
+                <div class="field-wrap">
+
+                    <label class="field-label">Adresse email</label>
+
+                    <div class="field-input-wrap" [class.field-error]="isEmailInvalid()"
+                        [class.field-ok]="email.valid && email.touched">
+
+                        <input class="field-input" type="email" formControlName="email" placeholder="votre@email.com" />
+
+                    </div>
+
+                    <div class="field-errors" *ngIf="isEmailInvalid()">
+
+                        <div class="field-err-item" *ngIf="email.errors?.['required']">
+                            <p style="color: red; font-size: 12px;"> Email obligatoire </p>
+                        </div>
+
+                        <div class="field-err-item" *ngIf="email.errors?.['email']">
+                           <p style="color: red; font-size: 12px;"> Format email invalide </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <button type="submit" class="btn-primary" [disabled]="isLoading">
+                    <span *ngIf="!isLoading">Envoyer le lien</span>
+                    <span *ngIf="isLoading">...</span>
+                </button>
+
+            </form>
+
+            <!-- BACK -->
+            <button class="btn-ghost" (click)="goToSignin()">
+                Retour à la connexion
+            </button>
+
+        </div>
+    </main>
+
+</div>
