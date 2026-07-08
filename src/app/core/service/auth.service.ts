@@ -4,10 +4,12 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { catchError, of, Observable, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { environment } from '../environement/environment';
-import { RegisterRequest, AuthResponse, LoginRequest, CompleteProfileRequest } from '../models/user';
-
-
-
+import {
+  RegisterRequest,
+  AuthResponse,
+  LoginRequest,
+  CompleteProfileRequest,
+} from '../models/user';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -16,19 +18,83 @@ export class AuthService {
   private readonly clientId = environment.keycloak.clientId;
   private readonly clientSecret = environment.keycloak.clientSecret;
   private readonly redirectUri = environment.keycloak.redirectUri;
+  private authFlowInProgress = false;
 
+  setAuthFlowInProgress(value: boolean): void {
+    this.authFlowInProgress = value;
+  }
+
+  isAuthFlowInProgress(): boolean {
+    return this.authFlowInProgress;
+  }
   constructor(
     private http: HttpClient,
     @Inject(PLATFORM_ID) private platformId: Object,
   ) {}
+  exchangeCodeForToken(code: string): Observable<any> {
+    const body = new URLSearchParams();
+    body.set('grant_type', 'authorization_code');
+    body.set('client_id', this.clientId);
+    body.set('client_secret', this.clientSecret);
+    body.set('redirect_uri', this.redirectUri);
+    body.set('code', code);
 
+    return this.http.post(
+      `${this.keycloakUrl}/realms/${environment.keycloak.realm}/protocol/openid-connect/token`,
+      body.toString(),
+      {
+        headers: new HttpHeaders({
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }),
+      },
+    );
+  }
+  /*
+  exchangeCodeForToken(code: string): Observable<any> {
+    const body = new URLSearchParams();
+    body.set('grant_type', 'authorization_code');
+    body.set('client_id', this.clientId);
+    body.set('client_secret', this.clientSecret);
+    body.set('redirect_uri', this.redirectUri);
+    body.set('code', code);
+
+    return this.http.post(
+      `${this.keycloakUrl}/protocol/openid-connect/token`,
+      body.toString(),
+      {
+        headers: new HttpHeaders({
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }),
+      },
+    );
+  }*/
   register(dto: RegisterRequest): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/register`, dto);
+  }
+
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  resetPassword(
+    token: string,
+    password: string,
+    confirmPassword: string,
+  ): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/reset-password`, {
+      token,
+      password,
+      confirmPassword,
+    });
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
     const dto: LoginRequest = { email, password };
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, dto);
+  }
+
+  completeProfile(dto: CompleteProfileRequest): Observable<any> {
+    return this.http.put(`${this.apiUrl}/users/complete-profile`, dto);
   }
 
   loginWithGoogle(): void {
@@ -60,11 +126,11 @@ export class AuthService {
       { headers: new HttpHeaders({ Authorization: `Bearer ${accessToken}` }) },
     );
   }
-
+  /*
   completeProfile(dto: CompleteProfileRequest): Observable<any> {
     return this.http.put(`${this.apiUrl}/auth/complete-profile`, dto);
   }
-
+*/
   getMyProfile(): Observable<any> {
     return this.http.get(`${this.apiUrl}/users/me`);
     // Le token est ajouté automatiquement par le JwtInterceptor, inutile de le remettre ici

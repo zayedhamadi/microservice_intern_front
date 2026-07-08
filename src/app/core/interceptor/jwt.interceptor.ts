@@ -11,7 +11,6 @@ import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, switchMap, take } from 'rxjs/operators';
 import { AuthService } from '../service/auth.service';
 
-
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {
   private isRefreshing = false;
@@ -47,6 +46,14 @@ export class JwtInterceptor implements HttpInterceptor {
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401 && !isPublic) {
+          // Ne jamais court-circuiter le flux OAuth en cours :
+          // une requête tierce (navbar, notifs, etc.) peut prendre un 401
+          // pendant les quelques secondes où /callback est en train de
+          // sauvegarder les tokens. On laisse le callback gérer sa propre
+          // redirection au lieu de clear+rediriger ici.
+          if (this.authService.isAuthFlowInProgress()) {
+            return throwError(() => error);
+          }
           return this.handle401(request, next);
         }
         return throwError(() => error);

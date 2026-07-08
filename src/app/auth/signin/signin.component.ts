@@ -23,7 +23,7 @@ export class SigninComponent implements OnInit, OnDestroy {
   isLoading = false;
 
   readonly MAX_ATTEMPTS = 3;
-  readonly BLOCK_DURATION = 30; // secondes de blocage
+  readonly BLOCK_DURATION = 30;
 
   attemptsLeft = this.MAX_ATTEMPTS;
   isBlocked = false;
@@ -54,9 +54,7 @@ export class SigninComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.clearTimers();
   }
-
-  // ── Login ────────────────────────────────────────────────────
-
+  /*
   onLogin(): void {
     if (this.isBlocked) return;
     this.form.markAllAsTouched();
@@ -88,7 +86,39 @@ export class SigninComponent implements OnInit, OnDestroy {
       },
     });
   }
+*/
+  onLogin(): void {
+    if (this.isBlocked) return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) return;
 
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    const { email, password } = this.form.value;
+
+    this.authService.login(email, password).subscribe({
+      next: (response: any) => {
+        this.clearTimers();
+        this.attemptsLeft = this.MAX_ATTEMPTS;
+
+        this.authService.saveToken(response.accessToken);
+        this.authService.saveRefreshToken(response.refreshToken);
+        this.authService.saveUserInfo({ ...response });
+
+        this.isLoading = false;
+        this.notify.toastSuccess('Connexion réussie !');
+        this.router.navigate(['/callback']);
+      },
+      error: (err) => {
+        console.log(err);
+        this.isLoading = false;
+        this.registerFailedAttempt();
+        this.errorMessage =
+          err.error?.error || 'Email ou mot de passe incorrect';
+      },
+    });
+  }
   private clearTimers(): void {
     if (this.blockTimer) {
       clearInterval(this.blockTimer);
@@ -153,23 +183,23 @@ export class SigninComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  // ── Redirection ──────────────────────────────────────────────
-
   private redirectByProfile(user: any): void {
     this.authService.getMyProfile().subscribe({
-      next: (fullUser) => {
-        const hasGenre = fullUser.genre != null && fullUser.genre !== '';
-        const hasTel = fullUser.num_Tel != null && fullUser.num_Tel !== 0;
+      next: (response) => {
+        this.clearTimers();
+        this.attemptsLeft = this.MAX_ATTEMPTS;
 
-        if (!hasGenre || !hasTel) {
-          this.router.navigate(['/complete-profile']);
-          return;
-        }
+        this.authService.saveToken(response.accessToken);
+        this.authService.saveRefreshToken(response.refreshToken);
+        this.authService.saveUserInfo({ ...response });
 
-        const target = ROLE_ROUTES[fullUser.role] ?? '/complete-profile';
-        this.router.navigate([target]);
+        this.isLoading = false;
+        this.router.navigate(['/callback']);
       },
-      error: () => this.router.navigate(['/complete-profile']),
+      error: (err: any) => {
+        console.log(err);
+        this.router.navigate(['/signin']);
+      },
     });
   }
 
@@ -203,7 +233,7 @@ export class SigninComponent implements OnInit, OnDestroy {
     this.router.navigate(['/forgot-password']);
   }
 
-  onGoogleLogin(): void {
+  onGoogleSignup(): void {
     this.authService.loginWithGoogle();
   }
 }

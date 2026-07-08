@@ -23,6 +23,7 @@ import { SignupComponent } from './auth/signup/signup.component';
 import { CompleteProfileComponent } from './auth/complete-profile/complete-profile.component';
 import { ValidationSignUpComponent } from './auth/validation-sign-up/validation-sign-up.component';
 import { JwtInterceptor } from './core/interceptor/jwt.interceptor';
+import { HomeComponent } from './auth/home/home.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -33,6 +34,7 @@ import { JwtInterceptor } from './core/interceptor/jwt.interceptor';
     SignupComponent,
     CompleteProfileComponent,
     ValidationSignUpComponent,
+    HomeComponent,
   ],
   imports: [
     BrowserModule,

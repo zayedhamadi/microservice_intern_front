@@ -1,1 +1,254 @@
-<p>reset-paswword works!</p>
+<div class="rp-shell">
+    <div class="noise"></div>
+
+    <aside class="rp-panel">
+        <div class="panel-inner">
+            <a class="brand" routerLink="/home">
+                <span class="brand-mark">
+                    <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+                        <path d="M8 8L16 4L24 8V16C24 21 16 28 16 28S8 21 8 16V8Z" fill="currentColor" />
+                        <path d="M12 16L15 19L20 13" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                    </svg>
+                </span>
+                <span class="brand-name">SkillExchange</span>
+            </a>
+
+            <div class="panel-copy">
+                <p class="panel-eyebrow">Réinitialisation</p>
+                <h1 class="panel-title">Nouveau<br><em>mot de passe</em></h1>
+                <p class="panel-body">
+                    Choisissez un mot de passe fort et unique pour protéger votre compte.
+                </p>
+            </div>
+
+            <div class="tips-card">
+                <p class="tips-title">Exigences</p>
+                <ul class="tips-list">
+                    <li [class.ok]="!pwd.errors?.['minLength'] && pwd.value">
+                        <svg class="tip-icon" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span class="tip-x">✕</span>
+                        8 caractères minimum
+                    </li>
+                    <li [class.ok]="!pwd.errors?.['noUppercase'] && pwd.value">
+                        <svg class="tip-icon" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span class="tip-x">✕</span>
+                        Une lettre majuscule
+                    </li>
+                    <li [class.ok]="!pwd.errors?.['noNumber'] && pwd.value">
+                        <svg class="tip-icon" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span class="tip-x">✕</span>
+                        Un chiffre
+                    </li>
+                    <li [class.ok]="!pwd.errors?.['noSymbol'] && pwd.value">
+                        <svg class="tip-icon" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span class="tip-x">✕</span>
+                        Un symbole
+                    </li>
+                </ul>
+            </div>
+
+            <div class="panel-deco">
+                <div class="orb orb-1"></div>
+                <div class="orb orb-2"></div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="rp-form-area">
+        <div class="rp-card">
+
+            <div class="card-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none" />
+                </svg>
+            </div>
+
+            <h2 class="card-title">Créer un nouveau mot de passe</h2>
+            <p class="card-sub">Sécurisez votre compte avec un mot de passe fort</p>
+
+            <!-- Success -->
+            <div class="rp-alert rp-alert--success" *ngIf="successMessage">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                <div>
+                    <strong>{{ successMessage }}</strong>
+                    <p>Redirection dans 3 secondes...</p>
+                </div>
+            </div>
+
+            <!-- Global error -->
+            <div class="rp-alert rp-alert--error" *ngIf="errorMessage">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+                {{ errorMessage }}
+            </div>
+
+            <!-- Form -->
+            <form class="rp-form" [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!successMessage && token">
+
+                <!-- New password -->
+                <div class="field-wrap">
+                    <label class="field-label">
+                        Nouveau mot de passe
+                        <span class="req">*</span>
+                    </label>
+                    <div class="field-input-wrap" [class.field-error]="isPwdInvalid()"
+                        [class.field-ok]="pwd.valid && pwd.touched">
+                        <svg class="field-ico" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        <input class="field-input" [type]="showPwd ? 'text' : 'password'" formControlName="newPassword"
+                            placeholder="Minimum 8 caractères" />
+                        <button type="button" class="eye-btn" (click)="showPwd = !showPwd">
+                            <svg *ngIf="!showPwd" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <svg *ngIf="showPwd" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Strength meter -->
+                    <div class="strength-wrap" *ngIf="pwd.value">
+                        <div class="strength-track">
+                            <div class="strength-fill" [style.width]="pwdStrength + '%'" [class]="pwdClass"></div>
+                        </div>
+                        <span class="strength-text" [class]="pwdClass">{{ pwdLabel }}</span>
+                    </div>
+
+                    <!-- Field errors -->
+                    <div class="field-errors" *ngIf="isPwdInvalid()">
+                        <div class="field-err-item" *ngFor="let err of getPwdErrors()">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="3">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="15" y1="9" x2="9" y2="15" />
+                                <line x1="9" y1="9" x2="15" y2="15" />
+                            </svg>
+                            {{ err }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confirm password -->
+                <div class="field-wrap">
+                    <label class="field-label">
+                        Confirmer le mot de passe
+                        <span class="req">*</span>
+                    </label>
+                    <div class="field-input-wrap" [class.field-error]="isConfirmInvalid()"
+                        [class.field-ok]="confirm.valid && confirm.touched && !form.errors?.['mismatch']">
+                        <svg class="field-ico" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        <input class="field-input" [type]="showConfirm ? 'text' : 'password'"
+                            formControlName="confirmPassword" placeholder="Répétez le mot de passe" />
+                        <button type="button" class="eye-btn" (click)="showConfirm = !showConfirm">
+                            <svg *ngIf="!showConfirm" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <svg *ngIf="showConfirm" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Required error -->
+                    <div class="field-errors" *ngIf="confirm.invalid && confirm.touched">
+                        <div class="field-err-item">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="3">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="15" y1="9" x2="9" y2="15" />
+                                <line x1="9" y1="9" x2="15" y2="15" />
+                            </svg>
+                            La confirmation est obligatoire
+                        </div>
+                    </div>
+
+                    <!-- Mismatch error -->
+                    <div class="field-errors"
+                        *ngIf="form.errors?.['mismatch'] && confirm.touched && !confirm.errors?.['required']">
+                        <div class="field-err-item">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="3">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="15" y1="9" x2="9" y2="15" />
+                                <line x1="9" y1="9" x2="15" y2="15" />
+                            </svg>
+                            Les mots de passe ne correspondent pas
+                        </div>
+                    </div>
+
+                    <!-- Match success -->
+                    <div class="match-success" *ngIf="confirm.value && !form.errors?.['mismatch'] && confirm.touched">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Les mots de passe correspondent
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" class="btn-primary" [disabled]="isLoading">
+                    <span *ngIf="!isLoading" class="btn-content">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                        Réinitialiser le mot de passe
+                    </span>
+                    <span *ngIf="isLoading" class="btn-dots">
+                        <span></span><span></span><span></span>
+                    </span>
+                </button>
+            </form>
+
+            <button [disabled]="!form.valid" class="btn-ghost" (click)="sigin()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                </svg>
+                Retour à la connexion
+            </button>
+
+        </div>
+    </main>
+</div>
