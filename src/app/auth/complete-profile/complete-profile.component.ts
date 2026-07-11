@@ -39,7 +39,9 @@ export const birthDateValidator: ValidatorFn = (
   return age >= 18 ? null : { underage: true };
 };
 
-// Rôles réellement supportés par le backend (enum Role.java)
+// EMPLOYEE reste un rôle valide (bootstrap serveur) — le composant doit
+// pouvoir l'afficher si jamais un compte EMPLOYEE passe par ce flow,
+// mais il n'est plus jamais SÉLECTIONNABLE par l'utilisateur.
 type BackendRole = 'RH' | 'EMPLOYEE' | 'CANDIDAT';
 const ROLES_AVEC_ETUDES: BackendRole[] = ['EMPLOYEE', 'CANDIDAT'];
 
@@ -49,18 +51,23 @@ const ROLES_AVEC_ETUDES: BackendRole[] = ['EMPLOYEE', 'CANDIDAT'];
   styleUrl: './complete-profile.component.css',
 })
 export class CompleteProfileComponent implements OnInit {
+  /** Étapes : 1 = Infos, 2 = Bio, 3 = Études + CV (si applicable) */
   currentStep = 1;
 
   form!: FormGroup;
   imagePreview: string | null = null;
   imageBase64: string | null = null;
   imageError = '';
+
+  cvBase64: string | null = null;
+  cvFileName: string | null = null;
+  cvError = '';
+
   isLoading = false;
   isInitializing = true;
   userName = '';
 
-  /** true si l'utilisateur a déjà un rôle en base (ex: signup classique) */
-  hasExistingRole = false;
+  currentRole: BackendRole | null = null;
 
   readonly niveauxEtude = [
     { value: 'BTS', label: 'BTS' },
@@ -88,9 +95,8 @@ export class CompleteProfileComponent implements OnInit {
 
     const cached = this.authService.getUserInfo();
     this.userName = cached?.prenom ?? '';
+    this.currentRole = (cached?.role as BackendRole) ?? null;
 
-    // Toujours vérifier l'état réel du profil côté backend (le cache
-    // localStorage après login/signup ne contient pas genre/num_Tel/etc.)
     this.authService.getMyProfile().subscribe({
       next: (profile: any) => this.applyExistingProfile(profile),
       error: () => {
@@ -101,34 +107,28 @@ export class CompleteProfileComponent implements OnInit {
 
   private buildForm(): void {
     this.form = this.fb.group({
-      // Étape "rôle" — uniquement si pas encore assigné
-      role: [''],
-
-      // Étape infos personnelles — obligatoire pour tous les rôles
       genre: ['', Validators.required],
       dateNaissance: ['', [Validators.required, birthDateValidator]],
       num_Tel: ['', [Validators.required, phoneValidator]],
       adresse: ['', [Validators.required, Validators.minLength(3)]],
 
-      // Étape bio — optionnelle pour tous
       description: ['', Validators.maxLength(300)],
       linkedin: [''],
       twitter: [''],
       siteweb: [''],
 
-      // Étape études — obligatoire seulement pour EMPLOYEE / CANDIDAT
       specialiteEtude: [''],
+      universiteEtude: [''],
       niveauEtude: [''],
       anneesExperience: [null, [Validators.min(0), Validators.max(60)]],
     });
   }
 
   private applyExistingProfile(profile: any): void {
-    this.hasExistingRole = !!profile?.role;
+    this.currentRole = (profile?.role as BackendRole) || this.currentRole;
     this.userName = profile?.prenom || this.userName;
 
     this.form.patchValue({
-      role: profile?.role || '',
       genre: profile?.genre || '',
       dateNaissance: profile?.dateNaissance || '',
       num_Tel: profile?.num_Tel ? String(profile.num_Tel) : '',
@@ -138,6 +138,7 @@ export class CompleteProfileComponent implements OnInit {
       twitter: profile?.twitter || '',
       siteweb: profile?.siteweb || '',
       specialiteEtude: profile?.specialiteEtude || '',
+      universiteEtude: profile?.universiteEtude || '',
       niveauEtude: profile?.niveauEtude || '',
       anneesExperience: profile?.anneesExperience ?? null,
     });
@@ -145,26 +146,26 @@ export class CompleteProfileComponent implements OnInit {
     if (profile?.imageBase64) {
       this.imagePreview = profile.imageBase64;
     }
-
-    if (this.hasExistingRole) {
-      // Rôle déjà assigné : on saute directement l'étape 1.
-      this.currentStep = 2;
+    if (profile?.cvBase64) {
+      this.cvBase64 = profile.cvBase64;
+      this.cvFileName = 'CV actuel.pdf';
     }
 
-    this.applyRoleSpecificValidators(this.form.get('role')!.value);
+    this.applyRoleSpecificValidators();
     this.isInitializing = false;
   }
 
-  /** Le rôle nécessite-t-il un parcours académique obligatoire ? */
-  private requiresEtudes(role: string): boolean {
-    return ROLES_AVEC_ETUDES.includes(role as BackendRole);
+  private requiresEtudes(): boolean {
+    return (
+      this.currentRole !== null && ROLES_AVEC_ETUDES.includes(this.currentRole)
+    );
   }
 
-  private applyRoleSpecificValidators(role: string): void {
+  private applyRoleSpecificValidators(): void {
     const specialite = this.form.get('specialiteEtude')!;
     const niveau = this.form.get('niveauEtude')!;
 
-    if (this.requiresEtudes(role)) {
+    if (this.requiresEtudes()) {
       specialite.setValidators([Validators.required]);
       niveau.setValidators([Validators.required]);
     } else {
@@ -175,32 +176,15 @@ export class CompleteProfileComponent implements OnInit {
     niveau.updateValueAndValidity();
   }
 
-  /** Nombre total d'étapes, dépend du rôle et si déjà assigné */
   get totalSteps(): number {
-    const role = this.form?.get('role')?.value;
-    const roleStep = this.hasExistingRole ? 0 : 1; // étape "rôle" comptée ou non
-    const etudesStep = this.requiresEtudes(role) ? 1 : 0;
-    return roleStep + 2 /* infos + bio */ + etudesStep;
+    return this.requiresEtudes() ? 3 : 2;
   }
 
   private get stepFields(): Record<number, string[]> {
-    // Mapping dynamique basé sur l'étape "rôle" active ou non
-    if (this.hasExistingRole) {
-      return {
-        2: ['genre', 'dateNaissance', 'num_Tel', 'adresse'],
-        3: [],
-        4: this.requiresEtudes(this.form.get('role')!.value)
-          ? ['specialiteEtude', 'niveauEtude']
-          : [],
-      };
-    }
     return {
-      1: ['role'],
-      2: ['genre', 'dateNaissance', 'num_Tel', 'adresse'],
-      3: [],
-      4: this.requiresEtudes(this.form.get('role')!.value)
-        ? ['specialiteEtude', 'niveauEtude']
-        : [],
+      1: ['genre', 'dateNaissance', 'num_Tel', 'adresse'],
+      2: [],
+      3: this.requiresEtudes() ? ['specialiteEtude', 'niveauEtude'] : [],
     };
   }
 
@@ -217,7 +201,6 @@ export class CompleteProfileComponent implements OnInit {
     const c = this.f(name);
     if (!c.errors) return '';
     const map: Record<string, Record<string, string>> = {
-      role: { required: 'Veuillez choisir un rôle.' },
       genre: { required: 'Veuillez sélectionner votre genre.' },
       dateNaissance: {
         required: 'La date de naissance est requise.',
@@ -242,11 +225,6 @@ export class CompleteProfileComponent implements OnInit {
     return map[name]?.[firstKey] ?? 'Champ invalide.';
   }
 
-  onRoleSelected(role: BackendRole): void {
-    this.form.get('role')!.setValue(role);
-    this.applyRoleSpecificValidators(role);
-  }
-
   nextStep(): void {
     const fields = this.stepFields[this.currentStep] ?? [];
     fields.forEach((f) => this.form.get(f)!.markAsTouched());
@@ -266,8 +244,7 @@ export class CompleteProfileComponent implements OnInit {
   }
 
   prevStep(): void {
-    const minStep = this.hasExistingRole ? 2 : 1;
-    if (this.currentStep > minStep) this.currentStep--;
+    if (this.currentStep > 1) this.currentStep--;
   }
 
   onImageSelected(event: any): void {
@@ -301,6 +278,37 @@ export class CompleteProfileComponent implements OnInit {
     this.imageError = '';
   }
 
+  onCvSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (!file) return;
+    this.cvError = '';
+
+    if (file.type !== 'application/pdf') {
+      this.cvError = 'Fichier invalide ! Sélectionnez un PDF.';
+      this.notify.toast('error', this.cvError);
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.cvError = 'CV trop volumineux ! Maximum 5MB.';
+      this.notify.toast('error', this.cvError);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.cvBase64 = e.target.result;
+      this.cvFileName = file.name;
+      this.notify.toast('success', 'CV ajouté avec succès !');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeCv(): void {
+    this.cvBase64 = null;
+    this.cvFileName = null;
+    this.cvError = '';
+  }
+
   async onComplete(): Promise<void> {
     this.form.markAllAsTouched();
     if (this.form.invalid) {
@@ -323,10 +331,9 @@ export class CompleteProfileComponent implements OnInit {
     const raw = this.form.value;
     const payload = {
       ...raw,
-      // rôle : n'envoyer que s'il n'était pas déjà assigné
-      role: this.hasExistingRole ? undefined : raw.role,
       num_Tel: raw.num_Tel ? Number(raw.num_Tel) : null,
       imageBase64: this.imageBase64 || null,
+      cvBase64: this.cvBase64 || null,
     };
 
     this.authService.completeProfile(payload).subscribe({

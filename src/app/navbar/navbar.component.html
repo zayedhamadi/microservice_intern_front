@@ -1,0 +1,116 @@
+<header class="navbar" *ngIf="!hideNavbar">
+    <div class="navbar-left">
+        <div class="logo" routerLink="/home">
+            <img src="/images/supraRH.png" alt="Supra Technology Logo" style="width: 60px; height: 60px" />
+
+            <span style="color: blueviolet"> Supra Technology </span>
+        </div>
+
+        <nav>
+            <a routerLink="/home" routerLinkActive="nav-active" [routerLinkActiveOptions]="{ exact: true }">
+                Accueil
+            </a>
+
+            <!-- ================= EMPLOYEE ================= -->
+
+            <ng-container *ngIf="isLoggedIn && user?.role === 'EMPLOYEE'">
+                <a routerLink="/employee/demandeConge" routerLinkActive="nav-active">
+                    demande un congé
+                </a>
+            </ng-container>
+
+            <!-- ================= RH ================= -->
+
+            <ng-container *ngIf="isLoggedIn && user?.role === 'RH'">
+                <a routerLink="/rh/dashboardrh" routerLinkActive="nav-active">
+                    Dashboard RH
+                </a>
+
+                <a routerLink="/rh/listUsers" routerLinkActive="nav-active">
+                    Liste utilisateurs
+                </a>
+
+                <a routerLink="/rh/listConges" routerLinkActive="nav-active">
+                    Liste congés
+                </a>
+            </ng-container>
+
+            <!-- ================= CANDIDAT ================= -->
+
+            <ng-container *ngIf="isLoggedIn && user?.role === 'CANDIDAT'">
+                <a routerLink="/candidat/dashboard" routerLinkActive="nav-active">
+                    Mon espace candidat
+                </a>
+            </ng-container>
+
+        </nav>
+    </div>
+
+    <div class="navbar-right">
+        <div class="user-menu" *ngIf="isLoggedIn">
+
+            <div class="user-avatar" (click)="toggleDropdown()">
+                <img *ngIf="getAvatarSrc()" [src]="getAvatarSrc()" class="avatar-img" />
+
+                <span *ngIf="!getAvatarSrc()">
+                    {{ user?.prenom?.charAt(0) }}
+                    {{ user?.nom?.charAt(0) }}
+                </span>
+            </div>
+
+            <!-- DROPDOWN -->
+
+            <div class="user-dropdown" *ngIf="showDropdown">
+                <div class="dropdown-header">
+                    <div class="dropdown-avatar">
+                        <img *ngIf="getAvatarSrc()" [src]="getAvatarSrc()" class="avatar-img" />
+
+                        <span *ngIf="!getAvatarSrc()">
+                            {{ user?.prenom?.charAt(0) }}
+                            {{ user?.nom?.charAt(0) }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <div class="dropdown-name">
+                            {{ user?.prenom }}
+                            {{ user?.nom }}
+                        </div>
+
+                        <div class="dropdown-email">
+                            {{ user?.email }}
+                        </div>
+
+                        <div class="dropdown-role">
+                            {{ user?.role }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dropdown-divider"></div>
+
+                <div class="dropdown-links">
+
+                    <a [routerLink]="profileRoute" (click)="closeDropdown()">
+                        <i class="fa-regular fa-user"></i>
+
+                        Mon Profil
+                    </a>
+
+                </div>
+
+                <div class="dropdown-divider"></div>
+
+                <!-- LOGOUT -->
+
+                <div class="dropdown-links">
+                    <a class="logout-link" (click)="logout()">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+
+                        Déconnexion
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

@@ -1,7 +1,16 @@
 import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { catchError, of, Observable, throwError } from 'rxjs';
+import {
+  catchError,
+  of,
+  Observable,
+  throwError,
+  timer,
+  retry,
+  BehaviorSubject,
+} from 'rxjs';
 import Swal from 'sweetalert2';
 import { environment } from '../environement/environment';
 import {
@@ -10,6 +19,7 @@ import {
   LoginRequest,
   CompleteProfileRequest,
 } from '../models/user';
+import { UserSession } from '../models/userSession';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -20,6 +30,50 @@ export class AuthService {
   private readonly redirectUri = environment.keycloak.redirectUri;
   private authFlowInProgress = false;
 
+  private static readonly STORAGE_KEYS = {
+    ACCESS_TOKEN: 'access_token',
+    REFRESH_TOKEN: 'refresh_token',
+    USER: 'user_info',
+  } as const;
+
+  private loggedInSubject = new BehaviorSubject<boolean>(false);
+
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object,
+  ) {
+    if (this.isBrowser()) {
+      this.loggedInSubject.next(this.isLoggedIn());
+    }
+  }
+
+  private isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
+  }
+
+  // --- État réactif de connexion ---
+
+  isLoggedInObservable(): Observable<boolean> {
+    return this.loggedInSubject.asObservable();
+  }
+
+  private setLoggedIn(value: boolean): void {
+    this.loggedInSubject.next(value);
+  }
+
+  getCurrentUser(): UserSession | null {
+    if (!this.isBrowser()) return null;
+
+    const raw = localStorage.getItem(AuthService.STORAGE_KEYS.USER);
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw) as UserSession;
+    } catch {
+      return null;
+    }
+  }
+
   setAuthFlowInProgress(value: boolean): void {
     this.authFlowInProgress = value;
   }
@@ -27,10 +81,7 @@ export class AuthService {
   isAuthFlowInProgress(): boolean {
     return this.authFlowInProgress;
   }
-  constructor(
-    private http: HttpClient,
-    @Inject(PLATFORM_ID) private platformId: Object,
-  ) {}
+
   exchangeCodeForToken(code: string): Observable<any> {
     const body = new URLSearchParams();
     body.set('grant_type', 'authorization_code');
@@ -49,27 +100,20 @@ export class AuthService {
       },
     );
   }
-  /*
-  exchangeCodeForToken(code: string): Observable<any> {
-    const body = new URLSearchParams();
-    body.set('grant_type', 'authorization_code');
-    body.set('client_id', this.clientId);
-    body.set('client_secret', this.clientSecret);
-    body.set('redirect_uri', this.redirectUri);
-    body.set('code', code);
 
-    return this.http.post(
-      `${this.keycloakUrl}/protocol/openid-connect/token`,
-      body.toString(),
-      {
-        headers: new HttpHeaders({
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }),
-      },
-    );
-  }*/
   register(dto: RegisterRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/register`, dto);
+    return this.http.post(`${this.apiUrl}/auth/register`, dto).pipe(
+      retry({
+        count: 2,
+        delay: (error, retryCount) => {
+          if (error.status === 503) {
+            console.log(error);
+            return timer(2000);
+          }
+          throw error;
+        },
+      }),
+    );
   }
 
   forgotPassword(email: string): Observable<any> {
@@ -111,7 +155,6 @@ export class AuthService {
     window.location.href = url;
   }
 
-  /** Appelé depuis /callback avec le code reçu de Keycloak. */
   handleGoogleCallback(code: string): Observable<any> {
     const params = new HttpParams().set('code', code);
     return this.http.post(`${this.apiUrl}/auth/google/callback`, null, {
@@ -126,33 +169,27 @@ export class AuthService {
       { headers: new HttpHeaders({ Authorization: `Bearer ${accessToken}` }) },
     );
   }
-  /*
-  completeProfile(dto: CompleteProfileRequest): Observable<any> {
-    return this.http.put(`${this.apiUrl}/auth/complete-profile`, dto);
-  }
-*/
+
   getMyProfile(): Observable<any> {
     return this.http.get(`${this.apiUrl}/users/me`);
-    // Le token est ajouté automatiquement par le JwtInterceptor, inutile de le remettre ici
   }
-
-  // --- Gestion des tokens ---
 
   saveToken(token: string): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('access_token', token);
+      localStorage.setItem(AuthService.STORAGE_KEYS.ACCESS_TOKEN, token);
+      this.setLoggedIn(true);
     }
   }
 
   saveRefreshToken(token: string): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('refresh_token', token);
+      localStorage.setItem(AuthService.STORAGE_KEYS.REFRESH_TOKEN, token);
     }
   }
 
   getToken(): string | null {
     return isPlatformBrowser(this.platformId)
-      ? localStorage.getItem('access_token')
+      ? localStorage.getItem(AuthService.STORAGE_KEYS.ACCESS_TOKEN)
       : null;
   }
 
@@ -160,7 +197,9 @@ export class AuthService {
     if (!isPlatformBrowser(this.platformId)) {
       return throwError(() => new Error('Not in browser'));
     }
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = localStorage.getItem(
+      AuthService.STORAGE_KEYS.REFRESH_TOKEN,
+    );
     if (!refreshToken) return throwError(() => new Error('No refresh token'));
 
     const body = new URLSearchParams();
@@ -182,23 +221,22 @@ export class AuthService {
 
   clearTokens(): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_info');
+      localStorage.removeItem(AuthService.STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(AuthService.STORAGE_KEYS.REFRESH_TOKEN);
+      localStorage.removeItem(AuthService.STORAGE_KEYS.USER);
+      this.setLoggedIn(false);
     }
   }
 
-  // --- Infos utilisateur ---
-
   saveUserInfo(user: any): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('user_info', JSON.stringify(user));
+      localStorage.setItem(AuthService.STORAGE_KEYS.USER, JSON.stringify(user));
     }
   }
 
   getUserInfo(): any {
     if (!isPlatformBrowser(this.platformId)) return null;
-    const raw = localStorage.getItem('user_info');
+    const raw = localStorage.getItem(AuthService.STORAGE_KEYS.USER);
     return raw ? JSON.parse(raw) : null;
   }
 
@@ -213,12 +251,15 @@ export class AuthService {
   logout(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = localStorage.getItem(
+      AuthService.STORAGE_KEYS.REFRESH_TOKEN,
+    );
     const keycloakId = localStorage.getItem('keycloak_id');
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem(AuthService.STORAGE_KEYS.ACCESS_TOKEN);
 
-    const doLogout = () => {
+    const finalizeLogout = () => {
       localStorage.clear();
+      this.setLoggedIn(false);
 
       if (refreshToken) {
         const body = new URLSearchParams();
@@ -249,17 +290,32 @@ export class AuthService {
       );
     };
 
-    if (keycloakId && token) {
+    const notifyLoginActivityThenFinalize = () => {
+      if (keycloakId && token) {
+        this.http
+          .post(
+            `${this.apiUrl}/api/login-activity/logout/${keycloakId}`,
+            {},
+            { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) },
+          )
+          .pipe(catchError(() => of(null)))
+          .subscribe(() => finalizeLogout());
+      } else {
+        finalizeLogout();
+      }
+    };
+
+    if (token) {
       this.http
         .post(
-          `${this.apiUrl}/api/login-activity/logout/${keycloakId}`,
+          `${this.apiUrl}/auth/logout`,
           {},
           { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) },
         )
         .pipe(catchError(() => of(null)))
-        .subscribe(() => doLogout());
+        .subscribe(() => notifyLoginActivityThenFinalize());
     } else {
-      doLogout();
+      notifyLoginActivityThenFinalize();
     }
   }
 }

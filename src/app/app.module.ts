@@ -24,6 +24,11 @@ import { CompleteProfileComponent } from './auth/complete-profile/complete-profi
 import { ValidationSignUpComponent } from './auth/validation-sign-up/validation-sign-up.component';
 import { JwtInterceptor } from './core/interceptor/jwt.interceptor';
 import { HomeComponent } from './auth/home/home.component';
+import { NavbarComponent } from './navbar/navbar.component';
+import { SidebarComponent } from './sidebar/sidebar.component';
+import { ProfileComponent } from './profile/profile.component';
+import { UpdateProfilComponent } from './update-profil/update-profil.component';
+import { SafeUrlPipe } from './core/service/SafeUrlPipe';
 @NgModule({
   declarations: [
     AppComponent,
@@ -35,6 +40,11 @@ import { HomeComponent } from './auth/home/home.component';
     CompleteProfileComponent,
     ValidationSignUpComponent,
     HomeComponent,
+    NavbarComponent,
+    SidebarComponent,
+    ProfileComponent,
+ SafeUrlPipe ,
+    UpdateProfilComponent,
   ],
   imports: [
     BrowserModule,
@@ -45,6 +55,7 @@ import { HomeComponent } from './auth/home/home.component';
     HttpClientModule,
     RouterModule,
     BrowserAnimationsModule,
+  
   ],
   providers: [
     provideHttpClient(withFetch(), withInterceptorsFromDi()),

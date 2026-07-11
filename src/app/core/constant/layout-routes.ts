@@ -5,6 +5,5 @@ export const HIDDEN_NAVBAR_ROUTES = [
   '/forgot-password',
   '/reset-password',
   '/complete-profile',
-  '/email-verification',
   '/validationSignUp',
 ];

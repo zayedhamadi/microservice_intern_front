@@ -14,30 +14,34 @@
         </div>
 
         <div class="steps">
-            <ng-container *ngIf="!hasExistingRole">
-                <div class="step" [class.active]="currentStep >= 1" [class.done]="currentStep > 1">
-                    <div class="step-dot"><span>1</span></div>
-                    <span class="step-label">Rôle</span>
+            <div class="step" [class.active]="currentStep >= 1" [class.done]="currentStep > 1">
+                <div class="step-dot">
+                    <svg *ngIf="currentStep > 1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white"
+                        stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span *ngIf="currentStep <= 1">1</span>
                 </div>
-                <div class="step-line" [class.done]="currentStep > 1"></div>
-            </ng-container>
-
-            <div class="step" [class.active]="currentStep >= 2" [class.done]="currentStep > 2">
-                <div class="step-dot"><span>{{ hasExistingRole ? 1 : 2 }}</span></div>
                 <span class="step-label">Infos</span>
             </div>
 
-            <div class="step-line" [class.done]="currentStep > 2"></div>
+            <div class="step-line" [class.done]="currentStep > 1"></div>
 
-            <div class="step" [class.active]="currentStep >= 3">
-                <div class="step-dot"><span>{{ hasExistingRole ? 2 : 3 }}</span></div>
+            <div class="step" [class.active]="currentStep >= 2" [class.done]="currentStep > 2">
+                <div class="step-dot">
+                    <svg *ngIf="currentStep > 2" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white"
+                        stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span *ngIf="currentStep <= 2">2</span>
+                </div>
                 <span class="step-label">Bio</span>
             </div>
 
-            <ng-container *ngIf="f('role').value === 'EMPLOYEE' || f('role').value === 'CANDIDAT'">
-                <div class="step-line" [class.done]="currentStep > 3"></div>
-                <div class="step" [class.active]="currentStep >= 4">
-                    <div class="step-dot"><span>{{ hasExistingRole ? 3 : 4 }}</span></div>
+            <ng-container *ngIf="totalSteps === 3">
+                <div class="step-line" [class.done]="currentStep > 2"></div>
+                <div class="step" [class.active]="currentStep >= 3">
+                    <div class="step-dot"><span>3</span></div>
                     <span class="step-label">Études</span>
                 </div>
             </ng-container>
@@ -54,82 +58,8 @@
         </div>
 
         <form [formGroup]="form" novalidate>
-            <!-- ══ ÉTAPE 1 — Rôle (uniquement si pas encore assigné) ══ -->
-            <div class="step-content" *ngIf="!hasExistingRole && currentStep === 1">
-                <h2>Vous êtes...</h2>
-                <p class="step-desc">Choisissez votre rôle sur la plateforme</p>
-
-                <div class="role-grid">
-                    <label class="role-card-big" [class.selected]="f('role').value === 'CANDIDAT'">
-                        <input type="radio" [checked]="f('role').value === 'CANDIDAT'"
-                            (change)="onRoleSelected('CANDIDAT')" />
-                        <div class="role-icon">
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="1.5">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
-                        </div>
-                        <h3>Candidat</h3>
-                        <p>Je recherche une opportunité professionnelle</p>
-                        <ul>
-                            <li>✓ Postuler aux offres</li>
-                            <li>✓ Suivi de candidatures</li>
-                            <li>✓ CV en ligne</li>
-                        </ul>
-                    </label>
-
-                    <label class="role-card-big" [class.selected]="f('role').value === 'EMPLOYEE'">
-                        <input type="radio" [checked]="f('role').value === 'EMPLOYEE'"
-                            (change)="onRoleSelected('EMPLOYEE')" />
-                        <div class="role-icon">
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="1.5">
-                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-                            </svg>
-                        </div>
-                        <h3>Employé</h3>
-                        <p>Je fais partie de l'équipe</p>
-                        <ul>
-                            <li>✓ Gestion des congés</li>
-                            <li>✓ Profil RH</li>
-                            <li>✓ Historique de poste</li>
-                        </ul>
-                    </label>
-
-                    <label class="role-card-big" [class.selected]="f('role').value === 'RH'">
-                        <input type="radio" [checked]="f('role').value === 'RH'" (change)="onRoleSelected('RH')" />
-                        <div class="role-icon">
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="1.5">
-                                <rect x="2" y="7" width="20" height="14" rx="2" />
-                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                            </svg>
-                        </div>
-                        <h3>RH</h3>
-                        <p>Je gère les ressources humaines</p>
-                        <ul>
-                            <li>✓ Gestion des employés</li>
-                            <li>✓ Validation des congés</li>
-                            <li>✓ Tableau de bord RH</li>
-                        </ul>
-                    </label>
-                </div>
-
-                <span class="field-error" *ngIf="showError('role')">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    {{ getError('role') }}
-                </span>
-            </div>
-
-            <!-- ══ ÉTAPE 2 — Infos personnelles (commun à tous les rôles) ══ -->
-            <div class="step-content" *ngIf="currentStep === 2">
+            <!-- ÉTAPE 1 — Infos personnelles -->
+            <div class="step-content" *ngIf="currentStep === 1">
                 <h2>Informations personnelles</h2>
                 <p class="step-desc">Ces informations sont requises quel que soit votre rôle</p>
 
@@ -191,8 +121,8 @@
                 </div>
             </div>
 
-            <!-- ══ ÉTAPE 3 — Photo & Bio (commun, optionnel) ══ -->
-            <div class="step-content" *ngIf="currentStep === 3">
+            <!-- ÉTAPE 2 — Photo & Bio -->
+            <div class="step-content" *ngIf="currentStep === 2">
                 <h2>Parlez-nous de vous</h2>
                 <p class="step-desc">Optionnel — ajoutez une photo et une bio</p>
 
@@ -252,9 +182,8 @@
                 </div>
             </div>
 
-            <!-- ══ ÉTAPE 4 — Parcours académique (EMPLOYEE / CANDIDAT uniquement) ══ -->
-            <div class="step-content"
-                *ngIf="currentStep === 4 && (f('role').value === 'EMPLOYEE' || f('role').value === 'CANDIDAT')">
+            <!-- ÉTAPE 3 — Parcours académique + CV (CANDIDAT / EMPLOYEE uniquement) -->
+            <div class="step-content" *ngIf="currentStep === 3 && totalSteps === 3">
                 <h2>Votre parcours académique</h2>
                 <p class="step-desc">Requis pour les rôles Employé et Candidat</p>
 
@@ -279,6 +208,11 @@
                     </div>
 
                     <div class="field">
+                        <label>Université</label>
+                        <input type="text" formControlName="universiteEtude" placeholder="Ex: ESPRIT, ISET Radès..." />
+                    </div>
+
+                    <div class="field">
                         <label>Années d'expérience</label>
                         <input type="number" formControlName="anneesExperience" min="0" max="60" placeholder="Ex: 5"
                             [class.error]="showError('anneesExperience')" />
@@ -286,13 +220,35 @@
                             }}</span>
                     </div>
                 </div>
+
+                <div class="field full" style="margin-top: 20px">
+                    <label>CV (PDF)</label>
+                    <div class="photo-upload-section" style="justify-content: flex-start; gap: 16px">
+                        <div class="cv-upload-box" (click)="cvInput.click()"
+                            style="border: 2px dashed #d1d5db; border-radius: 10px; padding: 16px 24px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                            </svg>
+                            <span *ngIf="!cvFileName">Ajouter votre CV (PDF, max 5MB)</span>
+                            <span *ngIf="cvFileName">{{ cvFileName }}</span>
+                        </div>
+                        <button *ngIf="cvFileName" type="button" class="btn-remove-photo" (click)="removeCv()">
+                            🗑 Supprimer
+                        </button>
+                    </div>
+                    <input #cvInput type="file" accept="application/pdf" style="display:none"
+                        (change)="onCvSelected($event)" />
+                    <p class="photo-error" *ngIf="cvError">{{ cvError }}</p>
+                    <p class="photo-hint">Optionnel — vous pourrez l'ajouter plus tard</p>
+                </div>
             </div>
         </form>
 
         <!-- Navigation -->
         <div class="nav-buttons">
-            <button class="btn-back" *ngIf="currentStep > (hasExistingRole ? 2 : 1)" (click)="prevStep()">←
-                Précédent</button>
+            <button class="btn-back" *ngIf="currentStep > 1" (click)="prevStep()">← Précédent</button>
             <button class="btn-next" *ngIf="currentStep < totalSteps" (click)="nextStep()">Suivant →</button>
             <button class="btn-complete" *ngIf="currentStep === totalSteps" (click)="onComplete()"
                 [disabled]="isLoading">

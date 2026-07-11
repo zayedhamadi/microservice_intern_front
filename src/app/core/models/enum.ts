@@ -13,3 +13,11 @@ export enum Compte {
   ACTIF = 'ACTIF',
   INACTIF = 'INACTIF',
 }
+
+export enum NiveauEtude {
+  LICENCE = 'LICENCE',
+  MASTER = 'MASTER',
+  INGENIEUR = 'INGENIEUR',
+  DOCTORAT = 'DOCTORAT',
+  AUTRE = 'AUTRE',
+}

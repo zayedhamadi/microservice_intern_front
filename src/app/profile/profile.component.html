@@ -1,0 +1,490 @@
+<div class="profile-wrapper" *ngIf="user; else loadingTpl">
+
+    <!-- SIDEBAR -->
+    <aside class="profile-sidebar">
+        <div class="sidebar-avatar-section">
+            <div class="avatar-ring">
+                <div class="avatar-container">
+                    <img *ngIf="avatarSrc" [src]="avatarSrc" alt="Photo de profil" class="avatar-img" />
+                    <div *ngIf="!avatarSrc" class="avatar-placeholder">
+                        {{ u.prenom.charAt(0).toUpperCase() }}{{ u.nom.charAt(0).toUpperCase() }}
+                    </div>
+                </div>
+                <div class="avatar-badge" [ngClass]="u.etatCompte === 'ACTIF' ? 'badge-active' : 'badge-inactive'">
+                    <div class="badge-dot"></div>
+                </div>
+            </div>
+            <h2 class="sidebar-name">{{ u.prenom }} {{ u.nom }}</h2>
+            <div class="sidebar-role">{{ u.role }}</div>
+            <div class="sidebar-email">{{ u.email }}</div>
+            <div class="sidebar-description" *ngIf="u.description">
+                <p>{{ u.description }}</p>
+            </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-position" *ngIf="isOrganisationalRole() && fullProfile">
+            <div class="sidebar-pos-item" *ngIf="fullProfile.departementActuel">
+                <span class="pos-label">Département</span>
+                <span class="pos-value">{{ fullProfile.departementActuel.nom }}</span>
+            </div>
+            <div class="sidebar-pos-item" *ngIf="fullProfile.posteActuel">
+                <span class="pos-label">Poste</span>
+                <span class="pos-value">{{ fullProfile.posteActuel.nom }}</span>
+            </div>
+        </div>
+
+        <div class="sidebar-position" *ngIf="u.requiresEtudes && !isOrganisationalRole()">
+            <div class="sidebar-pos-item" *ngIf="u.specialiteEtude">
+                <span class="pos-label">Spécialité</span>
+                <span class="pos-value">{{ u.specialiteEtude }}</span>
+            </div>
+            <div class="sidebar-pos-item" *ngIf="u.niveauEtude">
+                <span class="pos-label">Niveau d'étude</span>
+                <span class="pos-value">{{ u.niveauEtude }}</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="profile-main">
+
+        <div class="section-title-block">
+            <h1 class="page-title">Mon Profil <span class="title-accent">{{ u.nom }}</span></h1>
+            <p class="page-subtitle">Gérez vos informations personnelles et vos préférences de compte</p>
+            <div style="color:burlywood;cursor: pointer;" class="btn-edit-profile" (click)="goToUpdateProfil()">
+                <span class="btn-icon">✏️</span>
+                Modifier le profil
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs-bar">
+            <button class="tab-btn" [class.tab-active]="activeTab === 'profil'" (click)="setTab('profil')">
+                Profil
+            </button>
+            <button class="tab-btn" *ngIf="u.requiresEtudes" [class.tab-active]="activeTab === 'etudes'"
+                (click)="setTab('etudes')">
+                Études
+            </button>
+            <button class="tab-btn" [class.tab-active]="activeTab === 'certifications'"
+                (click)="setTab('certifications')">
+                <i class="ti ti-certificate" aria-hidden="true"></i> Certifications
+                <span class="tab-badge">{{ certifications.length }}</span>
+            </button>
+            <button class="tab-btn" *ngIf="isOrganisationalRole()" [class.tab-active]="activeTab === 'position'"
+                (click)="setTab('position')">
+                Historique Postes
+            </button>
+        </div>
+
+        <!-- TAB PROFIL -->
+        <div *ngIf="activeTab === 'profil'">
+            <div class="cards-grid">
+                <div class="info-card card-span-2">
+                    <h3 class="card-title">Informations personnelles</h3>
+                    <div class="card-body">
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Prénom</label>
+                                <div class="field-value">{{ u.prenom }}</div>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Nom</label>
+                                <div class="field-value">{{ u.nom }}</div>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Genre</label>
+                                <div class="field-value">{{ u.genre | lowercase }}</div>
+                            </div>
+                            <div class="info-field">
+                                <label class="field-label">Date de naissance</label>
+                                <div class="field-value">{{ u.dateNaissance }}</div>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-field">
+                                <label class="field-label">Années d'expérience</label>
+                                <div class="field-value">{{ u.anneesExperience }} ans</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h3 class="card-title">Contact</h3>
+                    <div class="card-body">
+                        <div class="info-field full-width">
+                            <label class="field-label">Adresse email</label>
+                            <div class="field-value">{{ u.email }}</div>
+                        </div>
+                        <div class="info-field full-width">
+                            <label class="field-label">Téléphone</label>
+                            <div class="field-value">+216 {{ u.num_Tel }}</div>
+                        </div>
+                        <div class="info-field full-width">
+                            <label class="field-label">Adresse</label>
+                            <div class="field-value">{{ u.adresse }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h3 class="card-title">Compte</h3>
+                    <div class="card-body">
+                        <div class="security-item">
+                            <span class="security-label">Statut du compte</span>
+                            <span class="status-tag"
+                                [ngClass]="u.etatCompte === 'ACTIF' ? 'tag-active' : 'tag-inactive'">
+                                {{ u.etatCompte }}
+                            </span>
+                        </div>
+                        <div class="security-item">
+                            <span class="security-label">Rôle</span>
+                            <span class="status-tag tag-role">{{ u.role | lowercase }}</span>
+                        </div>
+                        <div class="security-item">
+                            <span class="security-label">Profil complet</span>
+                            <span class="status-tag" [ngClass]="u.profileComplete ? 'tag-active' : 'tag-inactive'">
+                                {{ u.profileComplete ? 'Oui' : 'Non' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CV : visible pour RH / EMPLOYEE / CANDIDAT -->
+            <div class="cv-actions" *ngIf="hasCv" style="display:flex; gap:10px; margin-top:16px;">
+                <button type="button" class="btn-upload" (click)="openCvModal()">
+                    <i class="ti ti-eye" aria-hidden="true"></i> Voir le CV
+                </button>
+                <button type="button" class="btn-upload" (click)="downloadCv()">
+                    <i class="ti ti-download" aria-hidden="true"></i> Télécharger le CV
+                </button>
+            </div>
+            <div class="cv-empty" *ngIf="!hasCv" style="margin-top:16px; color:#94a3b8; font-size:14px;">
+                Aucun CV n'a été téléversé.
+            </div>
+        </div>
+
+        <!-- TAB ÉTUDES -->
+        <div *ngIf="activeTab === 'etudes' && u.requiresEtudes">
+            <div class="cards-grid">
+                <div class="info-card">
+                    <h3 class="card-title">Cursus académique</h3>
+                    <div class="card-body">
+                        <div class="info-field full-width">
+                            <label class="field-label">Spécialité</label>
+                            <div class="field-value">{{ u.specialiteEtude }}</div>
+                        </div>
+                        <div class="info-field full-width">
+                            <label class="field-label">Université</label>
+                            <div class="field-value">{{ u.universiteEtude }}</div>
+                        </div>
+                        <div class="info-field full-width">
+                            <label class="field-label">Niveau</label>
+                            <div class="field-value">{{ u.niveauEtude }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CERTIFICATIONS : gestion complète -->
+        <div *ngIf="activeTab === 'certifications'">
+            <div class="certif-section">
+                <div class="certif-section-header">
+                    <div class="certif-header-left">
+                        <div>
+                            <h3 class="card-title">Mes Certifications</h3>
+                            <p class="certif-subtitle">
+                                {{ filteredCertifications.length }} / {{ certifications.length }} certification(s)
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="certif-header-actions">
+                        <div class="search-wrap">
+                            <input class="search-input" type="text" placeholder="Filtrer par titre…"
+                                [(ngModel)]="searchTerm" (ngModelChange)="onSearch()" />
+                            <button *ngIf="searchTerm" class="search-clear" (click)="clearSearch()" title="Effacer">
+                                ✕
+                            </button>
+                        </div>
+                        <button class="btn-add-certif" (click)="openAddModal()" type="button">
+                            + Ajouter
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div *ngIf="isLoadingCertifs" class="certif-empty">Chargement…</div>
+
+                <!-- Empty states -->
+                <div class="certif-empty" *ngIf="!isLoadingCertifs && certifications.length === 0">
+                    <span>Aucune certification ajoutée</span>
+                    <button class="btn-add-certif" (click)="openAddModal()" type="button" style="margin-top:12px">
+                        + Ajouter ma première certification
+                    </button>
+                </div>
+
+                <div class="certif-empty"
+                    *ngIf="!isLoadingCertifs && certifications.length > 0 && filteredCertifications.length === 0">
+                    <span>Aucun résultat pour "{{ searchTerm }}"</span>
+                    <button class="btn-clear-search" (click)="clearSearch()">Effacer le filtre</button>
+                </div>
+
+                <!-- Table -->
+                <div class="certif-table-wrap" *ngIf="filteredCertifications.length > 0">
+                    <table class="certif-table">
+                        <thead>
+                            <tr>
+                                <th class="col-num">#</th>
+                                <th class="col-titre">Titre</th>
+                                <th class="col-date">Date</th>
+                                <th class="col-desc">Description</th>
+                                <th class="col-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let c of paginatedCertifs; let i = index" class="certif-row">
+                                <td class="col-num">
+                                    <span class="row-num">{{ (currentPage - 1) * pageSize + i + 1 }}</span>
+                                </td>
+                                <td class="col-titre">
+                                    <span class="certif-name">{{ c.titre }}</span>
+                                </td>
+                                <td class="col-date">
+                                    <span class="date-badge">{{ c.dateCertif | date:'dd MMM yyyy' }}</span>
+                                </td>
+                                <td class="col-desc">
+                                    <span class="desc-text">{{ c.description || '—' }}</span>
+                                </td>
+                                <td class="col-actions">
+                                    <div class="action-btns">
+                                        <button class="btn-action btn-download" (click)="downloadCertif(c)"
+                                            title="Télécharger le PDF" [disabled]="!c.pdfBase64">
+                                            PDF
+                                        </button>
+                                        <button class="btn-action btn-edit-certif" (click)="openEditModal(c)"
+                                            title="Modifier">
+                                            Modifier
+                                        </button>
+                                        <button class="btn-action btn-delete-certif" (click)="deleteCertif(c)"
+                                            title="Supprimer" [disabled]="isDeleting">
+                                            Suppr.
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="certif-pagination" *ngIf="totalPages > 1">
+                        <button class="page-btn page-nav" (click)="goToPage(currentPage - 1)"
+                            [disabled]="currentPage === 1">‹</button>
+                        <button *ngFor="let p of pages" class="page-btn" [class.page-active]="p === currentPage"
+                            (click)="goToPage(p)">
+                            {{ p }}
+                        </button>
+                        <button class="page-btn page-nav" (click)="goToPage(currentPage + 1)"
+                            [disabled]="currentPage === totalPages">›</button>
+                        <span class="page-info">Page {{ currentPage }} / {{ totalPages }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB HISTORIQUE POSTES -->
+        <div *ngIf="activeTab === 'position' && isOrganisationalRole()">
+            <div class="pos-empty" *ngIf="!fullProfile?.positionHistory?.length">
+                <span>Aucun historique de poste disponible</span>
+            </div>
+            <div class="pos-timeline" *ngIf="fullProfile?.positionHistory?.length">
+                <div class="pos-item" *ngFor="let p of fullProfile!.positionHistory"
+                    [class.pos-item--current]="p.actuel">
+                    <div class="pos-card">
+                        <div class="pos-card-header">
+                            <span class="pos-poste">{{ p.posteNom }}</span>
+                            <span class="pos-dept">{{ p.departementNom }}</span>
+                            <span class="pos-badge-current" *ngIf="p.actuel">Poste actuel</span>
+                            <span class="pos-badge-past" *ngIf="!p.actuel">Terminé</span>
+                        </div>
+                        <div class="pos-dates">
+                            Début : {{ p.dateDebut | date:'dd/MM/yyyy' }}
+                            <span *ngIf="p.dateFin"> — Fin : {{ p.dateFin | date:'dd/MM/yyyy' }}</span>
+                            <span *ngIf="!p.dateFin" class="pos-date-ongoing"> — En cours</span>
+                        </div>
+                        <div class="pos-commentaire" *ngIf="p.commentaire">{{ p.commentaire }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<ng-template #loadingTpl>
+    <div class="profile-loading">
+        <ng-container *ngIf="!hasError; else errorTpl">
+            <div class="loading-spinner"></div>
+            <span>Chargement du profil…</span>
+        </ng-container>
+        <ng-template #errorTpl>
+            <span style="color:#ef4444;font-weight:600">Erreur lors du chargement du profil</span>
+        </ng-template>
+    </div>
+</ng-template>
+
+<!-- MODAL — Ajouter une certification -->
+<div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()" [formGroup]="certifForm">
+        <div class="modal-header">
+            <div class="modal-title">Nouvelle certification</div>
+            <button class="modal-close" (click)="closeAddModal()" type="button">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="modal-alert" *ngIf="saveError">{{ saveError }}</div>
+
+            <div class="modal-row">
+                <div class="form-group">
+                    <label class="form-label">Titre <span class="form-required">*</span></label>
+                    <input class="form-control" type="text" placeholder="ex : AWS Cloud Practitioner"
+                        formControlName="titre"
+                        [class.form-control--error]="certifForm.controls['titre'].invalid && certifForm.controls['titre'].touched" />
+                    <span class="form-error-msg"
+                        *ngIf="certifForm.controls['titre'].invalid && certifForm.controls['titre'].touched">
+                        Le titre est obligatoire (3 caractères minimum).
+                    </span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date d'obtention <span class="form-required">*</span></label>
+                    <input class="form-control" type="date" formControlName="dateCertif"
+                        [class.form-control--error]="certifForm.controls['dateCertif'].invalid && certifForm.controls['dateCertif'].touched" />
+                    <span class="form-error-msg"
+                        *ngIf="certifForm.controls['dateCertif'].invalid && certifForm.controls['dateCertif'].touched">
+                        La date est obligatoire.
+                    </span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-control form-textarea" placeholder="Décrivez cette certification…"
+                    formControlName="description" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Certificat PDF</label>
+                <div class="upload-zone" [class.upload-zone--filled]="pdfBase64Value" (dragover)="onDragOver($event)"
+                    (drop)="onPdfDrop($event)" (click)="pdfInput.click()">
+                    <input #pdfInput type="file" accept="application/pdf" style="display:none"
+                        (change)="onPdfSelected($event)" />
+                    <ng-container *ngIf="!pdfBase64Value">
+                        <span class="upload-text">Cliquez ou glissez votre fichier PDF ici</span>
+                        <span class="upload-hint">Taille max : 5 Mo</span>
+                    </ng-container>
+                    <ng-container *ngIf="pdfBase64Value">
+                        <span class="upload-text" style="color:#16a34a">Fichier PDF chargé avec succès</span>
+                        <span class="upload-hint">Cliquez pour remplacer</span>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" (click)="closeAddModal()" type="button">Annuler</button>
+            <button class="btn-modal-save" (click)="saveCertif()" type="button" [disabled]="!isFormValid() || isSaving">
+                {{ isSaving ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL — Modifier une certification -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()" [formGroup]="certifForm">
+        <div class="modal-header">
+            <div class="modal-title">Modifier la certification</div>
+            <button class="modal-close" (click)="closeEditModal()" type="button">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="modal-alert" *ngIf="saveError">{{ saveError }}</div>
+
+            <div class="modal-row">
+                <div class="form-group">
+                    <label class="form-label">Titre <span class="form-required">*</span></label>
+                    <input class="form-control" type="text" formControlName="titre"
+                        [class.form-control--error]="certifForm.controls['titre'].invalid && certifForm.controls['titre'].touched" />
+                    <span class="form-error-msg"
+                        *ngIf="certifForm.controls['titre'].invalid && certifForm.controls['titre'].touched">
+                        Le titre est obligatoire (3 caractères minimum).
+                    </span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date d'obtention <span class="form-required">*</span></label>
+                    <input class="form-control" type="date" formControlName="dateCertif" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-control form-textarea" formControlName="description" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Remplacer le PDF (optionnel)</label>
+                <div class="upload-zone" [class.upload-zone--filled]="pdfBase64Value" (dragover)="onDragOver($event)"
+                    (drop)="onPdfDrop($event)" (click)="pdfInputEdit.click()">
+                    <input #pdfInputEdit type="file" accept="application/pdf" style="display:none"
+                        (change)="onPdfSelected($event)" />
+                    <ng-container *ngIf="!pdfBase64Value">
+                        <span class="upload-text">Cliquez pour changer le PDF</span>
+                        <span class="upload-hint">Laisser vide pour conserver l'existant</span>
+                    </ng-container>
+                    <ng-container *ngIf="pdfBase64Value">
+                        <span class="upload-text" style="color:#16a34a">Nouveau PDF sélectionné</span>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-modal-cancel" (click)="closeEditModal()" type="button">Annuler</button>
+            <button class="btn-modal-save" (click)="updateCertif()" type="button"
+                [disabled]="!isFormValid() || isSaving">
+                {{ isSaving ? 'Modification…' : 'Mettre à jour' }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL — Visualisation complète du CV -->
+<div class="modal-overlay" *ngIf="showCvModal" (click)="closeCvModal()">
+    <div class="modal-box modal-box--cv" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="ti ti-file-text" aria-hidden="true"></i>
+                Mon CV
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn-modal-cancel" (click)="downloadCv()" type="button">
+                    <i class="ti ti-download" aria-hidden="true"></i> Télécharger
+                </button>
+                <button class="modal-close" (click)="closeCvModal()" type="button">✕</button>
+            </div>
+        </div>
+
+        <div class="modal-body modal-body--cv">
+            <iframe *ngIf="cvSrc" [src]="cvSrc | safeUrl" class="cv-iframe" title="Aperçu du CV"></iframe>
+            <div *ngIf="!cvSrc" class="certif-empty">
+                Impossible d'afficher le CV.
+            </div>
+        </div>
+    </div>
+</div>

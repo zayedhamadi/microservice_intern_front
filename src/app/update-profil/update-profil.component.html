@@ -1,0 +1,578 @@
+<div class="pg">
+
+    <div class="topbar">
+        <div class="tb-left">
+            <button class="back-btn" type="button" (click)="cancel()">
+                <i class="ti ti-arrow-left" aria-hidden="true"></i> Retour
+            </button>
+            <i class="ti ti-chevron-right crumb-sep" aria-hidden="true"></i>
+            <div class="crumb">
+                <span>Mon espace</span>
+                <i class="ti ti-chevron-right" style="font-size:11px;color:#ccc" aria-hidden="true"></i>
+                <span class="active">Modifier le profil</span>
+            </div>
+        </div>
+        <div class="tb-right">
+            <span class="tab-badge">Étape {{ activeTab + 1 }} / 5</span>
+        </div>
+    </div>
+
+    <div class="update-loading" *ngIf="isLoadingProfile">
+        <div class="loading-spinner-lg"></div>
+        <span>Chargement du profil…</span>
+    </div>
+
+    <div class="layout" *ngIf="!isLoadingProfile">
+
+        <div class="sidebar">
+
+            <div class="sb-hero">
+                <div class="av-outer">
+                    <div class="av">
+                        <img *ngIf="imagePreview" [src]="imagePreview" alt="avatar" />
+                        <ng-container *ngIf="!imagePreview">
+                            {{ (f('prenom').value?.charAt(0) || 'U') | uppercase }}{{ (f('nom').value?.charAt(0) || '')
+                            | uppercase }}
+                        </ng-container>
+                    </div>
+                    <div class="av-cam" (click)="fileInput.click()">
+                        <i class="ti ti-camera" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <div class="sb-name">{{ f('prenom').value || 'Prénom' }} {{ f('nom').value || 'Nom' }}</div>
+                <div class="sb-role"><span class="role-dot"></span> {{ role || '—' }} · En ligne</div>
+                <div class="prog-wrap">
+                    <div class="prog-row">
+                        <span class="prog-lbl">Complétion du profil</span>
+                        <span class="prog-pct">{{ completionPct }}%</span>
+                    </div>
+                    <div class="prog-bg">
+                        <div class="prog-fill" [style.width]="completionPct + '%'"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sb-nav">
+                <span class="sb-label">Sections</span>
+                <div class="nav-item" [class.active]="activeTab === 0" (click)="activeTab = 0">
+                    <i class="ti ti-user-circle" aria-hidden="true"></i> Identité
+                    <span class="ni-badge" *ngIf="f('prenom').value && f('nom').value">✓</span>
+                </div>
+                <div class="nav-item" [class.active]="activeTab === 1" (click)="activeTab = 1">
+                    <i class="ti ti-phone" aria-hidden="true"></i> Contact
+                </div>
+                <div class="nav-item" [class.active]="activeTab === 2" (click)="activeTab = 2">
+                    <i class="ti ti-briefcase" aria-hidden="true"></i> Professionnel
+                </div>
+
+                <div class="nav-sep"></div>
+                <span class="sb-label">Sécurité</span>
+                <div class="nav-item" [class.active]="activeTab === 4" (click)="activeTab = 4">
+                    <i class="ti ti-shield-lock" aria-hidden="true"></i> Mot de passe
+                </div>
+            </div>
+
+            <div class="sb-footer">
+                <div class="cs-item">
+                    <span class="cs-dot" [class.done]="f('prenom').value && f('nom').value"></span>
+                    <span class="cs-text">Identité</span>
+                </div>
+                <div class="cs-item">
+                    <span class="cs-dot" [class.done]="f('num_Tel').value"></span>
+                    <span class="cs-text">Contact</span>
+                </div>
+                <div class="cs-item">
+                    <span class="cs-dot" [class.done]="f('anneesExperience').value != null"></span>
+                    <span class="cs-text">Professionnel</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="main">
+            <input #fileInput type="file" accept="image/*" style="display:none" (change)="onImageSelected($event)" />
+
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+                <ng-container *ngIf="activeTab === 0">
+                    <div class="tab-panel">
+
+                        <div class="card" style="margin-bottom:1rem">
+                            <div class="card-hd">
+                                <div class="card-ico"><i class="ti ti-camera" aria-hidden="true"></i></div>
+                                <div>
+                                    <h3>Photo de profil</h3>
+                                    <p>JPG ou PNG · max 2 Mo </p>
+                                </div>
+                            </div>
+                            <div class="photo-zone">
+                                <div class="photo-ring" [class.has-img]="imagePreview" (click)="fileInput.click()">
+                                    <img *ngIf="imagePreview" [src]="imagePreview" alt="Aperçu" />
+                                    <ng-container *ngIf="!imagePreview">
+                                        <i class="ti ti-camera-plus" aria-hidden="true"></i>
+                                        <span>Ajouter</span>
+                                    </ng-container>
+                                </div>
+                                <div class="photo-meta">
+                                    <p class="photo-hint">Choisissez une photo claire de face. Elle sera visible par vos
+                                        collègues.</p>
+                                    <div class="photo-btns">
+                                        <label class="btn-upload" (click)="fileInput.click()">
+                                            <i class="ti ti-upload" aria-hidden="true"></i> Choisir une photo
+                                        </label>
+                                        <button type="button" class="btn-remove" *ngIf="imagePreview"
+                                            (click)="removeImage()">
+                                            <i class="ti ti-trash" aria-hidden="true"></i> Supprimer
+                                        </button>
+                                    </div>
+                                    <span class="msg msg-err" *ngIf="imageError">
+                                        <i class="ti ti-alert-circle"></i> {{ imageError }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-hd">
+                                <div class="card-ico"><i class="ti ti-id-badge-2" aria-hidden="true"></i></div>
+                                <div>
+                                    <h3>Informations personnelles</h3>
+                                    <p>Données d'identité officielle</p>
+                                </div>
+                            </div>
+                            <div class="fg">
+
+                                <div class="form-group">
+                                    <label>Prénom <span class="req">*</span></label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="text" formControlName="prenom" placeholder="Votre prénom"
+                                            [class.valid]="f('prenom').valid && f('prenom').dirty"
+                                            [class.err]="showError('prenom')" />
+                                        <i class="ti field-status"
+                                            [class.ti-circle-check]="f('prenom').valid && f('prenom').dirty"
+                                            [class.ok]="f('prenom').valid && f('prenom').dirty"
+                                            [class.ti-alert-circle]="showError('prenom')"
+                                            [class.bad]="showError('prenom')" aria-hidden="true"></i>
+                                    </div>
+                                    <span class="msg msg-ok" *ngIf="f('prenom').valid && f('prenom').dirty">
+                                        <i class="ti ti-check"></i> Prénom valide
+                                    </span>
+                                    <span class="msg msg-err" *ngIf="showError('prenom')">
+                                        <i class="ti ti-x"></i> Minimum 2 caractères.
+                                    </span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Nom <span class="req">*</span></label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="text" formControlName="nom" placeholder="Votre nom"
+                                            [class.valid]="f('nom').valid && f('nom').dirty"
+                                            [class.err]="showError('nom')" />
+                                        <i class="ti field-status"
+                                            [class.ti-circle-check]="f('nom').valid && f('nom').dirty"
+                                            [class.ok]="f('nom').valid && f('nom').dirty"
+                                            [class.ti-alert-circle]="showError('nom')" [class.bad]="showError('nom')"
+                                            aria-hidden="true"></i>
+                                    </div>
+                                    <span class="msg msg-ok" *ngIf="f('nom').valid && f('nom').dirty">
+                                        Nom valide
+                                    </span>
+                                    <span class="msg msg-err" *ngIf="showError('nom')">
+                                        <i class="ti ti-x"></i> Minimum 2 caractères.
+                                    </span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Genre</label>
+                                    <div class="input-wrap has-icon">
+                                        <select formControlName="genre" [class.valid]="f('genre').value">
+                                            <option value="">— Sélectionner —</option>
+                                            <option value="HOMME">Homme</option>
+                                            <option value="FEMME">Femme</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Date de naissance <span class="req">*</span></label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="date" formControlName="dateNaissance"
+                                            [class.valid]="f('dateNaissance').valid && f('dateNaissance').dirty && f('dateNaissance').value"
+                                            [class.err]="showError('dateNaissance')" />
+                                        <i class="ti field-status"
+                                            [class.ti-circle-check]="f('dateNaissance').valid && f('dateNaissance').dirty && f('dateNaissance').value"
+                                            [class.ok]="f('dateNaissance').valid && f('dateNaissance').dirty && f('dateNaissance').value"
+                                            [class.ti-alert-circle]="showError('dateNaissance')"
+                                            [class.bad]="showError('dateNaissance')" aria-hidden="true"></i>
+                                    </div>
+                                    <span class="msg msg-ok"
+                                        *ngIf="f('dateNaissance').valid && f('dateNaissance').dirty && f('dateNaissance').value">
+                                        <i class="ti ti-check"></i> Date valide
+                                    </span>
+                                    <span class="msg msg-err" *ngIf="showError('dateNaissance')">
+                                        <i class="ti ti-x"></i>
+                                        <ng-container *ngIf="f('dateNaissance').errors?.['futureDate']">Date dans le
+                                            futur.</ng-container>
+                                        <ng-container *ngIf="f('dateNaissance').errors?.['underage']">Vous devez avoir
+                                            au moins 18 ans.</ng-container>
+                                        <ng-container *ngIf="f('dateNaissance').errors?.['invalidDate']">Date
+                                            invalide.</ng-container>
+                                    </span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <ng-container *ngIf="activeTab === 1">
+                    <div class="tab-panel">
+                        <div class="card">
+                            <div class="card-hd">
+                                <div class="card-ico"><i class="ti ti-map-pin" aria-hidden="true"></i></div>
+                                <div>
+                                    <h3>Contact & Adresse</h3>
+                                    <p>Coordonnées de contact</p>
+                                </div>
+                            </div>
+                            <div class="fg">
+
+                                <div class="form-group">
+                                    <label>Téléphone <span class="fhint">(commence par 2, 5 ou 9)</span></label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="text" formControlName="num_Tel" placeholder="55 123 456"
+                                            [class.valid]="f('num_Tel').valid && f('num_Tel').dirty && f('num_Tel').value"
+                                            [class.err]="showError('num_Tel')" />
+                                        <i class="ti field-status"
+                                            [class.ti-circle-check]="f('num_Tel').valid && f('num_Tel').dirty && f('num_Tel').value"
+                                            [class.ok]="f('num_Tel').valid && f('num_Tel').dirty && f('num_Tel').value"
+                                            [class.ti-alert-circle]="showError('num_Tel')"
+                                            [class.bad]="showError('num_Tel')" aria-hidden="true"></i>
+                                    </div>
+                                    <span class="msg msg-ok"
+                                        *ngIf="f('num_Tel').valid && f('num_Tel').dirty && f('num_Tel').value">
+                                        <i class="ti ti-check"></i> Numéro valide
+                                    </span>
+                                    <span class="msg msg-err" *ngIf="showError('num_Tel')">
+                                        <i class="ti ti-x"></i> Format invalide — 8 chiffres, commence par 2, 5 ou 9.
+                                    </span>
+                                </div>
+
+                                <div class="form-group f-full">
+                                    <label>Adresse complète</label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="text" formControlName="adresse"
+                                            placeholder="Numéro, rue, ville, gouvernorat…"
+                                            [class.valid]="f('adresse').valid && f('adresse').dirty && f('adresse').value"
+                                            [class.err]="showError('adresse')" />
+                                        <i class="ti field-status"
+                                            [class.ti-circle-check]="f('adresse').valid && f('adresse').dirty && f('adresse').value"
+                                            [class.ok]="f('adresse').valid && f('adresse').dirty && f('adresse').value"
+                                            [class.ti-alert-circle]="showError('adresse')"
+                                            [class.bad]="showError('adresse')" aria-hidden="true"></i>
+                                    </div>
+                                    <span class="msg msg-ok"
+                                        *ngIf="f('adresse').valid && f('adresse').dirty && f('adresse').value">
+                                        <i class="ti ti-check"></i> Adresse enregistrée
+                                    </span>
+                                    <span class="msg msg-err" *ngIf="showError('adresse')">
+                                        <i class="ti ti-x"></i> Minimum 3 caractères.
+                                    </span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <ng-container *ngIf="activeTab === 2">
+                    <div class="tab-panel">
+                        <div class="card">
+                            <div class="card-hd">
+                                <div class="card-ico"><i class="ti ti-building" aria-hidden="true"></i></div>
+                                <div>
+                                    <h3>Informations professionnelles</h3>
+                                    <p>Parcours, réseaux & activité</p>
+                                </div>
+                            </div>
+                            <div class="fg">
+
+                                <div class="form-group">
+                                    <label>Années d'expérience</label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="number" formControlName="anneesExperience" placeholder="3" min="0"
+                                            max="60"
+                                            [class.valid]="f('anneesExperience').valid && f('anneesExperience').dirty && f('anneesExperience').value != null"
+                                            [class.err]="showError('anneesExperience')" />
+                                        <i class="ti field-status"
+                                            [class.ti-circle-check]="f('anneesExperience').valid && f('anneesExperience').dirty && f('anneesExperience').value != null"
+                                            [class.ok]="f('anneesExperience').valid && f('anneesExperience').dirty && f('anneesExperience').value != null"
+                                            [class.ti-alert-circle]="showError('anneesExperience')"
+                                            [class.bad]="showError('anneesExperience')" aria-hidden="true"></i>
+                                    </div>
+                                    <span class="msg msg-err" *ngIf="showError('anneesExperience')">
+                                        <i class="ti ti-x"></i> Valeur entre 0 et 60 ans.
+                                    </span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>LinkedIn</label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="url" formControlName="linkedin"
+                                            placeholder="https://linkedin.com/in/…"
+                                            [class.valid]="f('linkedin').value" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Twitter / X</label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="url" formControlName="twitter" placeholder="https://x.com/…"
+                                            [class.valid]="f('twitter').value" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Site web</label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="url" formControlName="siteweb" placeholder="https://…"
+                                            [class.valid]="f('siteweb').value" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group f-full">
+                                    <label>
+                                        Description
+                                        <span class="fhint" [class.warn]="(f('description').value?.length || 0) > 255"
+                                            [class.over]="(f('description').value?.length || 0) > 300">
+                                            ({{ f('description').value?.length || 0 }}/300)
+                                        </span>
+                                    </label>
+                                    <textarea formControlName="description" rows="4"
+                                        placeholder="Décrivez vos compétences, domaines d'expertise, projets notables…"
+                                        [class.err]="showError('description')"></textarea>
+                                    <span class="msg msg-warn"
+                                        *ngIf="(f('description').value?.length || 0) > 255 && (f('description').value?.length || 0) <= 300">
+                                        <i class="ti ti-alert-triangle"></i> Presque à la limite — {{ 300 -
+                                        (f('description').value?.length || 0) }} caractères restants.
+                                    </span>
+                                    <span class="msg msg-err" *ngIf="showError('description')">
+                                        <i class="ti ti-x"></i> Maximum 300 caractères dépassé.
+                                    </span>
+                                </div>
+
+                                <!-- ✅ CV : disponible pour TOUS les rôles (RH inclus) -->
+                                <div class="form-group f-full">
+                                    <label>CV <span class="fhint">(PDF · max 5 Mo, optionnel)</span></label>
+                                    <div class="photo-btns">
+                                        <label class="btn-upload">
+                                            <i class="ti ti-upload" aria-hidden="true"></i>
+                                            {{ cvPreviewName ? 'Remplacer le CV' : 'Ajouter un CV' }}
+                                            <input type="file" accept="application/pdf" style="display:none"
+                                                (change)="onCvSelected($event)" />
+                                        </label>
+
+                                        <!-- ✅ Voir le CV (nouveau sélectionné, ou déjà existant) -->
+                                        <button type="button" class="btn-upload" *ngIf="hasCvToShow"
+                                            (click)="openCvModal()">
+                                            <i class="ti ti-eye" aria-hidden="true"></i> Voir le CV
+                                        </button>
+
+                                        <button type="button" class="btn-remove" *ngIf="cvPreviewName"
+                                            (click)="removeCv()">
+                                            <i class="ti ti-trash" aria-hidden="true"></i> Supprimer
+                                        </button>
+                                    </div>
+                                    <span class="msg msg-ok" *ngIf="cvPreviewName">
+                                        <i class="ti ti-check"></i> {{ cvPreviewName }}
+                                    </span>
+                                    <span class="msg msg-err" *ngIf="cvError">
+                                        <i class="ti ti-alert-circle"></i> {{ cvError }}
+                                    </span>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Cursus académique : uniquement CANDIDAT / EMPLOYEE -->
+                        <div class="card" *ngIf="requiresEtudes" style="margin-top:1rem">
+                            <div class="card-hd">
+                                <div class="card-ico"><i class="ti ti-school" aria-hidden="true"></i></div>
+                                <div>
+                                    <h3>Cursus académique</h3>
+                                    <p>Requis pour votre rôle ({{ role }})</p>
+                                </div>
+                            </div>
+                            <div class="fg">
+
+                                <div class="form-group">
+                                    <label>Spécialité d'étude</label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="text" formControlName="specialiteEtude"
+                                            placeholder="Génie informatique…"
+                                            [class.valid]="f('specialiteEtude').value" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Université</label>
+                                    <div class="input-wrap has-icon">
+                                        <input type="text" formControlName="universiteEtude" placeholder="ESPRIT…"
+                                            [class.valid]="f('universiteEtude').value" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Niveau d'étude</label>
+                                    <div class="input-wrap has-icon">
+                                        <select formControlName="niveauEtude" [class.valid]="f('niveauEtude').value">
+                                            <option value="">— Sélectionner —</option>
+                                            <option value="LICENCE">Licence</option>
+                                            <option value="MASTER">Master</option>
+                                            <option value="INGENIEUR">Ingénieur</option>
+                                            <option value="DOCTORAT">Doctorat</option>
+                                            <option value="AUTRE">Autre</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <ng-container *ngIf="activeTab === 4">
+                    <div class="tab-panel">
+                        <div class="card">
+                            <div class="card-hd">
+                                <div class="card-ico"><i class="ti ti-shield-lock" aria-hidden="true"></i></div>
+                                <div>
+                                    <h3>Changer le mot de passe</h3>
+                                    <p>Laisser vide pour conserver le mot de passe actuel</p>
+                                </div>
+                            </div>
+                            <div class="fg">
+
+                                <div class="f-full info-banner">
+                                    <i class="ti ti-info-circle" aria-hidden="true"></i>
+                                    Un mot de passe fort contient au moins 8 caractères, des majuscules, des chiffres et
+                                    des symboles.
+                                </div>
+
+                                <div class="form-group f-full">
+                                    <label>Mot de passe actuel</label>
+                                    <div class="input-wrap has-icon pw-wrap">
+                                        <i class="ti ti-lock input-icon" aria-hidden="true"></i>
+                                        <input [type]="showPw0 ? 'text' : 'password'" formControlName="currentPassword"
+                                            placeholder="••••••••" />
+                                        <button type="button" class="pw-eye" (click)="showPw0 = !showPw0">
+                                            <i [class]="showPw0 ? 'ti ti-eye-off' : 'ti ti-eye'" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group f-full">
+                                    <label>Nouveau mot de passe <span class="fhint">(min. 8 caractères)</span></label>
+                                    <div class="input-wrap has-icon pw-wrap">
+                                        <i class="ti ti-lock-open input-icon" aria-hidden="true"></i>
+                                        <input [type]="showPw1 ? 'text' : 'password'" formControlName="newPassword"
+                                            placeholder="••••••••" [class.err]="showError('newPassword')" />
+                                        <button type="button" class="pw-eye" (click)="showPw1 = !showPw1">
+                                            <i [class]="showPw1 ? 'ti ti-eye-off' : 'ti ti-eye'" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <div class="pw-bars">
+                                        <div class="pw-bar" [class.weak]="pwStrength >= 1"
+                                            [class.medium]="pwStrength === 2" [class.strong]="pwStrength === 3"></div>
+                                        <div class="pw-bar" [class.medium]="pwStrength >= 2"
+                                            [class.strong]="pwStrength === 3"></div>
+                                        <div class="pw-bar" [class.strong]="pwStrength === 3"></div>
+                                        <span class="pw-lbl"
+                                            [style.color]="pwStrength===1 ? '#E24B4A' : pwStrength===2 ? '#EF9F27' : pwStrength===3 ? '#639922' : ''">
+                                            {{ pwStrength===1 ? 'Faible' : pwStrength===2 ? 'Moyen' : pwStrength===3 ?
+                                            'Fort' : '' }}
+                                        </span>
+                                    </div>
+                                    <span class="msg msg-ok"
+                                        *ngIf="f('newPassword').valid && f('newPassword').dirty && f('newPassword').value">
+                                        <i class="ti ti-check"></i>
+                                        {{ pwStrength === 3 ? 'Mot de passe fort' : pwStrength === 2 ? 'Mot de passe
+                                        moyen — ajoutez des symboles' : 'Longueur suffisante' }}
+                                    </span>
+                                    <span class="msg msg-err" *ngIf="showError('newPassword')">
+                                        <i class="ti ti-x"></i> Minimum 8 caractères requis.
+                                    </span>
+                                </div>
+
+                                <div class="form-group f-full">
+                                    <label>Confirmer le mot de passe</label>
+                                    <div class="input-wrap has-icon pw-wrap">
+                                        <i class="ti ti-lock input-icon" aria-hidden="true"></i>
+                                        <input [type]="showPw2 ? 'text' : 'password'" formControlName="confirmPassword"
+                                            placeholder="Répéter…"
+                                            [class.valid]="!form.errors?.['passwordMismatch'] && f('confirmPassword').touched && f('confirmPassword').value"
+                                            [class.err]="form.errors?.['passwordMismatch'] && f('confirmPassword').touched" />
+                                        <button type="button" class="pw-eye" (click)="showPw2 = !showPw2">
+                                            <i [class]="showPw2 ? 'ti ti-eye-off' : 'ti ti-eye'" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <span class="msg msg-ok"
+                                        *ngIf="!form.errors?.['passwordMismatch'] && f('confirmPassword').touched && f('confirmPassword').value">
+                                        <i class="ti ti-check"></i> Mots de passe identiques
+                                    </span>
+                                    <span class="msg msg-err"
+                                        *ngIf="form.errors?.['passwordMismatch'] && f('confirmPassword').touched">
+                                        <i class="ti ti-x"></i> Les mots de passe ne correspondent pas.
+                                    </span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <div class="actions-bar">
+                    <span class="actions-hint">
+                        <i class="ti ti-info-circle" aria-hidden="true"></i>
+                        Les champs <strong class="req-star">*</strong> sont obligatoires
+                    </span>
+                    <div class="actions-right">
+                        <button type="button" class="cancel-btn" (click)="cancel()">Annuler</button>
+                        <button type="submit" class="save-btn" [disabled]="isLoading">
+                            <i *ngIf="!isLoading" class="ti ti-device-floppy" aria-hidden="true"></i>
+                            <div *ngIf="isLoading" class="loading-spinner"></div>
+                            {{ isLoading ? 'Enregistrement…' : 'Sauvegarder' }}
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODAL — Visualisation complète du CV -->
+<div class="modal-overlay" *ngIf="showCvModal" (click)="closeCvModal()">
+    <div class="modal-box modal-box--cv" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="ti ti-file-text" aria-hidden="true"></i>
+                Aperçu du CV
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn-modal-cancel" (click)="downloadCv()" type="button">
+                    <i class="ti ti-download" aria-hidden="true"></i> Télécharger
+                </button>
+                <button class="modal-close" (click)="closeCvModal()" type="button">✕</button>
+            </div>
+        </div>
+
+        <div class="modal-body modal-body--cv">
+            <iframe *ngIf="cvSrc" [src]="cvSrc | safeUrl" class="cv-iframe" title="Aperçu du CV"></iframe>
+            <div *ngIf="!cvSrc" class="certif-empty">
+                Impossible d'afficher le CV.
+            </div>
+        </div>
+    </div>
+</div>

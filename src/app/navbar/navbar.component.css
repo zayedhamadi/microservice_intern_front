@@ -1,0 +1,290 @@
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 64px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: 800;
+    color: #4a6cf7;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+nav a {
+    padding: 6px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #555;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+nav a:hover {
+    background: #f0f4ff;
+    color: #4a6cf7;
+}
+
+nav a.nav-active {
+    background: #eef1ff;
+    color: #4a6cf7;
+    font-weight: 600;
+}
+
+.btn-outline {
+    padding: 8px 18px;
+    border: 2px solid #4a6cf7;
+    color: #4a6cf7;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-outline:hover {
+    background: #4a6cf7;
+    color: white;
+}
+
+.btn-filled {
+    padding: 8px 18px;
+    background: #4a6cf7;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-filled:hover {
+    background: #3a5ce6;
+}
+
+/* ── User menu ───────────────────────────────────── */
+.user-menu {
+    position: relative;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a6cf7, #764ba2);
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 12px rgba(74, 108, 247, 0.3);
+    overflow: hidden;
+    /* ← clips l'image dans le cercle */
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+}
+
+/* Image de profil (avatar navbar + dropdown) */
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+
+/* ── Dropdown ────────────────────────────────────── */
+.user-dropdown {
+    position: absolute;
+    right: 0;
+    top: 52px;
+    background: white;
+    border-radius: 14px;
+    min-width: 260px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+    overflow: hidden;
+    animation: fadeDown 0.15s ease;
+}
+
+@keyframes fadeDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+}
+
+.dropdown-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a6cf7, #764ba2);
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    /* ← clips l'image */
+}
+
+.dropdown-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #222;
+}
+
+.dropdown-email {
+    font-size: 12px;
+    color: #999;
+    margin-top: 2px;
+}
+
+/* Badge rôle */
+.dropdown-role {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: #eef1ff;
+    color: #4a6cf7;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #f0f0f0;
+}
+
+.dropdown-links a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    font-size: 13px;
+    color: #555;
+    text-decoration: none;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.dropdown-links a:hover {
+    background: #f8f9ff;
+    color: #4a6cf7;
+}
+
+.dropdown-links a i {
+    width: 16px;
+    color: #4a6cf7;
+}
+
+.logout-link {
+    color: #e53935 !important;
+}
+
+.logout-link i {
+    color: #e53935 !important;
+}
+
+.logout-link:hover {
+    background: #ffebee !important;
+}
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 16px;
+    }
+
+    nav a span {
+        display: none;
+    }
+}
+
+.user-avatar {
+    overflow: hidden;
+    /* ← indispensable pour clipper l'image dans le cercle */
+    border-radius: 50%;
+}
+
+.user-menu-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-link-with-badge {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.notif-badge {
+    background: #EF4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}

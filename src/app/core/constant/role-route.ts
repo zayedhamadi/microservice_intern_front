@@ -1,6 +1,5 @@
 export const ROLE_ROUTES: Readonly<Record<string, string>> = {
-  EMPLOYEE: '/employee/employeeProfile',
-  RH: '/rh/rhProfile',
-  CANDIDAT: '/manager/dashboardmanager',
+  EMPLOYEE: '/manager/dashboardmanager',
+  RH: '/rh/dashboardRH',
+  CANDIDAT: '/candidat/dashboardcandidat',
 } as const;
-    

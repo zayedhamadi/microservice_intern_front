@@ -75,7 +75,8 @@ export class SignupComponent implements OnInit {
           '',
           [Validators.required, Validators.email, Validators.maxLength(100)],
         ],
-        role: ['EMPLOYEE', Validators.required],
+        // ⚠️ EMPLOYEE retiré : ce rôle est créé au bootstrap serveur, jamais via signup public
+        role: ['CANDIDAT', Validators.required],
         password: [
           '',
           [
@@ -223,7 +224,7 @@ export class SignupComponent implements OnInit {
         });
 
         this.isLoading = false;
-        this.router.navigate(['/callback']); 
+        this.router.navigate(['/callback']);
       },
       error: (err: any) => {
         console.log('Signup error:', err);
