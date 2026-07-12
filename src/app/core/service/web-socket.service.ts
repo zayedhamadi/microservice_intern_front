@@ -3,12 +3,18 @@ import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { environment } from '../environement/environment';
 import { StatsPayload } from '../models/userstatistics';
-import { AdminRealtimeEvent, ConnectionStatus } from '../models/websocket';
+import {
+  AdminRealtimeEvent,
+  STATUS_LABELS,
+  ConnectionStatus,
+  EVENT_COLORS,
+  EVENT_ICONS,
+  EventType,
+  STATUS_CLASSES,
+} from '../models/websocket';
 
-@Injectable({
-  providedIn: 'root',
-})
-export class WebSocketService implements OnDestroy {
+@Injectable({ providedIn: 'root' })
+export class WebSocketService  implements OnDestroy {
   readonly stats$ = new Subject<StatsPayload>();
   readonly events$ = new Subject<AdminRealtimeEvent>();
   readonly status$ = new BehaviorSubject<ConnectionStatus>('DISCONNECTED');
@@ -17,14 +23,8 @@ export class WebSocketService implements OnDestroy {
   private subscriptions: StompSubscription[] = [];
   private reconnectAttempts = 0;
 
-  /** Backend WS pas encore implémenté → on plafonne les tentatives pour ne pas spammer. */
-  private readonly MAX_RECONNECT_ATTEMPTS = 5;
-
-  private readonly WS_URL =
-    environment.apiUrl
-      .replace('/api', '')
-      .replace('http://', 'ws://')
-      .replace('https://', 'wss://') + '/ws-admin';
+  // Connexion directe à user-service (le gateway ne route pas encore /ws-admin)
+  private readonly WS_URL = `ws://localhost:${environment.EMPLOYEE_PORT}/ws-admin`;
 
   connect(jwtToken?: string): void {
     if (this.client?.active) return;
@@ -34,10 +34,10 @@ export class WebSocketService implements OnDestroy {
     this.client = new Client({
       brokerURL: this.WS_URL,
       connectHeaders: jwtToken ? { Authorization: `Bearer ${jwtToken}` } : {},
-
-      // stompjs applique ce délai fixe à chaque tentative ; l'arrêt définitif
-      // est géré nous-mêmes via handleFailedAttempt() ci-dessous.
-      reconnectDelay: 3000,
+      reconnectDelay: Math.min(
+        1000 * Math.pow(2, this.reconnectAttempts),
+        30_000,
+      ),
       heartbeatIncoming: 25_000,
       heartbeatOutgoing: 25_000,
 
@@ -45,40 +45,27 @@ export class WebSocketService implements OnDestroy {
         this.reconnectAttempts = 0;
         this.status$.next('CONNECTED');
         this.subscribeToTopics();
-        console.log('[WS-SupraTech] Connected →', this.WS_URL);
       },
 
       onDisconnect: () => {
         this.status$.next('DISCONNECTED');
         this.subscriptions = [];
-        console.log('[WS-SupraTech] Disconnected');
       },
 
       onStompError: (frame) => {
         this.status$.next('ERROR');
+        this.reconnectAttempts++;
         console.error('[WS-SupraTech] STOMP Error:', frame.headers['message']);
-        this.handleFailedAttempt();
       },
 
       onWebSocketError: (error) => {
         this.status$.next('ERROR');
+        this.reconnectAttempts++;
         console.error('[WS-SupraTech] WebSocket Error:', error);
-        this.handleFailedAttempt();
       },
     });
 
     this.client.activate();
-  }
-
-  /** Stoppe les tentatives une fois le plafond atteint (backend indisponible). */
-  private handleFailedAttempt(): void {
-    this.reconnectAttempts++;
-    if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
-      console.warn(
-        `[WS-SupraTech] ${this.MAX_RECONNECT_ATTEMPTS} tentatives échouées — arrêt automatique.`,
-      );
-      this.disconnect();
-    }
   }
 
   private subscribeToTopics(): void {
@@ -100,7 +87,6 @@ export class WebSocketService implements OnDestroy {
         try {
           const event = JSON.parse(msg.body) as AdminRealtimeEvent;
           this.events$.next(event);
-          console.log('[WS-SupraTech] Event:', event.type, event.payload);
         } catch (e) {
           console.error('[WS-SupraTech] Event parse error', e);
         }
@@ -110,7 +96,6 @@ export class WebSocketService implements OnDestroy {
     this.subscriptions.push(statsSub, eventsSub);
   }
 
-  /** Permet à un composant de relancer manuellement après un arrêt automatique. */
   resetAndReconnect(jwtToken?: string): void {
     this.reconnectAttempts = 0;
     this.connect(jwtToken);
@@ -126,4 +111,20 @@ export class WebSocketService implements OnDestroy {
   ngOnDestroy(): void {
     this.disconnect();
   }
+}
+
+export function wsStatusLabel(s: ConnectionStatus): string {
+  return STATUS_LABELS[s];
+}
+
+export function wsStatusClass(s: ConnectionStatus): string {
+  return STATUS_CLASSES[s];
+}
+
+export function eventIcon(type?: EventType | string): string {
+  return type ? (EVENT_ICONS[type as EventType] ?? 'fa-bell') : 'fa-bell';
+}
+
+export function eventColor(type?: EventType | string): string {
+  return type ? (EVENT_COLORS[type as EventType] ?? '#64748b') : '#64748b';
 }

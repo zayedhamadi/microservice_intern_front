@@ -1,1 +1,279 @@
-<p>dashboard-employee works!</p>
+<!-- dashboard-employee.component.html -->
+<div class="admin-layout">
+    <main class="main-content">
+
+        <div class="section-header">
+            <div class="section-title-group">
+                <h2 class="section-title">Vue d'ensemble</h2>
+                <p class="section-sub">Statistiques des collaborateurs en temps réel</p>
+            </div>
+            <div class="section-actions">
+              
+                <div class="ws-badge" [ngClass]="wsStatusClass">
+                    <span class="ws-dot"></span>
+                    {{ wsStatusLabel }}
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Total collaborateurs</div>
+                    <div class="kpi-value">{{ stats.totalUsers }}</div>
+                    <div class="kpi-trend" [class.up]="isDeltaUp(stats.deltaUsers)"
+                        [class.down]="isDeltaDown(stats.deltaUsers)">
+                        <i class="fa-solid" [class.fa-arrow-trend-up]="isDeltaUp(stats.deltaUsers)"
+                            [class.fa-arrow-trend-down]="isDeltaDown(stats.deltaUsers)"></i>
+                        {{ formatDelta(stats.deltaUsers) }}
+                    </div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-users"></i></div>
+            </div>
+
+            <div class="kpi-card kpi-green">
+                <div class="kpi-icon"><i class="fa-solid fa-id-badge"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Ressources Humaines</div>
+                    <div class="kpi-value">{{ stats.totalRH }}</div>
+                    <div class="kpi-trend" [class.up]="isDeltaUp(stats.deltaRH)"
+                        [class.down]="isDeltaDown(stats.deltaRH)">
+                        <i class="fa-solid" [class.fa-arrow-trend-up]="isDeltaUp(stats.deltaRH)"
+                            [class.fa-arrow-trend-down]="isDeltaDown(stats.deltaRH)"></i>
+                        {{ formatDelta(stats.deltaRH) }}
+                    </div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-id-badge"></i></div>
+            </div>
+
+            <div class="kpi-card kpi-orange">
+                <div class="kpi-icon"><i class="fa-solid fa-person-digging"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Employés</div>
+                    <div class="kpi-value">{{ stats.totalEmployees }}</div>
+                    <div class="kpi-trend" [class.up]="isDeltaUp(stats.deltaEmployees)"
+                        [class.down]="isDeltaDown(stats.deltaEmployees)">
+                        <i class="fa-solid" [class.fa-arrow-trend-up]="isDeltaUp(stats.deltaEmployees)"
+                            [class.fa-arrow-trend-down]="isDeltaDown(stats.deltaEmployees)"></i>
+                        {{ formatDelta(stats.deltaEmployees) }}
+                    </div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-person-digging"></i></div>
+            </div>
+
+            <div class="kpi-card kpi-purple">
+                <div class="kpi-icon"><i class="fa-solid fa-user-graduate"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Candidats</div>
+                    <div class="kpi-value">{{ stats.totalCandidats }}</div>
+                    <div class="kpi-trend" [class.up]="isDeltaUp(stats.deltaCandidats)"
+                        [class.down]="isDeltaDown(stats.deltaCandidats)">
+                        <i class="fa-solid" [class.fa-arrow-trend-up]="isDeltaUp(stats.deltaCandidats)"
+                            [class.fa-arrow-trend-down]="isDeltaDown(stats.deltaCandidats)"></i>
+                        {{ formatDelta(stats.deltaCandidats) }}
+                    </div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-user-graduate"></i></div>
+            </div>
+
+            <div class="kpi-card kpi-red">
+                <div class="kpi-icon"><i class="fa-solid fa-user-xmark"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Comptes suspendus</div>
+                    <div class="kpi-value">{{ stats.totalInactifs }}</div>
+                    <div class="kpi-trend" [class.up]="isDeltaUp(stats.deltaInactifs)"
+                        [class.down]="isDeltaDown(stats.deltaInactifs)">
+                        <i class="fa-solid" [class.fa-arrow-trend-up]="isDeltaUp(stats.deltaInactifs)"
+                            [class.fa-arrow-trend-down]="isDeltaDown(stats.deltaInactifs)"></i>
+                        {{ formatDelta(stats.deltaInactifs) }}
+                    </div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-user-xmark"></i></div>
+            </div>
+
+        </div>
+
+        <div class="charts-row row-2cols">
+
+            <div class="chart-card chart-large">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Inscriptions mensuelles</div>
+                        <div class="chart-sub">Évolution par rôle (RH / Employé / Candidat)</div>
+                    </div>
+                    <div class="chart-actions">
+                        <span class="activity-count">{{ activities.length }}</span>
+                        <button class="refresh-btn" title="Rafraîchir" (click)="loadActivities()"
+                            [class.spinning]="isLoadingActivities">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                        <button class="refresh-btn btn-danger" title="Vider" (click)="clearActivities()">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-wrap" style="height:240px;">
+                    <canvas #lineChart></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card chart-small">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Répartition des rôles</div>
+                        <div class="chart-sub">Distribution actuelle</div>
+                    </div>
+                </div>
+                <div class="chart-wrap" style="height:180px;">
+                    <canvas #doughnutChart></canvas>
+                </div>
+                <div class="donut-legend">
+                    <div class="donut-leg-item" *ngFor="let item of roleDistribution">
+                        <span class="leg-dot" [style.background]="item.color"></span>
+                        <span class="leg-label">{{ item.label }}</span>
+                        <span class="leg-pct">{{ item.pct }}%</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+       
+
+        <div class="charts-row row-bottom">
+
+            <div class="chart-card table-card">
+                <div class="chart-header">
+                    <div class="chart-header-content">
+                        <div>
+                            <div class="chart-title">Derniers inscrits</div>
+                            <div class="chart-sub">5 comptes les plus récents</div>
+                        </div>
+                        <div class="link-active" *ngIf="recentUsers.length > 0" (click)="goToUsersPage()">Voir tous les
+                            collaborateurs →</div>
+                    </div>
+                </div>
+
+                <ng-container *ngIf="recentUsers.length > 0; else noUsers">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Collaborateur</th>
+                                <th>Rôle</th>
+                                <th>Matricule</th>
+                                <th>CIN</th>
+                                <th>Inscrit le</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let u of recentUsers">
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-mini-avatar" [style.background]="getRoleColor(u.role)">
+                                            <ng-container *ngIf="u.imageLoading"><i class="fa-solid fa-spinner fa-spin"
+                                                    style="font-size:11px; color:#fff;"></i></ng-container>
+                                            <ng-container *ngIf="!u.imageLoading && u.image">
+                                                <img [src]="buildImageSrc(u.image)"
+                                                    [alt]="'Avatar de ' + u.prenom + ' ' + u.nom"
+                                                    style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />
+                                            </ng-container>
+                                            <ng-container *ngIf="!u.imageLoading && !u.image">{{ getInitials(u)
+                                                }}</ng-container>
+                                        </div>
+                                        <div>
+                                            <div class="user-cell-name">{{ u.prenom }} {{ u.nom }}</div>
+                                            <div class="user-cell-email">{{ u.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge" [ngClass]="'badge-' + u.role.toLowerCase()">{{ u.role }}</span>
+                                </td>
+                                <td><span class="badge badge-matricule">{{ u.matricule || 'N/A' }}</span></td>
+                                <td><span class="badge badge-cin">{{ u.cin || 'N/A' }}</span></td>
+                                <td class="date-cell">{{ u.dateInscrit | date:'dd/MM/yyyy' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </ng-container>
+
+                <ng-template #noUsers>
+                    <div class="empty-state"><i class="fa-solid fa-users-slash"></i><span>Aucun collaborateur
+                            récent</span></div>
+                </ng-template>
+            </div>
+
+            <div class="chart-card activity-card">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Activité récente</div>
+                        <div class="chart-sub">Événements en temps réel</div>
+                    </div>
+                    <span class="activity-count">{{ activities.length }}</span>
+                </div>
+
+                <div class="activity-feed">
+                    <div class="empty-state" *ngIf="activities.length === 0"><i
+                            class="fa-solid fa-clock-rotate-left"></i><span>Aucune activité</span></div>
+
+                    <div class="activity-item" *ngFor="let act of pagedActivities; let isLast = last">
+                        <div class="act-line" [class.act-line-hidden]="isLast"></div>
+                        <div class="act-dot" [style.background]="act.color"></div>
+                        <div class="act-body">
+                            <div class="act-text" [innerHTML]="act.text"></div>
+                            <div class="act-time"><i class="fa-regular fa-clock"></i> {{ act.time }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pager" *ngIf="activities.length > actPageSize">
+                    <div class="pager-info"><strong>{{ actRangeStart }}–{{ actRangeEnd }}</strong> sur <strong>{{
+                            activities.length }}</strong></div>
+                    <div class="pager-controls">
+                        <button class="pg-btn" (click)="goToActPage(1)" [disabled]="actPage === 1"><i
+                                class="fa-solid fa-angles-left"></i></button>
+                        <button class="pg-btn" (click)="goToActPage(actPage - 1)" [disabled]="actPage === 1"><i
+                                class="fa-solid fa-angle-left"></i></button>
+                        <button class="pg-btn" *ngFor="let pg of actVisiblePages" [class.pg-active]="pg === actPage"
+                            [class.ellipsis]="pg === -1" (click)="pg !== -1 && goToActPage(pg)"
+                            [disabled]="pg === -1">{{ pg === -1 ? '…' : pg }}</button>
+                        <button class="pg-btn" (click)="goToActPage(actPage + 1)"
+                            [disabled]="actPage === actTotalPages"><i class="fa-solid fa-angle-right"></i></button>
+                        <button class="pg-btn" (click)="goToActPage(actTotalPages)"
+                            [disabled]="actPage === actTotalPages"><i class="fa-solid fa-angles-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <div class="realtime-toast" *ngIf="showToast && lastEvent" role="alert" aria-live="polite">
+        <div class="toast-icon" [style.background]="getToastColor()"><i class="fa-solid" [ngClass]="getToastIcon()"></i>
+        </div>
+        <div class="toast-body">
+            <div class="toast-title">
+                <ng-container [ngSwitch]="lastEvent.type">
+                    <span *ngSwitchCase="'NEW_USER'">Nouvel utilisateur</span>
+                    <span *ngSwitchCase="'CESSATION'">Compte suspendu</span>
+                    <span *ngSwitchCase="'REACTIVATION'">Compte réactivé</span>
+                    <span *ngSwitchCase="'LOGIN_ACTIVITY'">Connexion détectée</span>
+                    <span *ngSwitchCase="'CERTIFICATION'">Certification</span>
+                    <span *ngSwitchCase="'DEMANDE_CONGE'">Demande de congé</span>
+                    <span *ngSwitchDefault>Mise à jour</span>
+                </ng-container>
+            </div>
+            <div class="toast-sub" *ngIf="lastEvent.payload?.prenom">
+                {{ lastEvent.payload.prenom }} {{ lastEvent.payload.nom }}
+                <span *ngIf="lastEvent.payload.role"> — {{ lastEvent.payload.role }}</span>
+                <span *ngIf="lastEvent.payload.titre"> — {{ lastEvent.payload.titre }}</span>
+            </div>
+            <div class="toast-time"><i class="fa-regular fa-clock"></i> {{ lastEvent.timestamp | date:'HH:mm:ss' }}
+            </div>
+        </div>
+        <button class="toast-close" (click)="dismissToast()" aria-label="Fermer"><i
+                class="fa-solid fa-xmark"></i></button>
+    </div>
+</div>

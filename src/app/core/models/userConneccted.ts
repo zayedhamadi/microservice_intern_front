@@ -26,6 +26,7 @@ export interface PositionHistoryEntry {
 
 export interface UserCommonProfile {
   id: number;
+  matricule: string;
   keycloakId: string;
   email: string;
   nom: string;

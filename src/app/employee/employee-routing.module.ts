@@ -4,6 +4,7 @@ import { DashboardEmployeeComponent } from './components/dashboard-employee/dash
 import { CreateEmployeeComponent } from './components/create-employee/create-employee.component';
 import { profileCompleteGuard } from '../core/guards/profile-complete.guard';
 import { SideBarComponent } from '../rh/sidebar/sidebar.component';
+import { ListUsersComponent } from './components/list-users/list-users.component';
 
 
 
@@ -14,6 +15,11 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboardmanager', pathMatch: 'full' },
 
+      {
+        path: 'listUsersManager',
+        component: ListUsersComponent,
+        canActivate: [profileCompleteGuard],
+      },
       {
         path: 'dashboardmanager',
         component: DashboardEmployeeComponent,
