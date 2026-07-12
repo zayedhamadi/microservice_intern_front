@@ -74,6 +74,7 @@ export class UpdateProfilComponent implements OnInit {
 
   // ✅ Modal de visualisation du CV
   showCvModal = false;
+  cvIframeLoaded = false;
 
   activeTab = 0;
   showPw0 = false;
@@ -233,6 +234,8 @@ export class UpdateProfilComponent implements OnInit {
       return;
     }
 
+    this.cvIframeLoaded = false;
+
     const reader = new FileReader();
     reader.onload = (e) => {
       this.cvBase64 = e.target!.result as string;
@@ -262,11 +265,23 @@ export class UpdateProfilComponent implements OnInit {
 
   openCvModal(): void {
     if (!this.hasCvToShow) return;
+    this.cvIframeLoaded = false; // ✅ reset à chaque ouverture
     this.showCvModal = true;
   }
 
   closeCvModal(): void {
     this.showCvModal = false;
+  }
+
+  // ✅ Ouvre le CV dans un nouvel onglet du navigateur
+  openCvNewTab(): void {
+    if (!this.cvSrc) return;
+    const win = window.open();
+    if (win) {
+      win.document.write(
+        `<iframe src="${this.cvSrc}" style="width:100%;height:100%;border:none;" title="CV"></iframe>`,
+      );
+    }
   }
 
   downloadCv(): void {

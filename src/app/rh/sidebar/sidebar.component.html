@@ -1,0 +1,107 @@
+<div class="page d-flex">
+
+    <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+    <aside class="sidebar" [class.collapsed]="isCollapsed">
+
+        <!-- Header -->
+        <div class="sb-header">
+            <div class="sb-logo" *ngIf="!isCollapsed">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Supra Technology</span>
+            </div>
+            <i class="fa-solid fa-shield-halved sb-logo-mini" *ngIf="isCollapsed"></i>
+            <button class="collapse-btn" (click)="toggleSidebar()" type="button"
+                [attr.aria-label]="isCollapsed ? 'Ouvrir le menu' : 'Réduire le menu'">
+                <i class="fa-solid" [class.fa-angles-left]="!isCollapsed" [class.fa-angles-right]="isCollapsed"></i>
+            </button>
+        </div>
+
+        <!-- Carte profil Manager -->
+        <div class="sb-admin-card" *ngIf="!isCollapsed">
+            <div class="sb-avatar">
+                <img *ngIf="getAvatarSrc()" [src]="getAvatarSrc()" alt="manager" />
+                <span *ngIf="!getAvatarSrc() && profile">
+                    {{ profile.prenom?.charAt(0) }}{{ profile.nom?.charAt(0) }}
+                </span>
+            </div>
+            <div class="sb-admin-info">
+                <div class="sb-admin-name">
+                    {{ profile?.prenom }} {{ profile?.nom }}
+                    <span class="ws-indicator" [ngClass]="wsStatusClass" [title]="wsStatusLabel"></span>
+                </div>
+                <span class="sb-admin-badge">{{ profile?.role | uppercase }}</span>
+            </div>
+        </div>
+
+        <div class="sb-avatar-mini" *ngIf="isCollapsed">
+            <img *ngIf="getAvatarSrc()" [src]="getAvatarSrc()" alt="manager" />
+            <span *ngIf="!getAvatarSrc()">
+                {{ profile?.prenom?.charAt(0) }}{{ profile?.nom?.charAt(0) }}
+            </span>
+        </div>
+
+        <nav class="sb-nav">
+
+            <div class="sb-section-label" *ngIf="!isCollapsed">GÉNÉRAL</div>
+
+            <a class="sb-item" routerLink="dashboardRH" routerLinkActive="active">
+                <i class="fa-solid fa-gauge-high fa-fw"></i>
+                <span *ngIf="!isCollapsed">Dashboard</span>
+                <div class="sb-tooltip" *ngIf="isCollapsed">Dashboard</div>
+            </a>
+
+            <div class="sb-divider"></div>
+
+            <div class="sb-section-label" *ngIf="!isCollapsed">CONSULTER</div>
+
+            <a class="sb-item" routerLink="listUsers" routerLinkActive="active" (click)="clearNotifCount()">
+                <i class="fa-solid fa-users fa-fw"></i>
+                <span *ngIf="!isCollapsed">
+                    Employés
+                    <span class="sb-badge" *ngIf="notifCount > 0">{{ notifCount }}</span>
+                </span>
+                <div class="sb-tooltip" *ngIf="isCollapsed">Employés</div>
+            </a>
+
+            <a class="sb-item" routerLink="addDepartementByAdmin" routerLinkActive="active">
+                <i class="fa-solid fa-certificate fa-fw"></i>
+                <span *ngIf="!isCollapsed">Départements</span>
+                <div class="sb-tooltip" *ngIf="isCollapsed">Départements</div>
+            </a>
+
+            <a class="sb-item" routerLink="addParametreByAdmin" routerLinkActive="active">
+                <i class="fa-solid fa-calendar-days fa-fw"></i>
+                <span *ngIf="!isCollapsed">Paramètres de congés</span>
+                <div class="sb-tooltip" *ngIf="isCollapsed">Paramètres de congés</div>
+            </a>
+
+            <div class="sb-divider"></div>
+
+            <!-- COMPTE -->
+            <div class="sb-section-label" *ngIf="!isCollapsed">COMPTE</div>
+
+            <a class="sb-item" routerLink="/getMyprofile" routerLinkActive="active">
+                <i class="fa-regular fa-user fa-fw"></i>
+                <span *ngIf="!isCollapsed">Mon Profil</span>
+                <div class="sb-tooltip" *ngIf="isCollapsed">Mon Profil</div>
+            </a>
+
+            <div class="sb-divider"></div>
+
+            <a class="sb-item sb-logout" (click)="logout()">
+                <i class="fa-solid fa-right-from-bracket fa-fw"></i>
+                <span *ngIf="!isCollapsed">Déconnexion</span>
+                <div class="sb-tooltip" *ngIf="isCollapsed">Déconnexion</div>
+            </a>
+
+        </nav>
+    </aside>
+
+    <!-- ═══════════════════ MAIN CONTENT ═══════════════════ -->
+    <div class="content w-full">
+
+        
+
+        <router-outlet></router-outlet>
+    </div>
+</div>

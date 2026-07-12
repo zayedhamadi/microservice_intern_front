@@ -25,7 +25,6 @@ import { ValidationSignUpComponent } from './auth/validation-sign-up/validation-
 import { JwtInterceptor } from './core/interceptor/jwt.interceptor';
 import { HomeComponent } from './auth/home/home.component';
 import { NavbarComponent } from './navbar/navbar.component';
-import { SidebarComponent } from './sidebar/sidebar.component';
 import { ProfileComponent } from './profile/profile.component';
 import { UpdateProfilComponent } from './update-profil/update-profil.component';
 import { SafeUrlPipe } from './core/service/SafeUrlPipe';
@@ -41,7 +40,6 @@ import { SafeUrlPipe } from './core/service/SafeUrlPipe';
     ValidationSignUpComponent,
     HomeComponent,
     NavbarComponent,
-    SidebarComponent,
     ProfileComponent,
  SafeUrlPipe ,
     UpdateProfilComponent,

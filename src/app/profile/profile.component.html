@@ -68,6 +68,10 @@
                 (click)="setTab('etudes')">
                 Études
             </button>
+            <button class="tab-btn" [class.tab-active]="activeTab === 'cv'" (click)="setTab('cv')">
+                <i class="ti ti-file-cv" aria-hidden="true"></i> Curriculum vitæ
+                <span class="tab-dot" *ngIf="hasCv" title="CV disponible"></span>
+            </button>
             <button class="tab-btn" [class.tab-active]="activeTab === 'certifications'"
                 (click)="setTab('certifications')">
                 <i class="ti ti-certificate" aria-hidden="true"></i> Certifications
@@ -156,18 +160,7 @@
                 </div>
             </div>
 
-            <!-- CV : visible pour RH / EMPLOYEE / CANDIDAT -->
-            <div class="cv-actions" *ngIf="hasCv" style="display:flex; gap:10px; margin-top:16px;">
-                <button type="button" class="btn-upload" (click)="openCvModal()">
-                    <i class="ti ti-eye" aria-hidden="true"></i> Voir le CV
-                </button>
-                <button type="button" class="btn-upload" (click)="downloadCv()">
-                    <i class="ti ti-download" aria-hidden="true"></i> Télécharger le CV
-                </button>
-            </div>
-            <div class="cv-empty" *ngIf="!hasCv" style="margin-top:16px; color:#94a3b8; font-size:14px;">
-                Aucun CV n'a été téléversé.
-            </div>
+
         </div>
 
         <!-- TAB ÉTUDES -->
@@ -192,7 +185,52 @@
                 </div>
             </div>
         </div>
+        <!-- TAB CV -->
+        <div *ngIf="activeTab === 'cv'">
+            <div class="cv-tab-card">
+                <div class="cv-tab-header">
+                    <div class="cv-tab-title-group">
+                        <div class="cv-tab-icon"><i class="ti ti-file-cv" aria-hidden="true"></i></div>
+                        <div>
+                            <h3 class="card-title">Curriculum vitæ</h3>
+                            <p class="cv-tab-subtitle">Document PDF visible par les recruteurs</p>
+                            <!-- CV : visible pour RH / EMPLOYEE / CANDIDAT -->
 
+                            <div class="cv-empty" *ngIf="!hasCv"
+                                style="margin-top:16px; color:#94a3b8; font-size:14px;">
+                                Aucun CV n'a été téléversé.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cv-tab-actions" *ngIf="hasCv">
+                        <button type="button" class="btn-cv-action" (click)="openCvModal()">
+                            <i class="ti ti-arrows-maximize" aria-hidden="true"></i> Plein écran
+                        </button>
+                        <button type="button" class="btn-cv-action" (click)="downloadCv()">
+                            <i class="ti ti-download" aria-hidden="true"></i> Télécharger
+                        </button>
+                    </div>
+                </div>
+
+                <div class="cv-inline-preview" *ngIf="hasCv">
+                    <object [data]="cvSrc! | safeUrl" type="application/pdf" class="cv-object">
+                        <div class="cv-fallback">
+                            <i class="ti ti-file-off" aria-hidden="true"></i>
+                            <p>Votre navigateur ne peut pas afficher ce PDF ici.</p>
+                            <button type="button" class="btn-cv-action" (click)="openCvModal()">
+                                Voir en plein écran
+                            </button>
+                        </div>
+                    </object>
+                </div>
+
+                <div class="cv-empty-state" *ngIf="!hasCv">
+                    <i class="ti ti-file-off" aria-hidden="true"></i>
+                    <p>Aucun CV n'a été téléversé.</p>
+                    <span>Ajoutez un CV depuis la page de modification du profil.</span>
+                </div>
+            </div>
+        </div>
         <!-- TAB CERTIFICATIONS : gestion complète -->
         <div *ngIf="activeTab === 'certifications'">
             <div class="certif-section">

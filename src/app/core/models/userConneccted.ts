@@ -24,7 +24,6 @@ export interface PositionHistoryEntry {
   commentaire?: string;
 }
 
-// Champs communs à tous les rôles (retournés par /users/me)
 export interface UserCommonProfile {
   id: number;
   keycloakId: string;

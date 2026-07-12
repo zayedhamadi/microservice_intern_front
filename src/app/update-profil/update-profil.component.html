@@ -64,6 +64,10 @@
                 <div class="nav-item" [class.active]="activeTab === 2" (click)="activeTab = 2">
                     <i class="ti ti-briefcase" aria-hidden="true"></i> Professionnel
                 </div>
+                <div class="nav-item" [class.active]="activeTab === 3" (click)="activeTab = 3">
+                    <i class="ti ti-file-cv" aria-hidden="true"></i> Curriculum vitæ
+                    <span class="ni-badge" *ngIf="cvPreviewName">✓</span>
+                </div>
 
                 <div class="nav-sep"></div>
                 <span class="sb-label">Sécurité</span>
@@ -361,36 +365,6 @@
                                     </span>
                                 </div>
 
-                                <!-- ✅ CV : disponible pour TOUS les rôles (RH inclus) -->
-                                <div class="form-group f-full">
-                                    <label>CV <span class="fhint">(PDF · max 5 Mo, optionnel)</span></label>
-                                    <div class="photo-btns">
-                                        <label class="btn-upload">
-                                            <i class="ti ti-upload" aria-hidden="true"></i>
-                                            {{ cvPreviewName ? 'Remplacer le CV' : 'Ajouter un CV' }}
-                                            <input type="file" accept="application/pdf" style="display:none"
-                                                (change)="onCvSelected($event)" />
-                                        </label>
-
-                                        <!-- ✅ Voir le CV (nouveau sélectionné, ou déjà existant) -->
-                                        <button type="button" class="btn-upload" *ngIf="hasCvToShow"
-                                            (click)="openCvModal()">
-                                            <i class="ti ti-eye" aria-hidden="true"></i> Voir le CV
-                                        </button>
-
-                                        <button type="button" class="btn-remove" *ngIf="cvPreviewName"
-                                            (click)="removeCv()">
-                                            <i class="ti ti-trash" aria-hidden="true"></i> Supprimer
-                                        </button>
-                                    </div>
-                                    <span class="msg msg-ok" *ngIf="cvPreviewName">
-                                        <i class="ti ti-check"></i> {{ cvPreviewName }}
-                                    </span>
-                                    <span class="msg msg-err" *ngIf="cvError">
-                                        <i class="ti ti-alert-circle"></i> {{ cvError }}
-                                    </span>
-                                </div>
-
                             </div>
                         </div>
 
@@ -436,6 +410,67 @@
                                     </div>
                                 </div>
 
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <ng-container *ngIf="activeTab === 3">
+                    <div class="tab-panel">
+                        <div class="card">
+                            <div class="card-hd">
+                                <div class="card-ico"><i class="ti ti-file-cv" aria-hidden="true"></i></div>
+                                <div>
+                                    <h3>Curriculum vitæ</h3>
+                                    <p>PDF · max 5 Mo · visible par les recruteurs</p>
+                                </div>
+                            </div>
+
+                            <div class="photo-btns" style="margin-bottom:1rem">
+                                <label class="btn-upload">
+                                    <i class="ti ti-upload" aria-hidden="true"></i>
+                                    {{ cvPreviewName ? 'Remplacer le CV' : 'Ajouter un CV' }}
+                                    <input type="file" accept="application/pdf" style="display:none"
+                                        (change)="onCvSelected($event)" />
+                                </label>
+
+                                <button type="button" class="btn-upload" *ngIf="hasCvToShow" (click)="openCvModal()">
+                                    <i class="ti ti-arrows-maximize" aria-hidden="true"></i> Plein écran
+                                </button>
+
+                                <button type="button" class="btn-upload" *ngIf="hasCvToShow" (click)="downloadCv()">
+                                    <i class="ti ti-download" aria-hidden="true"></i> Télécharger
+                                </button>
+
+                                <button type="button" class="btn-remove" *ngIf="cvPreviewName" (click)="removeCv()">
+                                    <i class="ti ti-trash" aria-hidden="true"></i> Supprimer
+                                </button>
+                            </div>
+
+                            <span class="msg msg-ok" *ngIf="cvPreviewName"
+                                style="margin-bottom:1rem; display:inline-flex">
+                                <i class="ti ti-check"></i> {{ cvPreviewName }}
+                            </span>
+                            <span class="msg msg-err" *ngIf="cvError" style="margin-bottom:1rem; display:inline-flex">
+                                <i class="ti ti-alert-circle"></i> {{ cvError }}
+                            </span>
+
+                            <!-- ✅ Aperçu intégré directement dans la page -->
+                            <div class="cv-inline-preview" *ngIf="hasCvToShow">
+                                <object [data]="(cvSrc || '') | safeUrl" type="application/pdf" class="cv-object">
+                                    <div class="cv-empty">
+                                        <i class="ti ti-file-off" aria-hidden="true"></i>
+                                        <p>Votre navigateur ne peut pas afficher ce PDF ici.</p>
+                                        <button type="button" class="btn-upload" (click)="openCvModal()">Voir en plein
+                                            écran</button>
+                                    </div>
+                                </object>
+                            </div>
+
+                            <div class="cv-empty cv-empty--card" *ngIf="!hasCvToShow">
+                                <i class="ti ti-file-off" aria-hidden="true"></i>
+                                <p>Aucun CV ajouté pour le moment.</p>
+                                <span>Ajoutez un fichier PDF pour qu'il soit visible dans votre profil.</span>
                             </div>
                         </div>
                     </div>
@@ -555,23 +590,50 @@
 <!-- MODAL — Visualisation complète du CV -->
 <div class="modal-overlay" *ngIf="showCvModal" (click)="closeCvModal()">
     <div class="modal-box modal-box--cv" (click)="$event.stopPropagation()">
-        <div class="modal-header">
+
+        <div class="modal-header modal-header--cv">
             <div class="modal-title">
-                <i class="ti ti-file-text" aria-hidden="true"></i>
-                Aperçu du CV
+                <div class="cv-icon-wrap">
+                    <i class="ti ti-file-type-pdf" aria-hidden="true"></i>
+                </div>
+                <div class="cv-title-txt">
+                    <span class="cv-title-main">Aperçu du CV</span>
+                    <span class="cv-title-sub">{{ cvPreviewName || 'Document PDF' }}</span>
+                </div>
             </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <button class="btn-modal-cancel" (click)="downloadCv()" type="button">
-                    <i class="ti ti-download" aria-hidden="true"></i> Télécharger
+
+            <div class="cv-toolbar">
+                <button class="btn-cv-tool" (click)="openCvNewTab()" type="button" title="Ouvrir dans un nouvel onglet">
+                    <i class="ti ti-external-link" aria-hidden="true"></i>
                 </button>
-                <button class="modal-close" (click)="closeCvModal()" type="button">✕</button>
+                <button class="btn-cv-tool" (click)="downloadCv()" type="button" title="Télécharger">
+                    <i class="ti ti-download" aria-hidden="true"></i>
+                </button>
+                <div class="cv-toolbar-sep"></div>
+                <button class="modal-close" (click)="closeCvModal()" type="button" title="Fermer">✕</button>
             </div>
         </div>
 
         <div class="modal-body modal-body--cv">
-            <iframe *ngIf="cvSrc" [src]="cvSrc | safeUrl" class="cv-iframe" title="Aperçu du CV"></iframe>
-            <div *ngIf="!cvSrc" class="certif-empty">
-                Impossible d'afficher le CV.
+            <object *ngIf="cvSrc" [data]="cvSrc | safeUrl" type="application/pdf" class="cv-iframe"
+                (load)="cvIframeLoaded = true">
+                <div class="cv-empty">
+                    <i class="ti ti-file-off" aria-hidden="true"></i>
+                    <p>Impossible d'afficher le PDF ici.</p>
+                    <button type="button" class="btn-upload" (click)="openCvNewTab()">Ouvrir dans un nouvel
+                        onglet</button>
+                </div>
+            </object>
+
+            <div class="cv-loading" *ngIf="cvSrc && !cvIframeLoaded">
+                <div class="loading-spinner-lg"></div>
+                <span>Chargement du document…</span>
+            </div>
+
+            <div *ngIf="!cvSrc" class="cv-empty">
+                <i class="ti ti-file-off" aria-hidden="true"></i>
+                <p>Impossible d'afficher le CV.</p>
+                <span>Le fichier est peut-être manquant ou corrompu.</span>
             </div>
         </div>
     </div>

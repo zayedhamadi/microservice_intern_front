@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter, Subscription } from 'rxjs';
+import { filter, Subject, Subscription, takeUntil } from 'rxjs';
 import { HIDDEN_NAVBAR_ROUTES } from '../core/constant/layout-routes';
 import { AuthService } from '../core/service/auth.service';
 import { UserConnected } from '../core/models/userConnected';
+import { WebSocketService } from '../core/service/web-socket.service';
+import { AdminRealtimeEvent } from '../core/models/websocket';
 
 @Component({
   selector: 'app-navbar',
@@ -21,12 +23,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
   // Route unique du profil commun, peu importe le rôle
   readonly profileRoute = '/getMyprofile';
 
+  // --- Notifications temps réel ---
+  notifCount = 0;
+
   private routerSub?: Subscription;
   private authSub?: Subscription;
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,
+    private readonly wsService: WebSocketService,
   ) {}
 
   ngOnInit(): void {
@@ -48,16 +55,47 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.isLoggedIn = logged;
         if (!logged) {
           this.user = null;
+          this.wsService.disconnect();
         } else {
           this.syncAuth();
+          this.connectRealtime();
         }
       });
+
+    if (this.isLoggedIn) {
+      this.connectRealtime();
+    }
   }
 
   ngOnDestroy(): void {
     this.routerSub?.unsubscribe();
     this.authSub?.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
+
+  // ─────────────────────────────────────────────
+  // TEMPS RÉEL — Notifications
+  // ─────────────────────────────────────────────
+
+  private connectRealtime(): void {
+    const token = this.authService.getToken() ?? undefined;
+    this.wsService.connect(token);
+
+    this.wsService.events$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((event: AdminRealtimeEvent) => {
+        if (event.type !== 'STATS_UPDATE') this.notifCount++;
+      });
+  }
+
+  clearNotifCount(): void {
+    this.notifCount = 0;
+  }
+
+  // ─────────────────────────────────────────────
+  // VISIBILITÉ / AUTH
+  // ─────────────────────────────────────────────
 
   private updateVisibility(url: string): void {
     this.hideNavbar = HIDDEN_NAVBAR_ROUTES.some((r) => url.startsWith(r));
@@ -114,6 +152,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.authService.logout();
     this.user = null;
     this.showDropdown = false;
+    this.wsService.disconnect();
   }
 
   isActive(route: string): boolean {

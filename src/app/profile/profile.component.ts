@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import Swal from 'sweetalert2';
+import { Router } from '@angular/router';
 
 import {
   UserCommonProfile,
@@ -10,19 +10,9 @@ import {
 import { UserService } from '../core/service/user.service';
 import { CertificationService } from '../core/service/certification.service';
 import { CertificationDTO } from '../core/models/CertificationDTO';
-import { Router } from '@angular/router';
+import { NotificationService } from '../core/service/notification.service';
 
-const Toast = Swal.mixin({
-  toast: true,
-  position: 'top-end',
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true,
-  didOpen: (toast) => {
-    toast.addEventListener('mouseenter', Swal.stopTimer);
-    toast.addEventListener('mouseleave', Swal.resumeTimer);
-  },
-});
+type ProfileTab = 'profil' | 'etudes' | 'cv' | 'certifications' | 'position';
 
 @Component({
   selector: 'app-profile',
@@ -30,6 +20,134 @@ const Toast = Swal.mixin({
   styleUrl: './profile.component.css',
 })
 export class ProfileComponent implements OnInit, OnDestroy {
+  user: UserCommonProfile | null = null;
+  fullProfile: UserFullProfile | null = null;
+  certifications: CertificationDTO[] = [];
+  filteredCertifications: CertificationDTO[] = [];
+
+  isLoading = true;
+  hasError = false;
+  isLoadingCertifs = false;
+
+  activeTab: ProfileTab = 'profil';
+
+  // --- Certification form & modals ---
+  certifForm!: FormGroup;
+  showAddModal = false;
+  showEditModal = false;
+  isSaving = false;
+  isDeleting = false;
+  saveError = '';
+  editingCertif: CertificationDTO | null = null;
+
+  // --- CV modal (aperçu plein écran) ---
+  showCvModal = false;
+
+  // --- Search & pagination ---
+  searchTerm = '';
+  currentPage = 1;
+  pageSize = 5;
+
+  private readonly destroy$ = new Subject<void>();
+
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly userService: UserService,
+    private readonly certificationService: CertificationService,
+    private readonly router: Router,
+    private readonly notification: NotificationService,
+  ) {}
+
+  ngOnInit(): void {
+    this.certifForm = this.fb.group({
+      titre: ['', [Validators.required, Validators.minLength(3)]],
+      dateCertif: ['', Validators.required],
+      description: ['', [Validators.minLength(10)]],
+      pdfBase64: [''],
+    });
+
+    this.userService
+      .getMyProfile()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data: UserCommonProfile) => {
+          this.user = data;
+          this.isLoading = false;
+          if (this.isOrganisationalRole()) this.loadFullProfile();
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.isLoading = false;
+          this.hasError = true;
+        },
+      });
+
+    this.loadCertifications();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  goToUpdateProfil(): void {
+    this.router.navigate(['/updateMyProfil']);
+  }
+
+  private loadFullProfile(): void {
+    this.userService
+      .getMyFullProfile()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (full: UserFullProfile) => (this.fullProfile = full),
+        error: (err: any) => console.error('Erreur full profile', err),
+      });
+  }
+
+  loadCertifications(): void {
+    this.isLoadingCertifs = true;
+    this.certificationService
+      .getMyCertifications()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (certifs) => {
+          this.certifications = certifs;
+          this.applyFilter();
+          this.isLoadingCertifs = false;
+        },
+        error: () => (this.isLoadingCertifs = false),
+      });
+  }
+
+  isOrganisationalRole(): boolean {
+    return this.user?.role === 'RH' || this.user?.role === 'EMPLOYEE';
+  }
+
+  isCandidat(): boolean {
+    return this.user?.role === 'CANDIDAT';
+  }
+
+  setTab(tab: ProfileTab): void {
+    this.activeTab = tab;
+  }
+
+  get u(): UserCommonProfile {
+    return this.user!;
+  }
+
+  get avatarSrc(): string | null {
+    if (!this.user?.imageBase64) return null;
+    return this.user.imageBase64.startsWith('data:')
+      ? this.user.imageBase64
+      : `data:image/jpeg;base64,${this.user.imageBase64}`;
+  }
+
+  // ==================== CV ====================
+
+  get hasCv(): boolean {
+    return !!this.user?.cvBase64;
+  }
+
   get cvSrc(): string | null {
     if (!this.user?.cvBase64) return null;
     return this.user.cvBase64.startsWith('data:')
@@ -47,144 +165,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   downloadCv(): void {
-    if (!this.cvSrc) return;
+    if (!this.cvSrc || !this.user) return;
     const link = document.createElement('a');
     link.href = this.cvSrc;
-    link.download = `CV_${this.user!.prenom}_${this.user!.nom}.pdf`;
+    link.download = `CV_${this.user.prenom}_${this.user.nom}.pdf`;
     link.click();
   }
-  showCvModal = false;
-  get hasCv(): boolean {
-    return !!this.user?.cvBase64;
-  }
-  user: UserCommonProfile | null = null;
-  fullProfile: UserFullProfile | null = null;
-  certifications: CertificationDTO[] = [];
-  filteredCertifications: CertificationDTO[] = [];
 
-  isLoading = true;
-  hasError = false;
-  isLoadingCertifs = false;
+  // ==================== CERTIFICATIONS : recherche & pagination ====================
 
-  activeTab: 'profil' | 'etudes' | 'position' | 'certifications' = 'profil';
-
-  // --- Certification form & modals ---
-  certifForm!: FormGroup;
-  showAddModal = false;
-  showEditModal = false;
-  isSaving = false;
-  isDeleting = false;
-  saveError = '';
-  editingCertif: CertificationDTO | null = null;
-
-  // --- Search & pagination ---
-  searchTerm = '';
-  currentPage = 1;
-  pageSize = 5;
-
-  private readonly destroy$ = new Subject<void>();
-
-  constructor(
-    private readonly fb: FormBuilder,
-    private readonly userService: UserService,
-    private readonly certificationService: CertificationService,
-    private readonly router: Router,
-  ) {}
-
-  goToUpdateProfil() {
-    this.router.navigate(['/updateMyProfil']);
-  }
-
-  ngOnInit(): void {
-    this.certifForm = this.fb.group({
-      titre: ['', [Validators.required, Validators.minLength(3)]],
-      dateCertif: ['', Validators.required],
-      description: ['', [Validators.minLength(10)]],
-      pdfBase64: [''],
-    });
-
-    this.userService
-      .getMyProfile()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data: UserCommonProfile) => {
-          this.user = data;
-          this.isLoading = false;
-
-          if (this.isOrganisationalRole()) {
-            this.loadFullProfile();
-          }
-        },
-        error: (err: any) => {
-          console.error(err);
-          this.isLoading = false;
-          this.hasError = true;
-        },
-      });
-
-    this.loadCertifications();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  private loadFullProfile(): void {
-    this.userService
-      .getMyFullProfile()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (full: UserFullProfile) => {
-          this.fullProfile = full;
-        },
-        error: (err: any) => {
-          console.error('Erreur full profile', err);
-        },
-      });
-  }
-
-  loadCertifications(): void {
-    this.isLoadingCertifs = true;
-    this.certificationService
-      .getMyCertifications()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (certifs) => {
-          this.certifications = certifs;
-          this.applyFilter();
-          this.isLoadingCertifs = false;
-        },
-        error: () => {
-          this.isLoadingCertifs = false;
-        },
-      });
-  }
-
-  isOrganisationalRole(): boolean {
-    return this.user?.role === 'RH' || this.user?.role === 'EMPLOYEE';
-  }
-
-  isCandidat(): boolean {
-    return this.user?.role === 'CANDIDAT';
-  }
-
-  setTab(tab: 'profil' | 'etudes' | 'position' | 'certifications'): void {
-    this.activeTab = tab;
-  }
-
-  get u(): UserCommonProfile {
-    return this.user!;
-  }
-
-  get avatarSrc(): string | null {
-    if (!this.user?.imageBase64) return null;
-    return this.user.imageBase64.startsWith('data:')
-      ? this.user.imageBase64
-      : `data:image/jpeg;base64,${this.user.imageBase64}`;
-  }
-
- 
   onSearch(): void {
     this.currentPage = 1;
     this.applyFilter();
@@ -271,6 +260,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+
     if (file.type !== 'application/pdf') {
       this.saveError = 'Seuls les fichiers PDF sont autorisés.';
       return;
@@ -279,6 +269,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.saveError = 'Le fichier PDF ne doit pas dépasser 5 Mo.';
       return;
     }
+
     const reader = new FileReader();
     reader.onload = () => {
       this.certifForm.patchValue({ pdfBase64: reader.result as string });
@@ -332,7 +323,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.applyFilter();
           this.isSaving = false;
           this.closeAddModal();
-          Toast.fire({ icon: 'success', title: 'Certification ajoutée' });
+          this.notification.toastSuccess('Certification ajoutée');
         },
         error: (err) => {
           this.saveError =
@@ -368,7 +359,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.applyFilter();
           this.isSaving = false;
           this.closeEditModal();
-          Toast.fire({ icon: 'success', title: 'Certification mise à jour' });
+          this.notification.toastSuccess('Certification mise à jour');
         },
         error: (err) => {
           this.saveError =
@@ -378,41 +369,31 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
   }
 
-  deleteCertif(certif: CertificationDTO): void {
-    Swal.fire({
-      title: 'Supprimer cette certification ?',
-      text: `« ${certif.titre} » sera supprimée définitivement.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#E24B4A',
-      cancelButtonColor: '#64748B',
-      confirmButtonText: 'Supprimer',
-      cancelButtonText: 'Annuler',
-      reverseButtons: true,
-    }).then((result) => {
-      if (!result.isConfirmed) return;
+  async deleteCertif(certif: CertificationDTO): Promise<void> {
+    const confirmed = await this.notification.confirm(
+      'Supprimer cette certification ?',
+      `« ${certif.titre} » sera supprimée définitivement.`,
+      'Supprimer',
+    );
+    if (!confirmed) return;
 
-      this.isDeleting = true;
-      this.certificationService
-        .deleteCertification(certif.idCertification)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.certifications = this.certifications.filter(
-              (c) => c.idCertification !== certif.idCertification,
-            );
-            this.applyFilter();
-            this.isDeleting = false;
-            Toast.fire({ icon: 'info', title: 'Certification supprimée' });
-          },
-          error: () => {
-            this.isDeleting = false;
-            Toast.fire({
-              icon: 'error',
-              title: 'Erreur lors de la suppression',
-            });
-          },
-        });
-    });
+    this.isDeleting = true;
+    this.certificationService
+      .deleteCertification(certif.idCertification)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.certifications = this.certifications.filter(
+            (c) => c.idCertification !== certif.idCertification,
+          );
+          this.applyFilter();
+          this.isDeleting = false;
+          this.notification.toast('info', 'Certification supprimée');
+        },
+        error: () => {
+          this.isDeleting = false;
+          this.notification.toastError('Erreur lors de la suppression');
+        },
+      });
   }
 }
