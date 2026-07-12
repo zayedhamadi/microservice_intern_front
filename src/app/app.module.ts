@@ -9,7 +9,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { CommonModule, DatePipe } from '@angular/common';
 import {
   HTTP_INTERCEPTORS,
-  HttpClientModule,
   provideHttpClient,
   withFetch,
   withInterceptorsFromDi,
@@ -28,6 +27,7 @@ import { NavbarComponent } from './navbar/navbar.component';
 import { ProfileComponent } from './profile/profile.component';
 import { UpdateProfilComponent } from './update-profil/update-profil.component';
 import { SafeUrlPipe } from './core/service/SafeUrlPipe';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -41,7 +41,7 @@ import { SafeUrlPipe } from './core/service/SafeUrlPipe';
     HomeComponent,
     NavbarComponent,
     ProfileComponent,
- SafeUrlPipe ,
+    SafeUrlPipe,
     UpdateProfilComponent,
   ],
   imports: [
@@ -50,12 +50,11 @@ import { SafeUrlPipe } from './core/service/SafeUrlPipe';
     ReactiveFormsModule,
     AppRoutingModule,
     CommonModule,
-    HttpClientModule,
     RouterModule,
     BrowserAnimationsModule,
-  
   ],
   providers: [
+    DatePipe,
     provideHttpClient(withFetch(), withInterceptorsFromDi()),
     {
       provide: HTTP_INTERCEPTORS,

@@ -1,0 +1,63 @@
+<div class="page">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="card">
+
+        <div class="head">
+            <h1>Créer un compte</h1>
+            <p>Le mot de passe et le matricule sont générés automatiquement et envoyés par email.</p>
+        </div>
+
+        <!-- Nom / Prénom -->
+        <div class="row two-cols">
+            <div class="field">
+                <label for="prenom">Prénom</label>
+                <input id="prenom" type="text" formControlName="prenom" placeholder="Yassine"
+                    [class.invalid]="isInvalid('prenom')" />
+                <span class="error" *ngIf="isInvalid('prenom')">2 à 50 caractères</span>
+            </div>
+
+            <div class="field">
+                <label for="nom">Nom</label>
+                <input id="nom" type="text" formControlName="nom" placeholder="Ben Ali"
+                    [class.invalid]="isInvalid('nom')" />
+                <span class="error" *ngIf="isInvalid('nom')">2 à 50 caractères</span>
+            </div>
+        </div>
+
+        <!-- Email -->
+        <div class="row">
+            <div class="field">
+                <label for="email">Email</label>
+                <input id="email" type="email" formControlName="email" placeholder="prenom.nom@supra-technology.com"
+                    [class.invalid]="isInvalid('email')" />
+                <span class="error" *ngIf="isInvalid('email')">Adresse email invalide</span>
+            </div>
+        </div>
+
+        <!-- Rôle -->
+        <div class="row">
+            <label>Rôle</label>
+            <div class="role-toggle">
+                <button type="button" *ngFor="let r of roles" [class.active]="isRoleSelected(r.value)"
+                    (click)="selectRole(r.value)">
+                    {{ r.label }}
+                </button>
+            </div>
+            <span class="error" *ngIf="isInvalid('role')">Sélectionne un rôle</span>
+        </div>
+
+        <!-- Erreur serveur -->
+        <div class="server-error" *ngIf="serverError">{{ serverError }}</div>
+
+        <!-- Actions -->
+        <div class="actions">
+            <button type="button" class="btn-ghost" (click)="resetForm()" [disabled]="isSubmitting">
+                Réinitialiser
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="isSubmitting">
+                <span *ngIf="!isSubmitting">Créer le compte</span>
+                <span *ngIf="isSubmitting" class="spinner"></span>
+            </button>
+        </div>
+
+    </form>
+</div>

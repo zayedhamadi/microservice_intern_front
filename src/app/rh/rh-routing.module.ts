@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { DashboardRHComponent } from './dashboard-rh/dashboard-rh.component';
-import { ListUsersComponent } from './list-users/list-users.component';
-import { ConsulterProfilUserDetailsPerRHComponent } from './consulter-profil-user-details-per-rh/consulter-profil-user-details-per-rh.component';
+import { DashboardRHComponent } from './components/dashboard-rh/dashboard-rh.component';
+import { ListUsersComponent } from './components/list-users/list-users.component';
+import { ConsulterProfilUserDetailsPerRHComponent } from './components/consulter-profil-user-details-per-rh/consulter-profil-user-details-per-rh.component';
 import { profileCompleteGuard } from '../core/guards/profile-complete.guard';
 import { SideBarComponent } from './sidebar/sidebar.component';
 

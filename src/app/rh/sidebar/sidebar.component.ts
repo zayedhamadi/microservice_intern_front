@@ -2,10 +2,10 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 
-import { UserCommonProfile } from '../../core/models/userConneccted';
 import { AuthService } from '../../core/service/auth.service';
 import { UserService } from '../../core/service/user.service';
 import { WebSocketService } from '../../core/service/web-socket.service';
+import { UserConnected } from '../../core/models/userConnected';
 import {
   AdminRealtimeEvent,
   ConnectionStatus,
@@ -15,7 +15,8 @@ import {
   eventIcon,
   wsStatusClass,
   wsStatusLabel,
-} from '../../core/helpers/websocket.helpers'; // ✅ depuis les helpers, plus depuis le service
+} from '../../core/helpers/websocket.helpers';
+import { ROLE_ROUTES } from '../../core/constant/role-route';
 
 @Component({
   selector: 'app-sidebar',
@@ -24,13 +25,18 @@ import {
 })
 export class SideBarComponent implements OnInit, OnDestroy {
   isCollapsed = false;
-  profile: UserCommonProfile | null = null;
-  userRole = '';
+  isLoggedIn = false;
+  user: UserConnected | null = null;
+
   notifCount = 0;
   wsStatus: ConnectionStatus = 'DISCONNECTED';
 
   openSubmenus: Record<string, boolean> = {};
   private readonly destroy$ = new Subject<void>();
+
+  readonly profileRoute = '/getMyprofile';
+  readonly dashboardRoute = ROLE_ROUTES;
+  currentRole: keyof typeof ROLE_ROUTES = 'EMPLOYEE'; // Default fallback
 
   constructor(
     private readonly authService: AuthService,
@@ -40,16 +46,54 @@ export class SideBarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.syncAuth();
+
     this.userService
       .getMyProfile()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (p) => {
-          this.profile = p;
-          this.userRole = p.role ?? '';
+          this.user = {
+            ...(this.user as UserConnected),
+            ...p,
+            image: p.imageBase64,
+          } as UserConnected;
+
+          // Set currentRole based on the user's role
+          if (
+            this.user?.role &&
+            ROLE_ROUTES[this.user.role as keyof typeof ROLE_ROUTES]
+          ) {
+            this.currentRole = this.user.role as keyof typeof ROLE_ROUTES;
+          }
         },
-        error: () => (this.profile = null),
+        error: () => {},
       });
+
+    this.connectRealtime();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.wsService.disconnect();
+  }
+
+  // ─────────────────────────────────────────────
+  // AUTH
+  // ─────────────────────────────────────────────
+
+  private syncAuth(): void {
+    this.isLoggedIn = this.authService.isLoggedIn();
+    this.user = this.authService.getCurrentUser();
+  }
+
+  // ─────────────────────────────────────────────
+  // TEMPS RÉEL — Notifications
+  // ─────────────────────────────────────────────
+
+  private connectRealtime(): void {
+    if (!this.isLoggedIn) return;
 
     const token = this.authService.getToken() ?? undefined;
     this.wsService.connect(token);
@@ -65,13 +109,33 @@ export class SideBarComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.wsService.disconnect();
+  clearNotifCount(): void {
+    this.notifCount = 0;
   }
 
-  // --- Sidebar UI ---
+  // ─────────────────────────────────────────────
+  // WEBSOCKET HELPERS (template)
+  // ─────────────────────────────────────────────
+
+  get wsStatusLabel(): string {
+    return wsStatusLabel(this.wsStatus);
+  }
+
+  get wsStatusClass(): string {
+    return wsStatusClass(this.wsStatus);
+  }
+
+  eventIcon(type?: string): string {
+    return eventIcon(type as any);
+  }
+
+  eventColor(type?: string): string {
+    return eventColor(type as any);
+  }
+
+  // ─────────────────────────────────────────────
+  // UI
+  // ─────────────────────────────────────────────
 
   toggleSidebar(): void {
     this.isCollapsed = !this.isCollapsed;
@@ -93,37 +157,14 @@ export class SideBarComponent implements OnInit, OnDestroy {
     return !!this.openSubmenus[key];
   }
 
-  clearNotifCount(): void {
-    this.notifCount = 0;
-  }
-
-  // --- Websocket helpers exposés au template ---
-
-  get wsStatusLabel(): string {
-    return wsStatusLabel(this.wsStatus);
-  }
-
-  get wsStatusClass(): string {
-    return wsStatusClass(this.wsStatus);
-  }
-
-  eventIcon(type?: string): string {
-    return eventIcon(type as any);
-  }
-
-  eventColor(type?: string): string {
-    return eventColor(type as any);
-  }
-
-  // --- Profil (un seul component partagé par les 3 rôles) ---
-
   getAvatarSrc(): string | null {
-    const img = this.profile?.imageBase64;
+    const img = this.user?.image;
     if (!img) return null;
     return img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
   }
 
   logout(): void {
     this.authService.logout();
+    this.wsService.disconnect();
   }
 }

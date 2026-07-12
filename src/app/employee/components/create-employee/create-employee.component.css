@@ -1,0 +1,225 @@
+:host {
+    --primary: #6D28D9;
+    --dark: #1E1B2E;
+    --border: #E4E4E7;
+    --text-muted: #71717A;
+    --error: #DC2626;
+    display: block;
+}
+
+.page {
+    display: flex;
+    justify-content: center;
+    padding: 48px 20px;
+    background: #FAFAFA;
+    min-height: 100%;
+}
+
+.card {
+    width: 100%;
+    max-width: 520px;
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+/* ---------- Head ---------- */
+.head h1 {
+    margin: 0 0 6px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.head p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* ---------- Rows / fields ---------- */
+.row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.row.two-cols {
+    flex-direction: row;
+    gap: 16px;
+}
+
+.row.two-cols .field {
+    flex: 1;
+    min-width: 0;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--dark);
+}
+
+input {
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 12px;
+    font-size: 0.9rem;
+    color: var(--dark);
+    background: #fff;
+    transition: border-color 0.12s ease;
+}
+
+input::placeholder {
+    color: #B4B4B8;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+input.invalid {
+    border-color: var(--error);
+}
+
+.error {
+    font-size: 0.75rem;
+    color: var(--error);
+}
+
+/* ---------- Role toggle ---------- */
+.role-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.role-toggle button {
+    flex: 1;
+    padding: 9px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+
+.role-toggle button:not(:last-child) {
+    border-right: 1px solid var(--border);
+}
+
+.role-toggle button.active {
+    background: var(--primary);
+    color: #fff;
+}
+
+.role-toggle button:hover:not(.active) {
+    background: #F4F4F5;
+}
+
+/* ---------- Server error ---------- */
+.server-error {
+    font-size: 0.83rem;
+    color: var(--error);
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 7px;
+    padding: 10px 12px;
+}
+
+/* ---------- Actions ---------- */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.btn-ghost,
+.btn-primary {
+    padding: 9px 18px;
+    border-radius: 7px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.btn-ghost {
+    background: #fff;
+    border-color: var(--border);
+    color: var(--dark);
+}
+
+.btn-ghost:hover {
+    background: #F4F4F5;
+}
+
+.btn-primary {
+    background: var(--dark);
+    color: #fff;
+    min-width: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary:hover {
+    background: #2C2647;
+}
+
+.btn-ghost:disabled,
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+    .row.two-cols {
+        flex-direction: column;
+    }
+
+    .card {
+        padding: 24px;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+    }
+
+    .btn-ghost,
+    .btn-primary {
+        width: 100%;
+    }
+}
