@@ -320,4 +320,144 @@ nav a.nav-active {
     position: absolute;
     top: -3px;
     right: -3px;
+}/* ── Notifications dropdown ─────────────────────── */
+.notif-wrap {
+    position: relative;
+}
+
+.notif-dropdown {
+    position: absolute;
+    right: 0;
+    top: 52px;
+    background: white;
+    border-radius: 14px;
+    width: 340px;
+    max-height: 420px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: fadeDown 0.15s ease;
+}
+
+.notif-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #222;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.notif-clear-btn {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.notif-clear-btn:hover {
+    background: #ffebee;
+    color: #e53935;
+}
+
+.notif-list {
+    overflow-y: auto;
+    max-height: 360px;
+}
+
+.notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 32px 16px;
+    color: #999;
+    font-size: 13px;
+}
+
+.notif-empty i {
+    font-size: 22px;
+    opacity: 0.5;
+}
+
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f7f7f7;
+    transition: background 0.15s;
+}
+
+.notif-item:hover {
+    background: #f8f9ff;
+}
+
+.notif-item.notif-unread {
+    background: #f5f7ff;
+}
+
+.notif-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.notif-item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-item-text {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.4;
+}
+
+.notif-item-time {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}.notif-item {
+    position: relative;
+}
+
+.notif-item-delete {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+.notif-item:hover .notif-item-delete {
+    opacity: 1;
+}
+
+.notif-item-delete:hover {
+    background: #ffebee;
+    color: #e53935;
 }

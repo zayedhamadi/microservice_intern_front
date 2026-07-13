@@ -45,14 +45,48 @@
     </div>
 
     <div class="navbar-right">
-        <!-- ✅ Cloche + avatar regroupés sur la même ligne, plus jamais "sous" l'avatar -->
         <div class="user-menu-row" *ngIf="isLoggedIn">
 
-            <button class="notif-btn" type="button" (click)="clearNotifCount()" aria-label="Notifications">
-                <i class="fa-regular fa-bell"></i>
-                <span class="notif-badge" *ngIf="notifCount > 0">{{ notifCount }}</span>
-            </button>
+            <!-- ================= NOTIFICATIONS ================= -->
+            <div class="notif-wrap">
+                <button class="notif-btn" type="button" (click)="toggleNotifDropdown()" aria-label="Notifications">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="notif-badge" *ngIf="notifCount > 0">{{ notifCount }}</span>
+                </button>
 
+                <div class="notif-dropdown" *ngIf="showNotifDropdown">
+                    <div class="notif-dropdown-header">
+                        <span>Notifications</span>
+                        <button class="notif-clear-btn" *ngIf="notifications.length > 0" (click)="clearNotifications()"
+                            title="Tout effacer">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+
+                    <div class="notif-list">
+                        <div class="notif-empty" *ngIf="notifications.length === 0">
+                            <i class="fa-regular fa-bell-slash"></i>
+                            <span>Aucune notification</span>
+                        </div>
+
+                    <div class="notif-item" *ngFor="let n of notifications" [class.notif-unread]="!n.read">
+                        <div class="notif-item-icon" [style.background]="n.color">
+                            <i class="fa-solid" [ngClass]="n.icon"></i>
+                        </div>
+                        <div class="notif-item-body">
+                            <div class="notif-item-text">{{ n.text }}</div>
+                            <div class="notif-item-time"><i class="fa-regular fa-clock"></i> {{ n.time }}</div>
+                        </div>
+                        <button class="notif-item-delete" type="button" (click)="removeNotification(n.id, $event)"
+                            title="Supprimer cette notification">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= MENU UTILISATEUR ================= -->
             <div class="user-menu">
                 <div class="user-avatar" (click)="toggleDropdown()">
                     <img *ngIf="getAvatarSrc()" [src]="getAvatarSrc()" class="avatar-img" />

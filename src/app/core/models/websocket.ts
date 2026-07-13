@@ -20,6 +20,16 @@ export interface AdminRealtimeEvent {
   timestamp: string;
 }
 
+export interface NotificationItem {
+  id: string;
+  type: EventType;
+  text: string;
+  time: string;
+  color: string;
+  icon: string;
+  read: boolean;
+}
+
 export const STATUS_LABELS: Record<ConnectionStatus, string> = {
   CONNECTING: 'Connexion…',
   CONNECTED: 'Connecté',
@@ -53,3 +63,28 @@ export const EVENT_COLORS: Record<EventType, string> = {
   CERTIFICATION: '#f59e0b',
   DEMANDE_CONGE: '#f97316',
 };
+
+/**
+ * Construit le texte lisible d'une notification à partir d'un événement WebSocket.
+ * Utilisé par la navbar (cloche) et peut remplacer la logique dupliquée du dashboard.
+ */
+export function buildNotificationText(event: AdminRealtimeEvent): string {
+  const p = event.payload as any;
+
+  switch (event.type) {
+    case 'NEW_USER':
+      return `Nouveau compte ${p?.role ?? ''} : ${p?.prenom ?? ''} ${p?.nom ?? ''}`;
+    case 'CESSATION':
+      return `Compte suspendu : ${p?.prenom ?? ''} ${p?.nom ?? ''}`;
+    case 'REACTIVATION':
+      return `Compte réactivé : ${p?.prenom ?? ''} ${p?.nom ?? ''}`;
+    case 'LOGIN_ACTIVITY':
+      return `Connexion : ${p?.prenom ?? ''} ${p?.nom ?? ''}`;
+    case 'CERTIFICATION':
+      return `Certification ${p?.action ?? ''} — ${p?.titre ?? ''} (${p?.prenom ?? ''} ${p?.nom ?? ''})`;
+    case 'DEMANDE_CONGE':
+      return `Demande de congé : ${p?.prenom ?? ''} ${p?.nom ?? ''}`;
+    default:
+      return 'Nouvel événement';
+  }
+}

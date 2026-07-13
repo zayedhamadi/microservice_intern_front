@@ -1,11 +1,20 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  HostListener,
+  Inject,
+  PLATFORM_ID,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subject, Subscription, takeUntil } from 'rxjs';
 import { HIDDEN_NAVBAR_ROUTES } from '../core/constant/layout-routes';
 import { AuthService } from '../core/service/auth.service';
 import { UserConnected } from '../core/models/userConnected';
-import { WebSocketService } from '../core/service/web-socket.service';
-import { AdminRealtimeEvent } from '../core/models/websocket';
+import { eventColor, eventIcon, WebSocketService } from '../core/service/web-socket.service';
+import { NotificationItem, AdminRealtimeEvent, buildNotificationText } from '../core/models/websocket';
+
 
 @Component({
   selector: 'app-navbar',
@@ -17,14 +26,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
   user: UserConnected | null = null;
 
   showDropdown = false;
+  showNotifDropdown = false;
   activeRoute = '';
   hideNavbar = false;
 
-  // Route unique du profil commun, peu importe le rôle
   readonly profileRoute = '/getMyprofile';
 
   // --- Notifications temps réel ---
-  notifCount = 0;
+  notifications: NotificationItem[] = [];
+  private readonly MAX_NOTIFICATIONS = 30;
+  private readonly NOTIF_STORAGE_KEY = 'app_notifications';
+
+  // Empêche un double abonnement à events$ si connectRealtime() est appelé plusieurs fois
+  private realtimeInitialized = false;
 
   private routerSub?: Subscription;
   private authSub?: Subscription;
@@ -34,9 +48,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly authService: AuthService,
     private readonly router: Router,
     private readonly wsService: WebSocketService,
+    @Inject(PLATFORM_ID) private readonly platformId: Object,
   ) {}
 
   ngOnInit(): void {
+    this.loadNotifications();
     this.syncAuth();
     this.updateVisibility(this.router.url);
 
@@ -49,22 +65,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.syncAuth();
       });
 
+    // Ce seul abonnement suffit : le BehaviorSubject émet déjà l'état actuel
+    // immédiatement à la souscription, donc pas besoin d'appeler connectRealtime()
+    // une deuxième fois "à la main" ici.
     this.authSub = this.authService
       .isLoggedInObservable()
       .subscribe((logged) => {
         this.isLoggedIn = logged;
         if (!logged) {
           this.user = null;
+          this.realtimeInitialized = false;
           this.wsService.disconnect();
         } else {
           this.syncAuth();
           this.connectRealtime();
         }
       });
-
-    if (this.isLoggedIn) {
-      this.connectRealtime();
-    }
   }
 
   ngOnDestroy(): void {
@@ -82,15 +98,99 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const token = this.authService.getToken() ?? undefined;
     this.wsService.connect(token);
 
+    // Garde-fou : même si connectRealtime() est rappelé, on ne s'abonne
+    // qu'une seule fois à events$ pour éviter les doublons.
+    if (this.realtimeInitialized) return;
+    this.realtimeInitialized = true;
+
     this.wsService.events$
       .pipe(takeUntil(this.destroy$))
       .subscribe((event: AdminRealtimeEvent) => {
-        if (event.type !== 'STATS_UPDATE') this.notifCount++;
+        if (event.type === 'STATS_UPDATE') return;
+        this.addNotification(event);
       });
   }
 
-  clearNotifCount(): void {
-    this.notifCount = 0;
+  private addNotification(event: AdminRealtimeEvent): void {
+    const item: NotificationItem = {
+      id: `${event.type}-${event.timestamp}-${Math.random().toString(36).slice(2, 8)}`,
+      type: event.type,
+      text: buildNotificationText(event),
+      time: this.formatTime(event.timestamp),
+      color: eventColor(event.type),
+      icon: eventIcon(event.type),
+      read: false,
+    };
+
+    this.notifications.unshift(item);
+    if (this.notifications.length > this.MAX_NOTIFICATIONS) {
+      this.notifications = this.notifications.slice(0, this.MAX_NOTIFICATIONS);
+    }
+    this.persistNotifications();
+  }
+
+  get notifCount(): number {
+    return this.notifications.filter((n) => !n.read).length;
+  }
+
+  toggleNotifDropdown(): void {
+    this.showNotifDropdown = !this.showNotifDropdown;
+    this.showDropdown = false;
+
+    if (this.showNotifDropdown) {
+      this.notifications.forEach((n) => (n.read = true));
+      this.persistNotifications();
+    }
+  }
+
+  closeNotifDropdown(): void {
+    this.showNotifDropdown = false;
+  }
+
+  /** Supprime une seule notification (bouton individuel). */
+  removeNotification(id: string, event?: MouseEvent): void {
+    event?.stopPropagation();
+    this.notifications = this.notifications.filter((n) => n.id !== id);
+    this.persistNotifications();
+  }
+
+  /** Supprime toutes les notifications (bouton "tout effacer"). */
+  clearNotifications(): void {
+    this.notifications = [];
+    this.persistNotifications();
+  }
+
+  private loadNotifications(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const raw = localStorage.getItem(this.NOTIF_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as NotificationItem[];
+      this.notifications = Array.isArray(parsed)
+        ? parsed.slice(0, this.MAX_NOTIFICATIONS)
+        : [];
+    } catch {
+      this.notifications = [];
+    }
+  }
+
+  private persistNotifications(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      localStorage.setItem(
+        this.NOTIF_STORAGE_KEY,
+        JSON.stringify(this.notifications),
+      );
+    } catch {
+      // stockage plein ou indisponible : on ignore silencieusement
+    }
+  }
+
+  private formatTime(iso: string): string {
+    return new Date(iso).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   // ─────────────────────────────────────────────
@@ -134,6 +234,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   toggleDropdown(): void {
     this.showDropdown = !this.showDropdown;
+    this.showNotifDropdown = false;
   }
 
   closeDropdown(): void {
@@ -146,12 +247,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (!target.closest('.user-menu')) {
       this.showDropdown = false;
     }
+    if (!target.closest('.notif-wrap')) {
+      this.showNotifDropdown = false;
+    }
   }
 
   logout(): void {
     this.authService.logout();
     this.user = null;
+    this.notifications = [];
+    this.persistNotifications();
+    this.realtimeInitialized = false;
     this.showDropdown = false;
+    this.showNotifDropdown = false;
     this.wsService.disconnect();
   }
 

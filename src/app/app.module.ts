@@ -27,6 +27,7 @@ import { NavbarComponent } from './navbar/navbar.component';
 import { ProfileComponent } from './profile/profile.component';
 import { UpdateProfilComponent } from './update-profil/update-profil.component';
 import { SafeUrlPipe } from './core/service/SafeUrlPipe';
+import { NotificationComponent } from './notification/notification.component';
 
 @NgModule({
   declarations: [
@@ -43,6 +44,7 @@ import { SafeUrlPipe } from './core/service/SafeUrlPipe';
     ProfileComponent,
     SafeUrlPipe,
     UpdateProfilComponent,
+    NotificationComponent,
   ],
   imports: [
     BrowserModule,
