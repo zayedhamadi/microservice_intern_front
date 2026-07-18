@@ -21,7 +21,7 @@
             <div class="sb-avatar">
                 <img *ngIf="getAvatarSrc()" [src]="getAvatarSrc()" alt="avatar" />
                 <span *ngIf="!getAvatarSrc() && user">
-                    {{ user.prenom?.charAt(0) }}{{ user.nom?.charAt(0) }}
+                    {{ user.prenom }}{{ user.nom }}
                 </span>
             </div>
             <div class="sb-admin-info">
@@ -36,7 +36,7 @@
         <div class="sb-avatar-mini" *ngIf="isCollapsed">
             <img *ngIf="getAvatarSrc()" [src]="getAvatarSrc()" alt="avatar" />
             <span *ngIf="!getAvatarSrc()">
-                {{ user?.prenom?.charAt(0) }}{{ user?.nom?.charAt(0) }}
+                {{ user?.prenom }}{{ user?.nom}}
             </span>
         </div>
 
