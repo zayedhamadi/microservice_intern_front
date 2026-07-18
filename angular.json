@@ -39,7 +39,7 @@
             "styles": [
               "node_modules/sweetalert2/dist/sweetalert2.min.css",
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "src/styles.css"
+              "src/styles.css","src/styles/cessation-modal.css"
             ],
             "scripts": [
               "node_modules/sweetalert2/dist/sweetalert2.min.js",

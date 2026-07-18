@@ -1,7 +1,5 @@
-<!-- signin.component.html -->
 <div class="auth-wrapper">
 
-    <!-- Left Panel -->
     <div class="auth-left">
         <div class="brand">
             <div class="brand-icon">
@@ -65,7 +63,6 @@
         </div>
     </div>
 
-    <!-- Right Panel -->
     <div class="auth-right">
         <div class="form-container">
 
@@ -74,7 +71,6 @@
                 <p>Pas encore de compte ? <a routerLink="/signup" class="link">S'inscrire</a></p>
             </div>
 
-            <!-- Google -->
             <button type="button" class="btn-google" (click)="onGoogleSignup()">
                 <svg width="20" height="20" viewBox="0 0 24 24">
                     <path fill="#4285F4"
@@ -91,7 +87,6 @@
 
             <div class="divider"><span>ou avec email</span></div>
 
-            <!-- ══════════════ BLOC BLOCAGE 60s ══════════════ -->
             <div class="lockout-banner" *ngIf="isBlocked">
                 <div class="lockout-icon">
                     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -118,7 +113,6 @@
                 </div>
             </div>
 
-            <!-- ══════════════ BLOC TENTATIVES RESTANTES ══════════════ -->
             <div class="attempts-banner" *ngIf="!isBlocked && attemptsLeft < MAX_ATTEMPTS && attemptsLeft > 0">
                 <div class="attempts-left-col">
                     <span class="attempts-label">Tentatives restantes</span>
@@ -142,7 +136,6 @@
                 </div>
             </div>
 
-            <!-- Alerts -->
             <div class="alert alert-error" *ngIf="errorMessage && !isBlocked">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10" />
@@ -158,10 +151,8 @@
                 {{ successMessage }}
             </div>
 
-            <!-- ═══════════════ FORM ═══════════════ -->
             <form [formGroup]="form" (ngSubmit)="onLogin()" class="form" novalidate>
 
-                <!-- Email -->
                 <div class="field">
                     <label for="email">Email <span class="req">*</span></label>
                     <div class="input-icon">
@@ -188,7 +179,7 @@
                 <div class="field">
                     <div class="label-row">
                         <label for="password">Mot de passe <span class="req">*</span></label>
-                        <a (click)="onForgotPassword()" class="link forgot">Mot de passe oublié ?</a>
+                        <a style="cursor: pointer;" (click)="onForgotPassword()" class="link forgot">Mot de passe oublié ?</a>
                     </div>
                     <div class="input-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"

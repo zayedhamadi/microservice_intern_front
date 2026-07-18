@@ -1,0 +1,414 @@
+<div class="layout" *ngIf="!isLoading; else fullLoader">
+
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <div class="eyebrow"><span class="eyebrow-dot"></span> Gestion ADMIN</div>
+            <h1 class="page-title">
+                Profil de <span class="title-accent">{{ user?.prenom || 'Utilisateur' }} {{ user?.nom || '' }}</span>
+            </h1>
+            <nav class="breadcrumbs">
+                <span class="bc-link" (click)="backToList()">
+                    <i class="fa-solid fa-house"></i> Liste utilisateurs
+                </span>
+                <i class="fa-solid fa-chevron-right bc-sep"></i>
+                <span class="bc-active">Consulter profil</span>
+            </nav>
+        </div>
+        <div class="top-bar-actions" *ngIf="user">
+            <button class="btn btn-outline" (click)="backToList()">
+                <i class="fa-solid fa-arrow-left"></i> Retour
+            </button>
+            <button *ngIf="isAccountActive()" class="btn btn-danger" (click)="openCesserModal()">
+                <i class="fa-solid fa-user-slash"></i> Cesser
+            </button>
+            <button *ngIf="isAccountInactive()" class="btn btn-success" (click)="openReactiverModal()">
+                <i class="fa-solid fa-user-check"></i> Réactiver
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Hero card ── -->
+    <div class="hero-card" *ngIf="user; else emptyState">
+        <br><br>
+        <div class="hero-body">
+            <div class="avatar-zone">
+                <div class="avatar-wrap" [class.avatar-wrap-active]="isAccountActive()"
+                    [class.avatar-wrap-inactive]="isAccountInactive()"
+                    [style.background]="user.image ? 'transparent' : getRoleColor(user.role)">
+                    <img *ngIf="user.image" [src]="sanitizeImage(user.image)" (error)="handleImageError()"
+                        alt="Photo de {{ user.prenom }}" class="avatar-img" />
+                    <span *ngIf="!user.image" class="avatar-initials">{{ getInitials(user) }}</span>
+                    <span class="avatar-status-dot" [class.dot-active]="isAccountActive()"
+                        [class.dot-inactive]="isAccountInactive()"></span>
+                </div>
+                <div class="user-meta-block">
+                    <div class="user-fullname">{{ user.prenom }} {{ user.nom }}</div>
+                    <div class="user-badges">
+                        <span class="badge badge-role"
+                            [ngClass]="'badge-role-' + getNormalizedRole(user.role).toLowerCase()">
+                            <i class="fa-solid" [ngClass]="getRoleIcon(user.role)"></i>
+                            {{ getNormalizedRole(user.role) }}
+                        </span>
+                        <span class="badge" [ngClass]="isAccountActive() ? 'badge-actif' : 'badge-inactif'">
+                            <i class="fa-solid"
+                                [ngClass]="isAccountActive() ? 'fa-circle-check' : 'fa-circle-xmark'"></i>
+                            {{ isAccountActive() ? 'Actif' : 'Inactif' }}
+                        </span>
+                        <span class="badge badge-email">
+                            <i class="fa-solid fa-envelope"></i> {{ user.email }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-right" *ngIf="user.numTel">
+                <a [href]="'tel:' + user.numTel" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-phone"></i> {{ user.numTel }}
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats strip : uniquement les champs qui existent réellement dans l'entité -->
+        <div class="stats-strip">
+            <div class="stat-cell">
+                <div class="stat-label">Matricule</div>
+                <div class="stat-value">{{ user.matricule || '—' }}</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-label">Ancienneté</div>
+                <div class="stat-value accent">{{ getAnciennete(user.dateInscrit) }}</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-label">Certifications</div>
+                <div class="stat-value accent">{{ user.certifications?.length || 0 }}</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-label">Expérience</div>
+                <div class="stat-value">{{ user.anneesExperience || 0 }} an(s)</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-label">Niveau d'étude</div>
+                <div class="stat-value">{{ user.niveauEtude || '—' }}</div>
+            </div>
+        </div>
+
+        <!-- Profile completion bar -->
+        <div class="completion-zone">
+            <div class="completion-ring-wrap">
+                <svg width="50" height="50" viewBox="0 0 50 50">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="#ede9fe" stroke-width="5" />
+                    <circle cx="25" cy="25" r="20" fill="none" [attr.stroke]="getCompletionColor()" stroke-width="5"
+                        stroke-linecap="round" [attr.stroke-dasharray]="getCompletionDash()"
+                        transform="rotate(-90 25 25)" />
+                </svg>
+                <span class="ring-pct">{{ getCompletionPct() }}%</span>
+            </div>
+            <div class="completion-text">
+                <div class="ct-label">Complétude du profil</div>
+                <div class="ct-bar">
+                    <div class="ct-fill" [style.width.%]="getCompletionPct()"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Main content tabs ── -->
+    <div class="content-card" *ngIf="user">
+        <div class="tabs-bar">
+            <button class="tab-btn" [class.active]="activeTab === 'infos'" (click)="activeTab = 'infos'">
+                <i class="fa-solid fa-id-card"></i> Informations
+            </button>
+            <button class="tab-btn" [class.active]="activeTab === 'pro'" (click)="activeTab = 'pro'">
+                <i class="fa-solid fa-briefcase"></i> Professionnel
+            </button>
+            <button class="tab-btn" [class.active]="activeTab === 'certifs'" (click)="activeTab = 'certifs'">
+                <i class="fa-solid fa-certificate"></i> Certifications
+                <span class="tab-pill">{{ user.certifications?.length || 0 }}</span>
+            </button>
+            <button class="tab-btn" *ngIf="isAccountInactive()" [class.active]="activeTab === 'cessation'"
+                (click)="activeTab = 'cessation'">
+                <i class="fa-solid fa-user-xmark"></i> Cessation
+            </button>
+        </div>
+
+        <!-- ══ Tab: Informations personnelles ══ -->
+        <div class="tab-body" *ngIf="activeTab === 'infos'">
+            <div class="section-head">
+                <i class="fa-solid fa-user-circle"></i> Informations personnelles
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-envelope"></i> Email</div>
+                    <div class="info-value">{{ user.email }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-cake-candles"></i> Date de naissance</div>
+                    <div class="info-value">
+                        {{ user.dateNaissance ? (user.dateNaissance | date:'dd/MM/yyyy') : 'Non renseigné' }}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-venus-mars"></i> Genre</div>
+                    <div class="info-value" [class.empty]="!user.genre">{{ user.genre || 'Non renseigné' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-phone"></i> Téléphone</div>
+                    <div class="info-value">{{ user.numTel || 'Non renseigné' }}</div>
+                </div>
+                <div class="info-item info-item-wide">
+                    <div class="info-label"><i class="fa-solid fa-map-marker-alt"></i> Adresse</div>
+                    <div class="info-value" [class.empty]="!user.adresse">{{ user.adresse || 'Non renseignée' }}</div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="description-block" *ngIf="user.description">
+                <div class="info-label"><i class="fa-solid fa-file-alt"></i> Description</div>
+                <div class="description-text">{{ user.description }}</div>
+            </div>
+        </div>
+
+        <!-- ══ Tab: Professionnel ══ -->
+        <div class="tab-body" *ngIf="activeTab === 'pro'">
+            <div class="section-head">
+                <i class="fa-solid fa-briefcase"></i> Informations professionnelles
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-hashtag"></i> Matricule</div>
+                    <div class="info-value">{{ user.matricule || 'Non renseigné' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-calendar-check"></i> Date d'inscription</div>
+                    <div class="info-value">
+                        {{ user.dateInscrit ? (user.dateInscrit | date:'dd/MM/yyyy') : 'Non renseignée' }}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-star"></i> Années d'expérience</div>
+                    <div class="info-value">{{ user.anneesExperience || 0 }} an(s)</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-shield-halved"></i> Rôle</div>
+                    <div class="info-value">
+                        <span class="badge badge-role"
+                            [ngClass]="'badge-role-' + getNormalizedRole(user.role).toLowerCase()">
+                            <i class="fa-solid" [ngClass]="getRoleIcon(user.role)"></i>
+                            {{ getNormalizedRole(user.role) }}
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-clock-rotate-left"></i> Ancienneté</div>
+                    <div class="info-value accent">{{ getAnciennete(user.dateInscrit) }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-graduation-cap"></i> Niveau d'étude</div>
+                    <div class="info-value" [class.empty]="!user.niveauEtude">{{ user.niveauEtude || 'Non renseigné' }}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-book"></i> Spécialité</div>
+                    <div class="info-value" [class.empty]="!user.specialiteEtude">{{ user.specialiteEtude || 'Non
+                        renseignée' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fa-solid fa-school"></i> Université</div>
+                    <div class="info-value" [class.empty]="!user.universiteEtude">{{ user.universiteEtude || 'Non
+                        renseignée' }}</div>
+                </div>
+                <div class="info-item" *ngIf="user.linkedin">
+                    <div class="info-label"><i class="fa-brands fa-linkedin"></i> LinkedIn</div>
+                    <div class="info-value"><a [href]="user.linkedin" target="_blank">{{ user.linkedin }}</a></div>
+                </div>
+                <div class="info-item" *ngIf="user.siteweb">
+                    <div class="info-label"><i class="fa-solid fa-globe"></i> Site web</div>
+                    <div class="info-value"><a [href]="user.siteweb" target="_blank">{{ user.siteweb }}</a></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ Tab: Certifications ══ -->
+        <div class="tab-body" *ngIf="activeTab === 'certifs'">
+            <div class="section-head">
+                <i class="fa-solid fa-certificate"></i>
+                Certifications
+                <span class="section-count">{{ user.certifications?.length || 0 }} au total</span>
+            </div>
+
+            <!-- Aucune certification -->
+            <div *ngIf="!hasCertifications()" class="empty-certifs">
+                <i class="fa-solid fa-certificate-slash empty-icon-sm"></i>
+                <p>Aucune certification enregistrée pour cet utilisateur.</p>
+            </div>
+
+            <!-- Grille certifications -->
+            <div class="cert-grid" *ngIf="hasCertifications()">
+                <div class="cert-card" *ngFor="let cert of pagedCertifications">
+                    <div class="cert-header">
+                        <div class="cert-icon"><i class="fa-solid fa-certificate"></i></div>
+                        <div class="cert-meta">
+                            <div class="cert-title">{{ cert.titre }}</div>
+                            <div class="cert-date">
+                                <i class="fa-solid fa-calendar-alt"></i>
+                                {{ cert.dateCertif | date:'dd/MM/yyyy' }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cert-desc">{{ cert.description || 'Aucune description disponible.' }}</div>
+                    <div class="cert-footer">
+                        <button *ngIf="cert.pdfBase64" class="btn btn-outline btn-sm"
+                            (click)="downloadCertification(cert)">
+                            <i class="fa-solid fa-download"></i> Télécharger PDF
+                        </button>
+                        <span *ngIf="!cert.pdfBase64" class="no-pdf">
+                            <i class="fa-solid fa-file-slash"></i> Pas de PDF
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination certifs -->
+            <div class="cert-pagination" *ngIf="certTotalPages > 1">
+                <span class="pg-info">
+                    {{ certRangeStart }}–{{ certRangeEnd }} sur {{ user.certifications!.length }}
+                </span>
+                <div class="pg-controls">
+                    <button class="pg-btn" (click)="certGoTo(certPage - 1)" [disabled]="certPage === 1">
+                        <i class="fa-solid fa-angle-left"></i>
+                    </button>
+                    <button class="pg-btn" *ngFor="let p of certPages" [class.active]="p === certPage"
+                        (click)="certGoTo(p)">
+                        {{ p }}
+                    </button>
+                    <button class="pg-btn" (click)="certGoTo(certPage + 1)" [disabled]="certPage === certTotalPages">
+                        <i class="fa-solid fa-angle-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ Tab: Cessation ══ -->
+        <div class="tab-body" *ngIf="activeTab === 'cessation' && isAccountInactive()">
+            <div class="section-head">
+                <i class="fa-solid fa-user-xmark"></i> Détails de la cessation
+            </div>
+        
+            <div class="cess-timeline">
+                <div class="cess-tl-item">
+                    <div class="cess-tl-dot cess-tl-dot-red"><i class="fa-solid fa-user-slash"></i></div>
+                    <div class="cess-tl-content">
+                        <div class="cess-tl-label">Compte désactivé</div>
+                        <div class="cess-tl-date">{{ user.dateCessation ? (user.dateCessation | date:'dd/MM/yyyy') : 'Date non
+                            renseignée' }}</div>
+                        <div class="cess-tl-motif">{{ user.motifCessation || 'Aucun motif renseigné' }}</div>
+                    </div>
+                </div>
+        
+                <div class="cess-tl-item" *ngIf="user.motifReactivation">
+                    <div class="cess-tl-dot cess-tl-dot-green"><i class="fa-solid fa-user-check"></i></div>
+                    <div class="cess-tl-content">
+                        <div class="cess-tl-label">Dernière réactivation</div>
+                        <div class="cess-tl-motif">{{ user.motifReactivation }}</div>
+                    </div>
+                </div>
+            </div>
+        
+            <button class="btn btn-success" style="margin-top:24px" (click)="openReactiverModal()">
+                <i class="fa-solid fa-user-check"></i> Réactiver ce compte
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Cessation banner ── -->
+    <div class="cessation-banner" *ngIf="user && isAccountInactive()">
+        <div class="cess-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="cess-body">
+            <div class="cess-title">Compte désactivé</div>
+            <div class="cess-row">
+                <span class="cess-item">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                    {{ user.dateCessation ? (user.dateCessation | date:'dd/MM/yyyy') : 'Date inconnue' }}
+                </span>
+                <span class="cess-item">
+                    <i class="fa-solid fa-comment-dots"></i>
+                    {{ user.motifCessation || 'Motif non spécifié' }}
+                </span>
+            </div>
+        </div>
+        <button class="btn btn-success btn-sm" (click)="openReactiverModal()">
+            <i class="fa-solid fa-user-check"></i> Réactiver
+        </button>
+    </div>
+
+    <!-- ── Empty state ── -->
+    <ng-template #emptyState>
+        <div class="empty-card">
+            <i class="fa-solid fa-user-slash empty-icon"></i>
+            <p class="empty-title">Profil introuvable</p>
+            <p class="empty-sub">Cet utilisateur n'existe pas ou a été supprimé.</p>
+            <button class="btn btn-outline" (click)="backToList()">Retourner à la liste</button>
+        </div>
+    </ng-template>
+</div>
+
+<!-- ── Full-page loader ── -->
+<ng-template #fullLoader>
+    <div class="full-loader">
+        <div class="loader-spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>
+        <p>Chargement du profil…</p>
+    </div>
+</ng-template>
+
+<!-- ══════════════════════════════════════════════════════
+     Modal — Détail certification (lecture seule pour RH)
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showCertModal" (click)="closeCertModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fa-solid fa-certificate"></i> Détail de la certification
+            </div>
+            <button class="modal-close" (click)="closeCertModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="modal-body" *ngIf="selectedCert">
+            <div class="cert-detail-grid">
+                <div class="cd-item">
+                    <div class="cd-label"><i class="fa-solid fa-heading"></i> Titre</div>
+                    <div class="cd-value">{{ selectedCert.titre }}</div>
+                </div>
+                <div class="cd-item">
+                    <div class="cd-label"><i class="fa-solid fa-calendar-alt"></i> Date d'obtention</div>
+                    <div class="cd-value">{{ selectedCert.dateCertif | date:'dd/MM/yyyy' }}</div>
+                </div>
+                <div class="cd-item cd-item-full">
+                    <div class="cd-label"><i class="fa-solid fa-align-left"></i> Description</div>
+                    <div class="cd-value">{{ selectedCert.description || 'Aucune description.' }}</div>
+                </div>
+                <div class="cd-item">
+                    <div class="cd-label"><i class="fa-solid fa-file-pdf"></i> Fichier PDF</div>
+                    <div class="cd-value">
+                        <span *ngIf="selectedCert.pdfBase64" class="badge-pdf">
+                            <i class="fa-solid fa-check-circle"></i> PDF disponible
+                        </span>
+                        <span *ngIf="!selectedCert.pdfBase64" class="no-pdf">
+                            <i class="fa-solid fa-file-slash"></i> Aucun PDF
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button *ngIf="selectedCert?.pdfBase64" class="btn btn-outline"
+                (click)="downloadCertification(selectedCert!)">
+                <i class="fa-solid fa-download"></i> Télécharger PDF
+            </button>
+            <button class="btn btn-outline" (click)="closeCertModal()">
+                <i class="fa-solid fa-xmark"></i> Fermer
+            </button>
+        </div>
+    </div>
+</div>

@@ -5,6 +5,7 @@ import { CreateEmployeeComponent } from './components/create-employee/create-emp
 import { profileCompleteGuard } from '../core/guards/profile-complete.guard';
 import { SideBarComponent } from '../rh/sidebar/sidebar.component';
 import { ListUsersComponent } from './components/list-users/list-users.component';
+import { ConsulterUserByAdminComponent } from './consulter-user-by-admin/consulter-user-by-admin.component';
 
 
 
@@ -25,6 +26,11 @@ const routes: Routes = [
         component: DashboardEmployeeComponent,
         canActivate: [profileCompleteGuard],
       },
+      {
+              path: 'consulterUserByAdmin/:id',
+              component: ConsulterUserByAdminComponent,
+           
+            },
       {
         path: 'createEmployee',
         component: CreateEmployeeComponent,

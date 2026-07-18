@@ -533,7 +533,7 @@ background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 50%, #0284c7 100%);
 
 .eye-btn {
     position: absolute;
-    right: 10px;
+    right: 17px;
     top: 50%;
     transform: translateY(-50%);
     z-index: 4;
@@ -544,7 +544,7 @@ background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 50%, #0284c7 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
+    padding: 12px;
 }
 
 .eye-btn:hover {

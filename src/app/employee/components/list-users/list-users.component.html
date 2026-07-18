@@ -1,1 +1,405 @@
-<p>list-users works!</p>
+<div class="ul-layout">
+
+  <div class="ul-header">
+    <div class="ul-title-block">
+      <div class="ul-eyebrow">
+        <span class="ul-eyebrow-dot"></span>
+        GESTION ADMIN
+      </div>
+      <h1>Liste des <span>Utilisateurs</span></h1>
+      <div class="breadcrumb">
+        <span (click)="backToDashboard()" style="cursor:pointer;">Dashboard</span>
+        <i class="fa-solid fa-chevron-right"></i>
+        <span class="bc-active">Utilisateurs</span>
+      </div>
+    </div>
+
+    <div class="ul-header-actions">
+      <div class="date-chip">
+        <i class="fa-regular fa-calendar"></i>
+        {{ today }}
+      </div>
+  
+      <button class="btn-export" *ngIf="activeTab === 'disponible'" (click)="exportCsv()">
+        <i class="fa-solid fa-file-arrow-down"></i> Exporter CSV
+      </button>
+     
+      <button class="btn-export" *ngIf="activeTab === 'cessation'" (click)="exportCessationCsv()">
+        <i class="fa-solid fa-file-arrow-down"></i> Exporter CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI cards : Total / RH / EMPLOYEE / CANDIDAT / Congé / Cessations -->
+  <div class="kpi-row">
+    <div class="kpi-card kpi-violet" (click)="setRole('ALL'); switchTab('disponible')">
+      <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+      <div class="kpi-meta">
+        <div class="kpi-value">{{ allUsers.length }}</div>
+        <div class="kpi-label">Total disponibles</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-teal" (click)="setRole('RH')">
+      <div class="kpi-icon"><i class="fa-solid fa-user-tie"></i></div>
+      <div class="kpi-meta">
+        <div class="kpi-value">{{ countByRole('RH') }}</div>
+        <div class="kpi-label">RH ({{ pctRole('RH') }}%)</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-blue" (click)="setRole('EMPLOYEE')">
+      <div class="kpi-icon"><i class="fa-solid fa-user"></i></div>
+      <div class="kpi-meta">
+        <div class="kpi-value">{{ countByRole('EMPLOYEE') }}</div>
+        <div class="kpi-label">Employés ({{ pctRole('EMPLOYEE') }}%)</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-amber" (click)="setRole('CANDIDAT')">
+      <div class="kpi-icon"><i class="fa-solid fa-user-graduate"></i></div>
+      <div class="kpi-meta">
+        <div class="kpi-value">{{ countByRole('CANDIDAT') }}</div>
+        <div class="kpi-label">Candidats ({{ pctRole('CANDIDAT') }}%)</div>
+      </div>
+    </div>
+
+
+
+    <div class="kpi-card kpi-red" (click)="switchTab('cessation')">
+      <div class="kpi-icon"><i class="fa-solid fa-user-xmark"></i></div>
+      <div class="kpi-meta">
+        <div class="kpi-value">{{ inactifUsers.length }}</div>
+        <div class="kpi-label">Cessations</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <button class="tab-btn" [class.active]="activeTab === 'disponible'" (click)="switchTab('disponible')">
+      <i class="fa-solid fa-user-check"></i>
+      Disponibles
+      <span class="tab-count">{{ allUsers.length }}</span>
+    </button>
+   
+    <button class="tab-btn tab-cessation" [class.active]="activeTab === 'cessation'"
+      (click)="switchTab('cessation')">
+      <i class="fa-solid fa-user-xmark"></i>
+      Cessations
+      <span class="tab-count cessation-count">{{ inactifUsers.length }}</span>
+    </button>
+  </div>
+
+ 
+
+  <div class="cessation-banner" *ngIf="activeTab === 'cessation'">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    Ces comptes ont été désactivés suite à une cessation de fonction. Consultez le motif pour plus de détails.
+  </div>
+
+  <!-- Toolbar : disponible -->
+  <div class="toolbar" *ngIf="activeTab === 'disponible'">
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass ico-search"></i>
+      <input type="text" class="search-input"
+        placeholder="Rechercher par nom, prénom, email, matricule, CIN, téléphone…" [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearch()" />
+      <i class="fa-solid fa-spinner search-loading" *ngIf="isSearching"></i>
+      <button class="search-clear" *ngIf="searchTerm && !isSearching" (click)="clearSearch()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="filter-group">
+      <span class="filter-label">Rôle</span>
+      <div class="pills">
+        <button class="pill" *ngFor="let r of roles" [class.active]="activeRole === r" (click)="setRole(r)">
+          {{ r === 'ALL' ? 'Tous' : r }}
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-results">
+      <span class="results-count"><strong>{{ filteredUsers.length }}</strong> résultat(s)</span>
+    </div>
+  </div>
+
+
+
+  <!-- Toolbar : cessation -->
+  <div class="toolbar" *ngIf="activeTab === 'cessation'">
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass ico-search"></i>
+      <input type="text" class="search-input" placeholder="Rechercher par nom, prénom, email…"
+        [(ngModel)]="inactifSearchTerm" (ngModelChange)="onInactifSearch()" />
+      <button class="search-clear" *ngIf="inactifSearchTerm" (click)="clearInactifSearch()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="filter-group">
+      <span class="filter-label">Rôle</span>
+      <div class="pills">
+        <button class="pill" *ngFor="let r of roles" [class.active]="inactifRole === r"
+          (click)="setInactifRole(r)">
+          {{ r === 'ALL' ? 'Tous' : r }}
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-results">
+      <span class="results-count"><strong>{{ filteredInactifUsers.length }}</strong> résultat(s)</span>
+    </div>
+  </div>
+
+  <!-- Table : disponible -->
+  <div class="table-card" *ngIf="activeTab === 'disponible'">
+
+    <ng-container *ngIf="isLoading">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5,6]">
+        <div class="sk-avatar"></div>
+        <div class="sk-lines">
+          <div class="sk-line sk-60"></div>
+          <div class="sk-line sk-40"></div>
+        </div>
+        <div class="sk-badge"></div>
+        <div class="sk-phone"></div>
+        <div class="sk-date"></div>
+        <div class="sk-btn"></div>
+      </div>
+    </ng-container>
+
+    <table class="ul-table" *ngIf="!isLoading && pagedUsers.length">
+      <thead>
+        <tr>
+          <th class="th-center">#</th>
+          <th class="th-sortable" (click)="sort('nom')">
+            Utilisateur
+            <i class="fa-solid sort-ico"
+              [ngClass]="sortField === 'nom' ? (sortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort'"></i>
+          </th>
+          <th class="th-sortable" (click)="sort('matricule')">
+            Matricule
+            <i class="fa-solid sort-ico"
+              [ngClass]="sortField === 'matricule' ? (sortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort'"></i>
+          </th>
+          <th class="th-sortable" (click)="sort('cin')">
+            CIN
+            <i class="fa-solid sort-ico"
+              [ngClass]="sortField === 'cin' ? (sortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort'"></i>
+          </th>
+          <th>Téléphone</th>
+          <th class="th-sortable" (click)="sort('role')">
+            Rôle
+            <i class="fa-solid sort-ico"
+              [ngClass]="sortField === 'role' ? (sortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort'"></i>
+          </th>
+          <th class="th-sortable" (click)="sort('dateInscrit')">
+            Date inscription
+            <i class="fa-solid sort-ico"
+              [ngClass]="sortField === 'dateInscrit' ? (sortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort'"></i>
+          </th>
+          <th class="th-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="ul-row" *ngFor="let u of pagedUsers; let i = index; trackBy: trackById"
+          (click)="viewProfile(u)" (mouseenter)="loadImageForUser(u)">
+          <td class="row-num">{{ rangeStart + i }}</td>
+          <td>
+            <div class="user-cell">
+              <div class="avatar" [style.background]="getRoleColor(u.role)">
+                <img *ngIf="u.image" [src]="sanitizeImage(u.image)" (error)="handleImageError(u)" alt="">
+                <span *ngIf="!u.image">{{ (u.prenom?.charAt(0) || '') + (u.nom?.charAt(0) || '') }}</span>
+              </div>
+              <div>
+                <div class="user-name">{{ u.prenom }} {{ u.nom }}</div>
+                <div class="user-email">{{ u.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="phone-badge"><i class="fa-solid fa-id-badge"></i>{{ u.matricule || '—' }}</span></td>
+          <td><span class="phone-badge">{{ u.cin || '—' }}</span></td>
+          <td class="phone-cell">
+            <span class="phone-badge" *ngIf="u.numTel"><i class="fa-solid fa-phone"></i>{{ u.numTel }}</span>
+            <span class="no-phone" *ngIf="!u.numTel">—</span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="'badge-' + getNormalizedRole(u.role)">
+              <i class="fa-solid" [ngClass]="getRoleIcon(u.role)"></i>
+              {{ getNormalizedRole(u.role) }}
+            </span>
+          </td>
+          <td class="date-cell">{{ u.dateInscrit | date:'dd/MM/yyyy' }}</td>
+          <td class="action-cell">
+            <button class="btn-view" (click)="$event.stopPropagation(); viewProfile(u)">
+              <i class="fa-solid fa-eye"></i> Voir
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="empty-state" *ngIf="!isLoading && !pagedUsers.length">
+      <div class="empty-ico"><i class="fa-solid fa-user-slash"></i></div>
+      <div class="empty-title">Aucun utilisateur trouvé</div>
+      <div class="empty-sub">Essayez de modifier vos filtres ou votre recherche.</div>
+      <button class="btn-reset" (click)="resetFilters()">
+        <i class="fa-solid fa-rotate-left"></i> Réinitialiser les filtres
+      </button>
+    </div>
+  </div>
+
+ 
+
+  <!-- Table : cessation -->
+  <div class="table-card" *ngIf="activeTab === 'cessation'">
+
+    <ng-container *ngIf="isLoadingInactif">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4]">
+        <div class="sk-avatar"></div>
+        <div class="sk-lines">
+          <div class="sk-line sk-60"></div>
+          <div class="sk-line sk-40"></div>
+        </div>
+        <div class="sk-cessation"></div>
+        <div class="sk-date"></div>
+        <div class="sk-btn"></div>
+      </div>
+    </ng-container>
+
+    <table class="ul-table" *ngIf="!isLoadingInactif && pagedInactifUsers.length">
+      <thead>
+        <tr>
+          <th class="th-center">#</th>
+          <th class="th-sortable" (click)="sortInactif('nom')">
+            Utilisateur
+            <i class="fa-solid sort-ico"
+              [ngClass]="inactifSortField === 'nom' ? (inactifSortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort'"></i>
+          </th>
+          <th class="th-sortable" (click)="sortInactif('role')">
+            Rôle
+            <i class="fa-solid sort-ico"
+              [ngClass]="inactifSortField === 'role' ? (inactifSortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort'"></i>
+          </th>
+          <th>Motif de cessation</th>
+          <th class="th-sortable" (click)="sortInactif('dateCessation')">
+            Date cessation
+            <i class="fa-solid sort-ico"
+              [ngClass]="inactifSortField === 'dateCessation' ? (inactifSortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort'"></i>
+          </th>
+          <th class="th-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="ul-row cessation-row" *ngFor="let u of pagedInactifUsers; let i = index; trackBy: trackById"
+          (click)="viewProfile(u)" (mouseenter)="loadImageForUser(u)">
+          <td class="row-num">{{ inactifRangeStart + i }}</td>
+          <td>
+            <div class="user-cell">
+              <div class="avatar avatar-cessation" [style.background]="getRoleColor(u.role)">
+                <img *ngIf="u.image" [src]="sanitizeImage(u.image)" (error)="handleImageError(u)" alt="">
+                <span *ngIf="!u.image">{{ (u.prenom?.charAt(0) || '') + (u.nom?.charAt(0) || '') }}</span>
+              </div>
+              <div>
+                <div class="user-name cessation-name">{{ u.prenom }} {{ u.nom }}</div>
+                <div class="user-email">{{ u.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="'badge-' + getNormalizedRole(u.role)">
+              <i class="fa-solid" [ngClass]="getRoleIcon(u.role)"></i>
+              {{ getNormalizedRole(u.role) }}
+            </span>
+          </td>
+          <td>
+            <span class="motif-cell" [title]="u.motifCessation">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              {{ u.motifCessation || 'Non spécifié' }}
+            </span>
+          </td>
+          <td class="cessation-date">
+            <i class="fa-solid fa-calendar-xmark"></i>{{ u.dateCessation | date:'dd/MM/yyyy' }}
+          </td>
+          <td class="action-cell">
+            <button class="btn-view" (click)="$event.stopPropagation(); viewProfile(u)">
+              <i class="fa-solid fa-eye"></i> Voir
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="empty-state" *ngIf="!isLoadingInactif && !pagedInactifUsers.length">
+      <div class="empty-ico inactif-ico"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="empty-title">Aucune cessation enregistrée</div>
+      <div class="empty-sub">Aucun compte n'a été désactivé pour le moment.</div>
+    </div>
+  </div>
+
+  <!-- Pagination : disponible -->
+  <div class="pager" *ngIf="activeTab === 'disponible' && filteredUsers.length">
+    <div class="pager-size">
+      <span class="pager-size-label">Afficher</span>
+      <select class="pager-size-select" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+        <option *ngFor="let s of pageSizeOptions" [ngValue]="s">{{ s }}</option>
+        <option [ngValue]="filteredUsers.length">Tous</option>
+      </select>
+      <span class="pager-size-label">par page</span>
+    </div>
+
+    <div class="pager-info">
+      Affichage <strong>{{ rangeStart }}–{{ rangeEnd }}</strong> sur <strong>{{ filteredUsers.length }}</strong>
+    </div>
+
+    <div class="pager-controls">
+      <button class="pg-btn" [disabled]="currentPage === 1" (click)="prevPage()">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <ng-container *ngFor="let p of visiblePages">
+        <button class="pg-btn ellipsis" *ngIf="p === -1" disabled>…</button>
+        <button class="pg-btn" *ngIf="p !== -1" [class.pg-active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+      </ng-container>
+      <button class="pg-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+
+
+  <!-- Pagination : cessation -->
+  <div class="pager" *ngIf="activeTab === 'cessation' && filteredInactifUsers.length">
+    <div class="pager-size">
+      <span class="pager-size-label">Afficher</span>
+      <select class="pager-size-select" [(ngModel)]="inactifPageSize" (ngModelChange)="onInactifPageSizeChange()">
+        <option *ngFor="let s of pageSizeOptions" [ngValue]="s">{{ s }}</option>
+        <option [ngValue]="filteredInactifUsers.length">Tous</option>
+      </select>
+      <span class="pager-size-label">par page</span>
+    </div>
+
+    <div class="pager-info">
+      Affichage <strong>{{ inactifRangeStart }}–{{ inactifRangeEnd }}</strong> sur <strong>{{ filteredInactifUsers.length }}</strong>
+    </div>
+
+    <div class="pager-controls">
+      <button class="pg-btn" [disabled]="inactifPage === 1" (click)="prevInactifPage()">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <ng-container *ngFor="let p of inactifVisiblePages">
+        <button class="pg-btn ellipsis" *ngIf="p === -1" disabled>…</button>
+        <button class="pg-btn" *ngIf="p !== -1" [class.pg-active]="p === inactifPage" (click)="goToInactifPage(p)">{{ p }}</button>
+      </ng-container>
+      <button class="pg-btn" [disabled]="inactifPage === inactifTotalPages" (click)="nextInactifPage()">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+</div>

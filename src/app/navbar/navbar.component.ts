@@ -14,6 +14,7 @@ import { AuthService } from '../core/service/auth.service';
 import { UserConnected } from '../core/models/userConnected';
 import { eventColor, eventIcon, WebSocketService } from '../core/service/web-socket.service';
 import { NotificationItem, AdminRealtimeEvent, buildNotificationText } from '../core/models/websocket';
+import { ROLE_ROUTES } from '../core/constant/role-route';
 
 
 @Component({
@@ -31,6 +32,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
   hideNavbar = false;
 
   readonly profileRoute = '/getMyprofile';
+ 
+  getHomeRoute(): string {
+  const role = this.user?.role;
+  return role && ROLE_ROUTES[role] ? ROLE_ROUTES[role] : '/home';
+}
 
   // --- Notifications temps réel ---
   notifications: NotificationItem[] = [];

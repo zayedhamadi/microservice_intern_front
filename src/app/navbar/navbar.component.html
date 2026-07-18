@@ -5,9 +5,11 @@
         </div>
 
         <nav>
-            <a routerLink="/home" routerLinkActive="nav-active" [routerLinkActiveOptions]="{ exact: true }">
-                Accueil
-            </a>
+           
+        <a class="sb-item" [routerLink]="getHomeRoute()" routerLinkActive="nav-active">
+            Accueil
+        </a>
+            
             <!-- ================= EMPLOYEE ================= -->
             <ng-container *ngIf="isLoggedIn && user?.role === 'CANDIDAT'">
                 <a routerLink="/candidat/createEmployee" routerLinkActive="nav-active">
@@ -17,6 +19,9 @@
 
             <!-- ================= EMPLOYEE ================= -->
             <ng-container *ngIf="isLoggedIn && user?.role === 'EMPLOYEE'">
+                <a routerLink="/manager/createEmployee" routerLinkActive="nav-active">
+                    Créer un employé
+                </a>
                 <a routerLink="/manager/createEmployee" routerLinkActive="nav-active">
                     Créer un employé
                 </a>

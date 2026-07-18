@@ -34,8 +34,26 @@ export class UserService {
     );
   }
 
-  // Manquait : utilisée par dashboard-employee.component.ts (loadRecentUsersImages)
   getUserById(id: number): Observable<any> {
     return this.http.get<any>(`${this.employeeMgmtUrl}/users/${id}`);
+  }
+
+  getUserByIddAdmin(id: number): Observable<any> {
+    return this.http.get<any>(`${this.employeeMgmtUrl}/usersAdmin/${id}`);
+  }
+
+
+  getAllActiveAndCongeUsers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.employeeMgmtUrl}/allActiveUsers`);
+  }
+
+  getAllInactifUsers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.employeeMgmtUrl}/allInactifUsers`);
+  }
+
+  searchUsers(query: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.employeeMgmtUrl}/users/search`, {
+      params: { q: query },
+    });
   }
 }
