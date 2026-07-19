@@ -16,6 +16,18 @@ pipeline {
             }
         }
 
+        stage('Generate environment.ts') {
+            steps {
+                withCredentials([string(credentialsId: 'keycloak-client-secret', variable: 'KC_SECRET')]) {
+                    sh '''
+                        sed "s|__KEYCLOAK_CLIENT_SECRET__|$KC_SECRET|g" \
+                        src/app/core/environement/environment.template.ts \
+                        > src/app/core/environement/environment.ts
+                    '''
+                }
+            }
+        }
+
         stage('Install & Build') {
             steps {
                 script {
@@ -37,7 +49,7 @@ pipeline {
     }
 
     post {
-        success { echo "Build réussi pour frontend #${env.BUILD_NUMBER}" }
-        failure { echo "Échec du pipeline frontend #${env.BUILD_NUMBER}" }
+        success { echo "Build reussi pour frontend #${env.BUILD_NUMBER}" }
+        failure { echo "Echec du pipeline frontend #${env.BUILD_NUMBER}" }
     }
 }
