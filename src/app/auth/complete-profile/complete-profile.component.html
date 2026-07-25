@@ -11,51 +11,64 @@
     </div>
 
     <!-- Progress Header -->
-    <div class="progress-header">
-        <div class="brand">
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-                <path d="M8 8L16 4L24 8V16C24 21 16 28 16 28C16 28 8 21 8 16V8Z" fill="#4f46e5" />
-                <path d="M12 16L15 19L20 13" stroke="white" stroke-width="2.5" stroke-linecap="round" />
-            </svg>
-            <span>SkillExchange</span>
-        </div>
-
-        <div class="steps" *ngIf="!needsRoleSelection()">
-            <div class="step" [class.active]="currentStep >= 1" [class.done]="currentStep > 1">
-                <div class="step-dot">
-                    <svg *ngIf="currentStep > 1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white"
-                        stroke-width="3">
-                        <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span *ngIf="currentStep <= 1">1</span>
-                </div>
-                <span class="step-label">Infos</span>
-            </div>
-
-            <div class="step-line" [class.done]="currentStep > 1"></div>
-
-            <div class="step" [class.active]="currentStep >= 2" [class.done]="currentStep > 2">
-                <div class="step-dot">
-                    <svg *ngIf="currentStep > 2" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white"
-                        stroke-width="3">
-                        <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span *ngIf="currentStep <= 2">2</span>
-                </div>
-                <span class="step-label">Bio</span>
-            </div>
-
-            <ng-container *ngIf="totalSteps === 3">
-                <div class="step-line" [class.done]="currentStep > 2"></div>
-                <div class="step" [class.active]="currentStep >= 3">
-                    <div class="step-dot"><span>3</span></div>
-                    <span class="step-label">Études</span>
-                </div>
-            </ng-container>
-        </div>
-
-        <button class="skip-btn" *ngIf="!needsRoleSelection()" (click)="onSkip()">Passer →</button>
+<div class="progress-header">
+    <div class="brand">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+            <path d="M8 8L16 4L24 8V16C24 21 16 28 16 28C16 28 8 21 8 16V8Z" fill="#4f46e5" />
+            <path d="M12 16L15 19L20 13" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+        </svg>
+        <span>SkillExchange</span>
     </div>
+
+    <div class="steps" *ngIf="!needsRoleSelection()">
+        <div class="step" [class.active]="currentStep >= 1" [class.done]="currentStep > 1">
+            <div class="step-dot">
+                <svg *ngIf="currentStep > 1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white"
+                    stroke-width="3">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span *ngIf="currentStep <= 1">1</span>
+            </div>
+            <span class="step-label">Infos</span>
+        </div>
+
+        <div class="step-line" [class.done]="currentStep > 1"></div>
+
+        <div class="step" [class.active]="currentStep >= 2" [class.done]="currentStep > 2">
+            <div class="step-dot">
+                <svg *ngIf="currentStep > 2" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white"
+                    stroke-width="3">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span *ngIf="currentStep <= 2">2</span>
+            </div>
+            <span class="step-label">Bio</span>
+        </div>
+
+        <ng-container *ngIf="etudesStepIndex !== null">
+            <div class="step-line" [class.done]="currentStep > 2"></div>
+            <div class="step" [class.active]="currentStep >= etudesStepIndex"
+                [class.done]="currentStep > etudesStepIndex">
+                <div class="step-dot">
+                    <svg *ngIf="currentStep > etudesStepIndex" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                        stroke="white" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span *ngIf="currentStep <= etudesStepIndex">3</span>
+                </div>
+                <span class="step-label">Études</span>
+            </div>
+        </ng-container>
+
+        <div class="step-line" [class.done]="currentStep >= cvStepIndex"></div>
+        <div class="step" [class.active]="currentStep >= cvStepIndex">
+            <div class="step-dot"><span>{{ cvStepIndex }}</span></div>
+            <span class="step-label">CV</span>
+        </div>
+    </div>
+
+    <button class="skip-btn" *ngIf="!needsRoleSelection()" (click)="onSkip()">Passer →</button>
+</div>
 
     <!-- Content -->
     <div class="complete-content">
@@ -263,75 +276,74 @@
                 </div>
             </div>
 
-            <!-- ÉTAPE 3 — Parcours académique + CV -->
-            <div class="step-content" *ngIf="currentStep === 3 && totalSteps === 3">
-                <h2>Votre parcours académique</h2>
-                <p class="step-desc">Requis pour les rôles Employé et Candidat</p>
+<div class="step-content" *ngIf="etudesStepIndex !== null && currentStep === etudesStepIndex">
+    <h2>Votre parcours académique</h2>
+    <p class="step-desc">Requis pour les rôles Employé et Candidat</p>
 
-                <div class="form-grid">
-                    <div class="field">
-                        <label>Spécialité d'étude <span class="req">*</span></label>
-                        <input type="text" formControlName="specialiteEtude" placeholder="Ex: Informatique, Finance..."
-                            [class.error]="showError('specialiteEtude')"
-                            [class.valid]="f('specialiteEtude').valid && f('specialiteEtude').dirty" />
-                        <span class="field-error" *ngIf="showError('specialiteEtude')">{{ getError('specialiteEtude')
-                            }}</span>
-                    </div>
+    <div class="form-grid">
+        <div class="field">
+            <label>Spécialité d'étude <span class="req">*</span></label>
+            <input type="text" formControlName="specialiteEtude" placeholder="Ex: Informatique, Finance..."
+                [class.error]="showError('specialiteEtude')"
+                [class.valid]="f('specialiteEtude').valid && f('specialiteEtude').dirty" />
+            <span class="field-error" *ngIf="showError('specialiteEtude')">{{ getError('specialiteEtude') }}</span>
+        </div>
 
-                    <div class="field">
-                        <label>Niveau d'étude <span class="req">*</span></label>
-                        <select formControlName="niveauEtude" [class.error]="showError('niveauEtude')"
-                            [class.valid]="f('niveauEtude').valid && f('niveauEtude').dirty">
-                            <option value="">-- Sélectionner --</option>
-                            <option *ngFor="let n of niveauxEtude" [value]="n.value">{{ n.label }}</option>
-                        </select>
-                        <span class="field-error" *ngIf="showError('niveauEtude')">{{ getError('niveauEtude') }}</span>
-                    </div>
+        <div class="field">
+            <label>Niveau d'étude <span class="req">*</span></label>
+            <select formControlName="niveauEtude" [class.error]="showError('niveauEtude')"
+                [class.valid]="f('niveauEtude').valid && f('niveauEtude').dirty">
+                <option value="">-- Sélectionner --</option>
+                <option *ngFor="let n of niveauxEtude" [value]="n.value">{{ n.label }}</option>
+            </select>
+            <span class="field-error" *ngIf="showError('niveauEtude')">{{ getError('niveauEtude') }}</span>
+        </div>
 
-                    <div class="field">
-                        <label>Université</label>
-                        <input type="text" formControlName="universiteEtude" placeholder="Ex: ESPRIT, ISET Radès..." />
-                    </div>
+        <div class="field">
+            <label>Université</label>
+            <input type="text" formControlName="universiteEtude" placeholder="Ex: ESPRIT, ISET Radès..." />
+        </div>
 
-                    <div class="field">
-                        <label>Années d'expérience</label>
-                        <input type="number" formControlName="anneesExperience" min="0" max="60" placeholder="Ex: 5"
-                            [class.error]="showError('anneesExperience')" />
-                        <span class="field-error" *ngIf="showError('anneesExperience')">{{ getError('anneesExperience')
-                            }}</span>
-                    </div>
-                </div>
+        <div class="field">
+            <label>Années d'expérience</label>
+            <input type="number" formControlName="anneesExperience" min="0" max="60" placeholder="Ex: 5"
+                [class.error]="showError('anneesExperience')" />
+            <span class="field-error" *ngIf="showError('anneesExperience')">{{ getError('anneesExperience') }}</span>
+        </div>
+    </div>
+</div>
+<!-- ÉTAPE CV — pour tous les rôles -->
+<div class="step-content" *ngIf="currentStep === cvStepIndex">
+    <h2>Votre CV</h2>
+    <p class="step-desc">Optionnel — vous pourrez l'ajouter ou le modifier plus tard depuis votre profil</p>
 
-                <div class="field full" style="margin-top: 20px">
-                    <label>CV (PDF)</label>
-                    <div class="cv-upload-section">
-                        <div class="cv-upload-box" (click)="cvInput.click()">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="1.5">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14 2 14 8 20 8" />
-                            </svg>
-                            <span *ngIf="!cvFileName">Ajouter votre CV (PDF, max 5MB)</span>
-                            <span *ngIf="cvFileName" class="cv-name">{{ cvFileName }}</span>
-                        </div>
-                        <button *ngIf="cvFileName" type="button" class="btn-remove-photo" (click)="removeCv()">
-                            🗑 Supprimer
-                        </button>
-                    </div>
-                    <input #cvInput type="file" accept="application/pdf" style="display:none"
-                        (change)="onCvSelected($event)" />
-                    <p class="photo-error" *ngIf="cvError">{{ cvError }}</p>
-                    <p class="photo-hint">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="16" x2="12" y2="12" />
-                            <line x1="12" y1="8" x2="12.01" y2="8" />
-                        </svg>
-                        Optionnel — vous pourrez l'ajouter plus tard
-                    </p>
-                </div>
+    <div class="field full">
+        <label>CV (PDF)</label>
+        <div class="cv-upload-section">
+            <div class="cv-upload-box" (click)="cvInput.click()">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                </svg>
+                <span *ngIf="!cvFileName">Ajouter votre CV (PDF, max 5MB)</span>
+                <span *ngIf="cvFileName" class="cv-name">{{ cvFileName }}</span>
             </div>
+            <button *ngIf="cvFileName" type="button" class="btn-remove-photo" (click)="removeCv()">
+                🗑 Supprimer
+            </button>
+        </div>
+        <input #cvInput type="file" accept="application/pdf" style="display:none" (change)="onCvSelected($event)" />
+        <p class="photo-error" *ngIf="cvError">{{ cvError }}</p>
+        <p class="photo-hint">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            Optionnel — vous pourrez l'ajouter plus tard
+        </p>
+    </div>
+</div>
         </form>
 
         <!-- Navigation -->

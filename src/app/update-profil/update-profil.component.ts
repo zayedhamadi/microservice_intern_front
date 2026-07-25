@@ -14,6 +14,7 @@ import { UpdateProfileRequest } from '../core/models/update_profile.model';
 import { UserService } from '../core/service/user.service';
 import { CertificationService } from '../core/service/certification.service';
 import { CertificationDTO } from '../core/models/CertificationDTO';
+import { FileUserMongoService } from '../core/service/file-user-mongo.service';
 
 const phoneValidator: ValidatorFn = (
   c: AbstractControl,
@@ -68,11 +69,10 @@ export class UpdateProfilComponent implements OnInit {
   imageError = '';
 
   cvPreviewName: string | null = null;
-  cvBase64: string | null = null; // nouveau CV sélectionné (à envoyer)
-  existingCvBase64: string | null = null; // ✅ CV déjà présent en base, chargé depuis le profil
+  cvBase64: string | null = null;
+  existingCvBase64: string | null = null;
   cvError = '';
 
-  // ✅ Modal de visualisation du CV
   showCvModal = false;
   cvIframeLoaded = false;
 
@@ -83,7 +83,8 @@ export class UpdateProfilComponent implements OnInit {
 
   role = '';
   requiresEtudes = false;
-
+  cvFile: File | null = null;
+  cvMarkedForDeletion = false;
   certifications: CertificationDTO[] = [];
   isLoadingCertifs = false;
   isSavingCertif = false;
@@ -95,6 +96,7 @@ export class UpdateProfilComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
+    private fileUserMongoService: FileUserMongoService,
     private userService: UserService,
     private certificationService: CertificationService,
     private router: Router,
@@ -104,8 +106,21 @@ export class UpdateProfilComponent implements OnInit {
     this.initializeForm();
     this.loadProfile();
     this.loadCertifications();
+    this.loadCv();
   }
-
+  private loadCv(): void {
+    this.fileUserMongoService.getMyCv().subscribe({
+      next: (cv) => {
+        if (cv.exists) {
+          this.cvPreviewName = cv.cvFileName ?? 'CV actuel.pdf';
+          this.existingCvBase64 = cv.cvBase64 ?? null;
+        }
+      },
+      error: (error: any) => {
+        console.log(error);
+      },
+    });
+  }
   private initializeForm(): void {
     this.form = this.fb.group(
       {
@@ -157,12 +172,6 @@ export class UpdateProfilComponent implements OnInit {
         });
 
         if (profile.imageBase64) this.imagePreview = profile.imageBase64;
-
-        // ✅ Récupère le CV déjà existant pour permettre sa visualisation
-        if (profile.cvBase64) {
-          this.cvPreviewName = 'CV actuel.pdf';
-          this.existingCvBase64 = profile.cvBase64;
-        }
 
         this.isLoadingProfile = false;
       },
@@ -219,7 +228,6 @@ export class UpdateProfilComponent implements OnInit {
     Toast.fire({ icon: 'info', title: 'Photo supprimée' });
   }
 
-  // --- CV : disponible pour TOUS les rôles ---
   onCvSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -234,11 +242,13 @@ export class UpdateProfilComponent implements OnInit {
       return;
     }
 
+    this.cvFile = file; // <-- gardé pour l'upload réel
+    this.cvMarkedForDeletion = false;
     this.cvIframeLoaded = false;
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      this.cvBase64 = e.target!.result as string;
+      this.cvBase64 = e.target!.result as string; // toujours utilisé pour la preview locale uniquement
       this.cvPreviewName = file.name;
       Toast.fire({ icon: 'success', title: 'CV téléchargé' });
     };
@@ -246,13 +256,13 @@ export class UpdateProfilComponent implements OnInit {
   }
 
   removeCv(): void {
+    this.cvFile = null;
     this.cvBase64 = null;
-    this.existingCvBase64 = null; // ✅ on efface aussi la référence à l'ancien CV
+    this.existingCvBase64 = null;
     this.cvPreviewName = null;
+    this.cvMarkedForDeletion = true;
     Toast.fire({ icon: 'info', title: 'CV supprimé' });
   }
-
-  // ✅ URL à afficher : le nouveau CV sélectionné en priorité, sinon celui déjà en base
   get cvSrc(): string | null {
     const raw = this.cvBase64 || this.existingCvBase64;
     if (!raw) return null;
@@ -440,7 +450,6 @@ export class UpdateProfilComponent implements OnInit {
         twitter: v.twitter || undefined,
         siteweb: v.siteweb || undefined,
         imageBase64: this.imageBase64 || undefined,
-        cvBase64: this.cvBase64 || undefined,
         currentPassword: v.currentPassword || undefined,
         newPassword: v.newPassword || undefined,
         confirmPassword: v.confirmPassword || undefined,
@@ -454,14 +463,7 @@ export class UpdateProfilComponent implements OnInit {
 
       this.userService.updateProfile(payload).subscribe({
         next: () => {
-          this.isLoading = false;
-          Swal.fire({
-            title: '✅ Profil mis à jour !',
-            text: 'Vos informations ont été enregistrées avec succès',
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: false,
-          }).then(() => this.router.navigate(['/getMyprofile']));
+          this.handleCvChanges();
         },
         error: (err) => {
           this.isLoading = false;
@@ -472,7 +474,39 @@ export class UpdateProfilComponent implements OnInit {
       });
     });
   }
+  private handleCvChanges(): void {
+    if (this.cvFile) {
+      this.fileUserMongoService.uploadCv(this.cvFile).subscribe({
+        next: () => this.finishSubmit(),
+        error: () => {
+          this.isLoading = false;
+          Toast.fire({
+            icon: 'error',
+            title: "Profil enregistré, mais échec de l'envoi du CV.",
+          });
+        },
+      });
+    } else if (this.cvMarkedForDeletion) {
+      this.fileUserMongoService.deleteCv().subscribe({
+        next: () => this.finishSubmit(),
+        error: (error: any) => { this.finishSubmit(), console.log(error) },
+       
+      });
+    } else {
+      this.finishSubmit();
+    }
+  }
 
+  private finishSubmit(): void {
+    this.isLoading = false;
+    Swal.fire({
+      title: '✅ Profil mis à jour !',
+      text: 'Vos informations ont été enregistrées avec succès',
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false,
+    }).then(() => this.router.navigate(['/getMyprofile']));
+  }
   get completionPct(): number {
     const fields = [
       'prenom',

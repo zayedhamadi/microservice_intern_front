@@ -11,6 +11,7 @@ import { UserService } from '../core/service/user.service';
 import { CertificationService } from '../core/service/certification.service';
 import { CertificationDTO } from '../core/models/CertificationDTO';
 import { NotificationService } from '../core/service/notification.service';
+import { CvDto, FileUserMongoService } from '../core/service/file-user-mongo.service';
 
 type ProfileTab = 'profil' | 'etudes' | 'cv' | 'certifications' | 'position';
 
@@ -31,7 +32,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   activeTab: ProfileTab = 'profil';
 
-  // --- Certification form & modals ---
   certifForm!: FormGroup;
   showAddModal = false;
   showEditModal = false;
@@ -43,7 +43,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   // --- CV modal (aperçu plein écran) ---
   showCvModal = false;
 
-  // --- Search & pagination ---
+  cvData: CvDto | null = null;
   searchTerm = '';
   currentPage = 1;
   pageSize = 5;
@@ -56,9 +56,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private readonly certificationService: CertificationService,
     private readonly router: Router,
     private readonly notification: NotificationService,
+    private readonly fileUserMongoService: FileUserMongoService,
   ) {}
 
   ngOnInit(): void {
+    this.loadCv();
     this.certifForm = this.fb.group({
       titre: ['', [Validators.required, Validators.minLength(3)]],
       dateCertif: ['', Validators.required],
@@ -84,7 +86,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     this.loadCertifications();
   }
+  private loadCv(): void {
+    this.fileUserMongoService.getMyCv().subscribe({
+      next: (cv) => (this.cvData = cv),
+      error: () => (this.cvData = { exists: false }),
+    });
+  }
 
+  get hasCv(): boolean {
+    return !!this.cvData?.exists;
+  }
+
+  get cvSrc(): string | null {
+    return this.cvData?.cvBase64 ?? null;
+  }
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -142,18 +157,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       : `data:image/jpeg;base64,${this.user.imageBase64}`;
   }
 
-  // ==================== CV ====================
 
-  get hasCv(): boolean {
-    return !!this.user?.cvBase64;
-  }
-
-  get cvSrc(): string | null {
-    if (!this.user?.cvBase64) return null;
-    return this.user.cvBase64.startsWith('data:')
-      ? this.user.cvBase64
-      : `data:application/pdf;base64,${this.user.cvBase64}`;
-  }
 
   openCvModal(): void {
     if (!this.hasCv) return;

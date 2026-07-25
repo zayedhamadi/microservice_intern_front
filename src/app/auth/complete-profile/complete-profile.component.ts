@@ -10,6 +10,7 @@ import {
 } from '@angular/forms';
 import { AuthService } from '../../core/service/auth.service';
 import { NotificationService } from '../../core/service/notification.service';
+import { FileUserMongoService } from '../../core/service/file-user-mongo.service'; 
 import { ROLE_ROUTES } from '../../core/constant/role-route';
 import { Role } from '../../core/models/enum';
 
@@ -40,9 +41,6 @@ export const birthDateValidator: ValidatorFn = (
   return age >= 18 ? null : { underage: true };
 };
 
-// EMPLOYEE reste un rôle valide (bootstrap serveur) — le composant doit
-// pouvoir l'afficher si jamais un compte EMPLOYEE passe par ce flow,
-// mais il n'est plus jamais SÉLECTIONNABLE par l'utilisateur.
 const ROLES_AVEC_ETUDES: Role[] = [Role.EMPLOYEE, Role.CANDIDAT];
 
 @Component({
@@ -62,7 +60,9 @@ export class CompleteProfileComponent implements OnInit {
   imageBase64: string | null = null;
   imageError = '';
 
-  cvBase64: string | null = null;
+  // --- CV : désormais géré via recrutement-service, plus via le payload profil ---
+  cvFile: File | null = null; // <-- fichier réel, nécessaire pour FormData
+  cvBase64: string | null = null; // preview locale uniquement
   cvFileName: string | null = null;
   cvError = '';
 
@@ -84,6 +84,7 @@ export class CompleteProfileComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private fileUserMongoService: FileUserMongoService, // <-- ajouté
     private notify: NotificationService,
     private router: Router,
   ) {}
@@ -98,13 +99,30 @@ export class CompleteProfileComponent implements OnInit {
 
     const cached = this.authService.getUserInfo();
     this.userName = cached?.prenom ?? '';
-      this.currentRole = (cached?.role as Role) || null;  
+    this.currentRole = (cached?.role as Role) || null;
     this.selectedRole = this.currentRole;
- this.hadRoleAlready = this.currentRole !== null;
+    this.hadRoleAlready = this.currentRole !== null;
+
     this.authService.getMyProfile().subscribe({
       next: (profile: any) => this.applyExistingProfile(profile),
       error: () => {
         this.isInitializing = false;
+      },
+    });
+
+    this.loadExistingCv(); // <-- CV chargé séparément, plus via getMyProfile()
+  }
+
+  private loadExistingCv(): void {
+    this.fileUserMongoService.getMyCv().subscribe({
+      next: (cv) => {
+        if (cv.exists) {
+          this.cvFileName = cv.cvFileName ?? 'CV actuel.pdf';
+          this.cvBase64 = cv.cvBase64 ?? null;
+        }
+      },
+      error: () => {
+        // pas de CV existant, ou recrutement-service indisponible — non bloquant
       },
     });
   }
@@ -131,7 +149,7 @@ export class CompleteProfileComponent implements OnInit {
   private applyExistingProfile(profile: any): void {
     this.currentRole = (profile?.role as Role) || this.currentRole || null;
     this.selectedRole = this.currentRole;
-      this.hadRoleAlready = this.currentRole !== null; 
+    this.hadRoleAlready = this.currentRole !== null;
     this.userName = profile?.prenom || this.userName;
 
     this.form.patchValue({
@@ -152,10 +170,7 @@ export class CompleteProfileComponent implements OnInit {
     if (profile?.imageBase64) {
       this.imagePreview = profile.imageBase64;
     }
-    if (profile?.cvBase64) {
-      this.cvBase64 = profile.cvBase64;
-      this.cvFileName = 'CV actuel.pdf';
-    }
+    // cvBase64 retiré : profile n'expose plus le CV (voir loadExistingCv)
 
     this.applyRoleSpecificValidators();
     this.isInitializing = false;
@@ -192,16 +207,29 @@ export class CompleteProfileComponent implements OnInit {
     niveau.updateValueAndValidity();
   }
 
+  // --- CV : toujours la dernière étape, pour tous les rôles ---
   get totalSteps(): number {
-    return this.requiresEtudes() ? 3 : 2;
+    return this.requiresEtudes() ? 4 : 3; // Infos, Bio, [Études], CV
+  }
+
+  get etudesStepIndex(): number | null {
+    return this.requiresEtudes() ? 3 : null;
+  }
+
+  get cvStepIndex(): number {
+    return this.totalSteps; // toujours la dernière étape
   }
 
   private get stepFields(): Record<number, string[]> {
-    return {
+    const fields: Record<number, string[]> = {
       1: ['genre', 'dateNaissance', 'num_Tel', 'adresse'],
       2: [],
-      3: this.requiresEtudes() ? ['specialiteEtude', 'niveauEtude'] : [],
     };
+    if (this.etudesStepIndex !== null) {
+      fields[this.etudesStepIndex] = ['specialiteEtude', 'niveauEtude'];
+    }
+    fields[this.cvStepIndex] = []; // CV optionnel, pas de validation bloquante
+    return fields;
   }
 
   f(name: string): AbstractControl {
@@ -310,6 +338,8 @@ export class CompleteProfileComponent implements OnInit {
       return;
     }
 
+    this.cvFile = file; // <-- gardé pour l'upload réel vers recrutement-service
+
     const reader = new FileReader();
     reader.onload = (e: any) => {
       this.cvBase64 = e.target.result;
@@ -320,6 +350,7 @@ export class CompleteProfileComponent implements OnInit {
   }
 
   removeCv(): void {
+    this.cvFile = null;
     this.cvBase64 = null;
     this.cvFileName = null;
     this.cvError = '';
@@ -350,19 +381,12 @@ export class CompleteProfileComponent implements OnInit {
       role: this.hadRoleAlready ? null : this.selectedRole,
       num_Tel: raw.num_Tel ? Number(raw.num_Tel) : null,
       imageBase64: this.imageBase64 || null,
-      cvBase64: this.cvBase64 || null,
+      // cvBase64 retiré : géré séparément via recrutement-service
     };
 
     this.authService.completeProfile(payload).subscribe({
       next: (res: any) => {
-        this.isLoading = false;
-
-        const existing = this.authService.getUserInfo() ?? {};
-        this.authService.saveUserInfo({ ...existing, role: res.role });
-
-        this.notify
-          .success('Profil complété !', 'Redirection vers votre espace...')
-          .then(() => this.redirectByRole(res.role));
+        this.handleCvUpload(res); // <-- envoie le CV après succès du profil
       },
       error: (err: any) => {
         console.log(err);
@@ -373,6 +397,36 @@ export class CompleteProfileComponent implements OnInit {
         );
       },
     });
+  }
+
+  private handleCvUpload(res: any): void {
+    if (!this.cvFile) {
+      this.finishComplete(res);
+      return;
+    }
+
+    this.fileUserMongoService.uploadCv(this.cvFile).subscribe({
+      next: () => this.finishComplete(res),
+      error: () => {
+        // profil déjà sauvegardé — on n'échoue pas tout pour un CV en erreur
+        this.notify.toast(
+          'warning',
+          "Profil enregistré, mais l'envoi du CV a échoué. Réessayez depuis votre profil.",
+        );
+        this.finishComplete(res);
+      },
+    });
+  }
+
+  private finishComplete(res: any): void {
+    this.isLoading = false;
+
+    const existing = this.authService.getUserInfo() ?? {};
+    this.authService.saveUserInfo({ ...existing, role: res.role });
+
+    this.notify
+      .success('Profil complété !', 'Redirection vers votre espace...')
+      .then(() => this.redirectByRole(res.role));
   }
 
   logout(): void {
