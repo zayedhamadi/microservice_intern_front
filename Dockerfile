@@ -12,6 +12,7 @@ RUN npm ci
 COPY . .
 
 ARG BUILD_CONFIG=production
+ENV NODE_ENV=production
 RUN npm run build -- --configuration=$BUILD_CONFIG
 
 # =========================================================
@@ -19,10 +20,12 @@ RUN npm run build -- --configuration=$BUILD_CONFIG
 # =========================================================
 FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime
 
+LABEL org.opencontainers.image.description="Frontend Angular servi par Nginx (non-root)"
+
 # Nettoie la conf par défaut et met la nôtre (support routing Angular + proxy API)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-COPY --from=build /app/dist/frontend-microservice/browser /usr/share/nginx/html
+COPY --from=build --chown=nginx:nginx /app/dist/frontend-microservice/browser /usr/share/nginx/html
 
 # L'image nginx-unprivileged tourne déjà en utilisateur "nginx" (uid 101),
 # on le rend explicite pour la clarté / cohérence avec les autres Dockerfiles

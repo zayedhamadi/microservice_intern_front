@@ -3,3 +3,4 @@ export const ROLE_ROUTES: Readonly<Record<string, string>> = {
   RH: '/rh/dashboardRH',
   CANDIDAT: '/candidat/dashboardcandidat',
 } as const;
+  

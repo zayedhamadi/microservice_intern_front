@@ -11,6 +11,7 @@ import {
 import { AuthService } from '../../core/service/auth.service';
 import { NotificationService } from '../../core/service/notification.service';
 import { ROLE_ROUTES } from '../../core/constant/role-route';
+import { Role } from '../../core/models/enum';
 
 export const phoneValidator: ValidatorFn = (
   ctrl: AbstractControl,
@@ -42,8 +43,7 @@ export const birthDateValidator: ValidatorFn = (
 // EMPLOYEE reste un rôle valide (bootstrap serveur) — le composant doit
 // pouvoir l'afficher si jamais un compte EMPLOYEE passe par ce flow,
 // mais il n'est plus jamais SÉLECTIONNABLE par l'utilisateur.
-type BackendRole = 'RH' | 'EMPLOYEE' | 'CANDIDAT';
-const ROLES_AVEC_ETUDES: BackendRole[] = ['EMPLOYEE', 'CANDIDAT'];
+const ROLES_AVEC_ETUDES: Role[] = [Role.EMPLOYEE, Role.CANDIDAT];
 
 @Component({
   selector: 'app-complete-profile',
@@ -51,8 +51,11 @@ const ROLES_AVEC_ETUDES: BackendRole[] = ['EMPLOYEE', 'CANDIDAT'];
   styleUrl: './complete-profile.component.css',
 })
 export class CompleteProfileComponent implements OnInit {
-  /** Étapes : 1 = Infos, 2 = Bio, 3 = Études + CV (si applicable) */
+  private hadRoleAlready = false;
+  readonly Role = Role;
+
   currentStep = 1;
+  selectedRole: Role | null = null;
 
   form!: FormGroup;
   imagePreview: string | null = null;
@@ -67,7 +70,7 @@ export class CompleteProfileComponent implements OnInit {
   isInitializing = true;
   userName = '';
 
-  currentRole: BackendRole | null = null;
+  currentRole: Role | null = null;
 
   readonly niveauxEtude = [
     { value: 'BTS', label: 'BTS' },
@@ -95,8 +98,9 @@ export class CompleteProfileComponent implements OnInit {
 
     const cached = this.authService.getUserInfo();
     this.userName = cached?.prenom ?? '';
-    this.currentRole = (cached?.role as BackendRole) ?? null;
-
+      this.currentRole = (cached?.role as Role) || null;  
+    this.selectedRole = this.currentRole;
+ this.hadRoleAlready = this.currentRole !== null;
     this.authService.getMyProfile().subscribe({
       next: (profile: any) => this.applyExistingProfile(profile),
       error: () => {
@@ -125,7 +129,9 @@ export class CompleteProfileComponent implements OnInit {
   }
 
   private applyExistingProfile(profile: any): void {
-    this.currentRole = (profile?.role as BackendRole) || this.currentRole;
+    this.currentRole = (profile?.role as Role) || this.currentRole || null;
+    this.selectedRole = this.currentRole;
+      this.hadRoleAlready = this.currentRole !== null; 
     this.userName = profile?.prenom || this.userName;
 
     this.form.patchValue({
@@ -159,6 +165,16 @@ export class CompleteProfileComponent implements OnInit {
     return (
       this.currentRole !== null && ROLES_AVEC_ETUDES.includes(this.currentRole)
     );
+  }
+
+  needsRoleSelection(): boolean {
+    return this.currentRole === null && this.selectedRole === null;
+  }
+
+  chooseRole(role: Role): void {
+    this.selectedRole = role;
+    this.currentRole = role;
+    this.applyRoleSpecificValidators();
   }
 
   private applyRoleSpecificValidators(): void {
@@ -331,6 +347,7 @@ export class CompleteProfileComponent implements OnInit {
     const raw = this.form.value;
     const payload = {
       ...raw,
+      role: this.hadRoleAlready ? null : this.selectedRole,
       num_Tel: raw.num_Tel ? Number(raw.num_Tel) : null,
       imageBase64: this.imageBase64 || null,
       cvBase64: this.cvBase64 || null,
