@@ -1,4 +1,3 @@
-// core/models/websocket.ts
 export type ConnectionStatus =
   | 'CONNECTING'
   | 'CONNECTED'
@@ -12,6 +11,8 @@ export type EventType =
   | 'REACTIVATION'
   | 'LOGIN_ACTIVITY'
   | 'CERTIFICATION'
+  | 'NEW_POSTE'
+  | 'NEW_DEPARTEMENT'
   | 'DEMANDE_CONGE';
 
 export interface AdminRealtimeEvent {
@@ -51,6 +52,8 @@ export const EVENT_ICONS: Record<EventType, string> = {
   REACTIVATION: 'fa-user-check',
   LOGIN_ACTIVITY: 'fa-right-to-bracket',
   CERTIFICATION: 'fa-certificate',
+  NEW_POSTE: 'fa-briefcase',
+  NEW_DEPARTEMENT: 'fa-building',
   DEMANDE_CONGE: 'fa-calendar-days',
 };
 
@@ -61,13 +64,11 @@ export const EVENT_COLORS: Record<EventType, string> = {
   REACTIVATION: '#0ea5e9',
   LOGIN_ACTIVITY: '#8b5cf6',
   CERTIFICATION: '#f59e0b',
+  NEW_POSTE: '#6366f1',
+  NEW_DEPARTEMENT: '#0ea5e9',
   DEMANDE_CONGE: '#f97316',
 };
 
-/**
- * Construit le texte lisible d'une notification à partir d'un événement WebSocket.
- * Utilisé par la navbar (cloche) et peut remplacer la logique dupliquée du dashboard.
- */
 export function buildNotificationText(event: AdminRealtimeEvent): string {
   const p = event.payload as any;
 
@@ -82,6 +83,10 @@ export function buildNotificationText(event: AdminRealtimeEvent): string {
       return `Connexion : ${p?.prenom ?? ''} ${p?.nom ?? ''}`;
     case 'CERTIFICATION':
       return `Certification ${p?.action ?? ''} — ${p?.titre ?? ''} (${p?.prenom ?? ''} ${p?.nom ?? ''})`;
+    case 'NEW_POSTE':
+      return `Nouveau poste : ${p?.nom ?? ''}`;
+    case 'NEW_DEPARTEMENT':
+      return `Nouveau département : ${p?.nom ?? ''}`;
     case 'DEMANDE_CONGE':
       return `Demande de congé : ${p?.prenom ?? ''} ${p?.nom ?? ''}`;
     default:

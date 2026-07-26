@@ -60,9 +60,9 @@ export class CompleteProfileComponent implements OnInit {
   imageBase64: string | null = null;
   imageError = '';
 
-  // --- CV : désormais géré via recrutement-service, plus via le payload profil ---
-  cvFile: File | null = null; // <-- fichier réel, nécessaire pour FormData
-  cvBase64: string | null = null; // preview locale uniquement
+
+  cvFile: File | null = null; 
+  cvBase64: string | null = null; 
   cvFileName: string | null = null;
   cvError = '';
 
@@ -84,7 +84,7 @@ export class CompleteProfileComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private fileUserMongoService: FileUserMongoService, // <-- ajouté
+    private fileUserMongoService: FileUserMongoService, 
     private notify: NotificationService,
     private router: Router,
   ) {}
@@ -338,7 +338,7 @@ export class CompleteProfileComponent implements OnInit {
       return;
     }
 
-    this.cvFile = file; // <-- gardé pour l'upload réel vers recrutement-service
+    this.cvFile = file; 
 
     const reader = new FileReader();
     reader.onload = (e: any) => {

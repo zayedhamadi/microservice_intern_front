@@ -380,7 +380,7 @@ export class UpdateProfilComponent implements OnInit {
       });
   }
 
-  deleteCertification(id: number): void {
+  deleteCertification(id: string): void {
     Swal.fire({
       title: 'Supprimer cette certification ?',
       icon: 'warning',

@@ -30,17 +30,17 @@ export class CertificationService {
   }
 
   updateCertification(
-    id: number,
+    id: string,
     dto: Partial<CertificationDTO>,
   ): Observable<CertificationDTO> {
     return this.http.put<CertificationDTO>(`${this.CERTIF_URL}/${id}`, dto);
   }
 
-  deleteCertification(id: number): Observable<void> {
+  deleteCertification(id: string): Observable<void> {
     return this.http.delete<void>(`${this.CERTIF_URL}/${id}`);
   }
 
-  getCertificationById(certifId: number): Observable<CertificationDTO> {
+  getCertificationById(certifId: string): Observable<CertificationDTO> {
     return this.http.get<CertificationDTO>(`${this.CERTIF_URL}/${certifId}`);
   }
 }

@@ -1,5 +1,5 @@
 export interface CertificationDTO {
-  idCertification: number;
+  idCertification: string;
   titre: string;
   dateCertif: string;
   description: string;

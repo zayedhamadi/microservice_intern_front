@@ -13,8 +13,10 @@ import {
   STATUS_CLASSES,
 } from '../models/websocket';
 
+export type WsRole = 'RH' | 'EMPLOYEE' | 'CANDIDAT';
+
 @Injectable({ providedIn: 'root' })
-export class WebSocketService  implements OnDestroy {
+export class WebSocketService implements OnDestroy {
   readonly stats$ = new Subject<StatsPayload>();
   readonly events$ = new Subject<AdminRealtimeEvent>();
   readonly status$ = new BehaviorSubject<ConnectionStatus>('DISCONNECTED');
@@ -22,13 +24,22 @@ export class WebSocketService  implements OnDestroy {
   private client!: Client;
   private subscriptions: StompSubscription[] = [];
   private reconnectAttempts = 0;
+  private currentRole?: WsRole;
 
-  // Connexion directe à user-service (le gateway ne route pas encore /ws-admin)
   private readonly WS_URL = `ws://localhost:${environment.EMPLOYEE_PORT}/ws-admin`;
 
-  connect(jwtToken?: string): void {
-    if (this.client?.active) return;
+  connect(jwtToken?: string, role?: WsRole): void {
+    if (this.client?.active) {
+      if (role !== this.currentRole) {
+        this.currentRole = role;
+        this.subscriptions.forEach((s) => s.unsubscribe());
+        this.subscriptions = [];
+        this.subscribeToTopics(this.currentRole);
+      }
+      return;
+    }
 
+    this.currentRole = role;
     this.status$.next('CONNECTING');
 
     this.client = new Client({
@@ -44,7 +55,7 @@ export class WebSocketService  implements OnDestroy {
       onConnect: () => {
         this.reconnectAttempts = 0;
         this.status$.next('CONNECTED');
-        this.subscribeToTopics();
+        this.subscribeToTopics(this.currentRole);
       },
 
       onDisconnect: () => {
@@ -68,37 +79,51 @@ export class WebSocketService  implements OnDestroy {
     this.client.activate();
   }
 
-  private subscribeToTopics(): void {
-    const statsSub = this.client.subscribe(
-      '/topic/admin.stats',
-      (msg: IMessage) => {
-        try {
-          const envelope = JSON.parse(msg.body) as AdminRealtimeEvent;
-          this.stats$.next(envelope.payload as StatsPayload);
-        } catch (e) {
-          console.error('[WS-SupraTech] Stats parse error', e);
-        }
-      },
-    );
-
-    const eventsSub = this.client.subscribe(
-      '/topic/admin.events',
-      (msg: IMessage) => {
+  private subscribeToTopics(role?: WsRole): void {
+    const subscribeEvents = (topic: string) => {
+      const sub = this.client.subscribe(topic, (msg: IMessage) => {
         try {
           const event = JSON.parse(msg.body) as AdminRealtimeEvent;
           this.events$.next(event);
         } catch (e) {
-          console.error('[WS-SupraTech] Event parse error', e);
+          console.error(`[WS-SupraTech] Event parse error (${topic})`, e);
         }
-      },
-    );
+      });
+      this.subscriptions.push(sub);
+    };
 
-    this.subscriptions.push(statsSub, eventsSub);
+    subscribeEvents('/topic/admin.events.all');
+
+    switch (role) {
+      case 'EMPLOYEE':
+        subscribeEvents('/topic/admin.events.admin');
+        this.subscriptions.push(
+          this.client.subscribe('/topic/admin.stats', (msg: IMessage) => {
+            try {
+              const envelope = JSON.parse(msg.body) as AdminRealtimeEvent;
+              this.stats$.next(envelope.payload as StatsPayload);
+            } catch (e) {
+              console.error('[WS-SupraTech] Stats parse error', e);
+            }
+          }),
+        );
+        subscribeEvents('/topic/admin.events.rh-employee');
+
+        break;
+
+      case 'RH':
+        subscribeEvents('/topic/admin.events.rh');
+        subscribeEvents('/topic/admin.events.rh-employee');
+        break;
+
+      case 'CANDIDAT':
+        break;
+    }
   }
 
-  resetAndReconnect(jwtToken?: string): void {
+  resetAndReconnect(jwtToken?: string, role?: WsRole): void {
     this.reconnectAttempts = 0;
-    this.connect(jwtToken);
+    this.connect(jwtToken, role);
   }
 
   disconnect(): void {

@@ -21,6 +21,8 @@ const EVENT_ICONS: Record<EventType, string> = {
   STATS_UPDATE: 'fa-chart-line',
   LOGIN_ACTIVITY: 'fa-right-to-bracket',
   CERTIFICATION: 'fa-certificate',
+  NEW_POSTE: 'fa-briefcase',
+  NEW_DEPARTEMENT: 'fa-building',
   DEMANDE_CONGE: 'fa-calendar-days',
 };
 
@@ -31,6 +33,8 @@ const EVENT_COLORS: Record<EventType, string> = {
   STATS_UPDATE: '#64748b',
   LOGIN_ACTIVITY: '#f59e0b',
   CERTIFICATION: '#8b5cf6',
+  NEW_POSTE: '#6366f1',
+  NEW_DEPARTEMENT: '#0ea5e9',
   DEMANDE_CONGE: '#0891b2',
 };
 

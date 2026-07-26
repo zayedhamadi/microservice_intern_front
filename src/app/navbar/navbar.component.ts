@@ -16,6 +16,7 @@ import { eventColor, eventIcon, WebSocketService } from '../core/service/web-soc
 import { NotificationItem, AdminRealtimeEvent, buildNotificationText } from '../core/models/websocket';
 import { ROLE_ROUTES } from '../core/constant/role-route';
 
+import { WsRole } from '../core/service/web-socket.service';
 
 @Component({
   selector: 'app-navbar',
@@ -32,18 +33,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
   hideNavbar = false;
 
   readonly profileRoute = '/getMyprofile';
- 
-  getHomeRoute(): string {
-  const role = this.user?.role;
-  return role && ROLE_ROUTES[role] ? ROLE_ROUTES[role] : '/home';
-}
 
-  // --- Notifications temps réel ---
+  getHomeRoute(): string {
+    const role = this.user?.role;
+    return role && ROLE_ROUTES[role] ? ROLE_ROUTES[role] : '/home';
+  }
+
   notifications: NotificationItem[] = [];
   private readonly MAX_NOTIFICATIONS = 30;
   private readonly NOTIF_STORAGE_KEY = 'app_notifications';
 
-  // Empêche un double abonnement à events$ si connectRealtime() est appelé plusieurs fois
   private realtimeInitialized = false;
 
   private routerSub?: Subscription;
@@ -71,9 +70,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.syncAuth();
       });
 
-    // Ce seul abonnement suffit : le BehaviorSubject émet déjà l'état actuel
-    // immédiatement à la souscription, donc pas besoin d'appeler connectRealtime()
-    // une deuxième fois "à la main" ici.
     this.authSub = this.authService
       .isLoggedInObservable()
       .subscribe((logged) => {
@@ -96,16 +92,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // ─────────────────────────────────────────────
-  // TEMPS RÉEL — Notifications
-  // ─────────────────────────────────────────────
-
   private connectRealtime(): void {
     const token = this.authService.getToken() ?? undefined;
-    this.wsService.connect(token);
-
-    // Garde-fou : même si connectRealtime() est rappelé, on ne s'abonne
-    // qu'une seule fois à events$ pour éviter les doublons.
+    const role = this.user?.role as WsRole | undefined;
+    this.wsService.connect(token, role);
     if (this.realtimeInitialized) return;
     this.realtimeInitialized = true;
 
@@ -153,14 +143,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.showNotifDropdown = false;
   }
 
-  /** Supprime une seule notification (bouton individuel). */
   removeNotification(id: string, event?: MouseEvent): void {
     event?.stopPropagation();
     this.notifications = this.notifications.filter((n) => n.id !== id);
     this.persistNotifications();
   }
 
-  /** Supprime toutes les notifications (bouton "tout effacer"). */
   clearNotifications(): void {
     this.notifications = [];
     this.persistNotifications();
@@ -188,7 +176,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         JSON.stringify(this.notifications),
       );
     } catch {
-      // stockage plein ou indisponible : on ignore silencieusement
     }
   }
 
@@ -199,9 +186,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─────────────────────────────────────────────
-  // VISIBILITÉ / AUTH
-  // ─────────────────────────────────────────────
 
   private updateVisibility(url: string): void {
     this.hideNavbar = HIDDEN_NAVBAR_ROUTES.some((r) => url.startsWith(r));
