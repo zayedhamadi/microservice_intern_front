@@ -2,12 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../environement/environment';
+import { CvDto } from '../models/CvDto';
 
-export interface CvDto {
-  exists: boolean;
-  cvFileName?: string;
-  cvBase64?: string;
-}
+
 
 @Injectable({
   providedIn: 'root',

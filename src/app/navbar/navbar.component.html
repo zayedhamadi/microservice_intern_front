@@ -5,11 +5,11 @@
         </div>
 
         <nav>
-           
-        <a class="sb-item" [routerLink]="getHomeRoute()" routerLinkActive="nav-active">
-            Accueil
-        </a>
-            
+
+            <a class="sb-item" [routerLink]="getHomeRoute()" routerLinkActive="nav-active">
+                Accueil
+            </a>
+
             <!-- ================= EMPLOYEE ================= -->
             <ng-container *ngIf="isLoggedIn && user?.role === 'CANDIDAT'">
                 <a routerLink="/candidat/createEmployee" routerLinkActive="nav-active">
@@ -22,8 +22,8 @@
                 <a routerLink="/manager/createEmployee" routerLinkActive="nav-active">
                     Créer un employé
                 </a>
-                <a routerLink="/manager/createEmployee" routerLinkActive="nav-active">
-                    Créer un employé
+                <a routerLink="/manager/departement" routerLinkActive="nav-active">
+                    Créer une departement
                 </a>
             </ng-container>
 
@@ -74,19 +74,19 @@
                             <span>Aucune notification</span>
                         </div>
 
-                    <div class="notif-item" *ngFor="let n of notifications" [class.notif-unread]="!n.read">
-                        <div class="notif-item-icon" [style.background]="n.color">
-                            <i class="fa-solid" [ngClass]="n.icon"></i>
+                        <div class="notif-item" *ngFor="let n of notifications" [class.notif-unread]="!n.read">
+                            <div class="notif-item-icon" [style.background]="n.color">
+                                <i class="fa-solid" [ngClass]="n.icon"></i>
+                            </div>
+                            <div class="notif-item-body">
+                                <div class="notif-item-text">{{ n.text }}</div>
+                                <div class="notif-item-time"><i class="fa-regular fa-clock"></i> {{ n.time }}</div>
+                            </div>
+                            <button class="notif-item-delete" type="button" (click)="removeNotification(n.id, $event)"
+                                title="Supprimer cette notification">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
                         </div>
-                        <div class="notif-item-body">
-                            <div class="notif-item-text">{{ n.text }}</div>
-                            <div class="notif-item-time"><i class="fa-regular fa-clock"></i> {{ n.time }}</div>
-                        </div>
-                        <button class="notif-item-delete" type="button" (click)="removeNotification(n.id, $event)"
-                            title="Supprimer cette notification">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
                     </div>
                 </div>
             </div>

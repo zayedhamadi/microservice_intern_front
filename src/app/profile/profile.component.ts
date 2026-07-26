@@ -11,7 +11,8 @@ import { UserService } from '../core/service/user.service';
 import { CertificationService } from '../core/service/certification.service';
 import { CertificationDTO } from '../core/models/CertificationDTO';
 import { NotificationService } from '../core/service/notification.service';
-import { CvDto, FileUserMongoService } from '../core/service/file-user-mongo.service';
+import { FileUserMongoService } from '../core/service/file-user-mongo.service';
+import { CvDto } from '../core/models/CvDto';
 
 type ProfileTab = 'profil' | 'etudes' | 'cv' | 'certifications' | 'position';
 
@@ -40,7 +41,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   saveError = '';
   editingCertif: CertificationDTO | null = null;
 
-  // --- CV modal (aperçu plein écran) ---
   showCvModal = false;
 
   cvData: CvDto | null = null;

@@ -12,7 +12,6 @@ export interface UpdateProfileRequest {
   twitter?: string;
   siteweb?: string;
 
-  // Uniquement CANDIDAT / EMPLOYEE
   specialiteEtude?: string;
   universiteEtude?: string;
   niveauEtude?: string;

@@ -1,0 +1,149 @@
+<div class="departement-page">
+
+    <!-- En-tête -->
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">Gestion des départements</h2>
+            <p class="page-subtitle">Rechercher, ajouter, modifier et supprimer des départements</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-add" (click)="openCreateModal()">
+            <i class="fa-solid fa-plus"></i>
+            Ajouter un département
+        </button>
+    </div>
+
+    <!-- Barre d'outils : recherche + résultats -->
+    <div class="toolbar">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" class="form-control search-input" placeholder="Rechercher par nom ou description..."
+                [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" />
+            <button *ngIf="searchTerm" type="button" class="btn-clear" (click)="clearSearch()"
+                title="Effacer la recherche">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="toolbar-results">
+            <span class="results-count"><strong>{{ filteredDepartements.length }}</strong> résultat(s)</span>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="table-card">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="th-center">#</th>
+                    <th>Nom</th>
+                    <th>Description</th>
+                    <th class="text-end actions-col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngIf="isLoading">
+                    <td colspan="4" class="text-center py-4">
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        Chargement des départements...
+                    </td>
+                </tr>
+
+                <tr *ngIf="!isLoading && !pagedDepartements.length">
+                    <td colspan="4" class="text-center py-4 text-muted">
+                        Aucun département trouvé.
+                    </td>
+                </tr>
+
+                <tr *ngFor="let departement of pagedDepartements; let i = index; trackBy: trackByNom">
+                    <td class="row-num">{{ rangeStart + i }}</td>
+                    <td class="fw-semibold">{{ departement.nom }}</td>
+                    <td class="text-muted">{{ departement.description || '—' }}</td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-primary me-2" title="Modifier"
+                            (click)="openEditModal(departement)">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" title="Supprimer"
+                            (click)="confirmDelete(departement)">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination (pattern maison) -->
+    <div class="pager" *ngIf="filteredDepartements.length">
+        <div class="pager-size">
+            <span class="pager-size-label">Afficher</span>
+            <select class="pager-size-select" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+                <option *ngFor="let s of pageSizeOptions" [ngValue]="s">{{ s }}</option>
+                <option [ngValue]="filteredDepartements.length">Tous</option>
+            </select>
+            <span class="pager-size-label">par page</span>
+        </div>
+
+        <div class="pager-info">
+            Affichage <strong>{{ rangeStart }}–{{ rangeEnd }}</strong> sur <strong>{{ filteredDepartements.length
+                }}</strong>
+        </div>
+
+        <div class="pager-controls">
+            <button class="pg-btn" [disabled]="currentPage === 1" (click)="prevPage()">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <ng-container *ngFor="let p of visiblePages">
+                <button class="pg-btn ellipsis" *ngIf="p === -1" disabled>…</button>
+                <button class="pg-btn" *ngIf="p !== -1" [class.pg-active]="p === currentPage" (click)="goToPage(p)">{{ p
+                    }}</button>
+            </ng-container>
+            <button class="pg-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Ajout / Modification -->
+    <div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()"></div>
+
+    <div class="modal-custom" *ngIf="showModal" role="dialog" aria-modal="true">
+        <div class="modal-content-custom" (click)="$event.stopPropagation()">
+            <div class="modal-header-custom">
+                <h5 class="mb-0">
+                    {{ isEditMode ? 'Modifier le département' : 'Ajouter un département' }}
+                </h5>
+                <button type="button" class="btn-close-custom" (click)="closeModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form (ngSubmit)="saveDepartement()" #departementForm="ngForm">
+                <div class="modal-body-custom">
+                    <div class="mb-3">
+                        <label class="form-label" for="nom">Nom du département <span class="required">*</span></label>
+                        <input id="nom" name="nom" type="text" class="form-control" [(ngModel)]="currentDepartement.nom"
+                            required placeholder="Ex : Ressources Humaines" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label" for="description">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="3"
+                            [(ngModel)]="currentDepartement.description"
+                            placeholder="Description du département (optionnel)"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer-custom">
+                    <button type="button" class="btn btn-outline-secondary" (click)="closeModal()">
+                        Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary" [disabled]="departementForm.invalid">
+                        {{ isEditMode ? 'Enregistrer' : 'Ajouter' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
