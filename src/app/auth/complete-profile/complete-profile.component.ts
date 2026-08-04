@@ -10,9 +10,9 @@ import {
 } from '@angular/forms';
 import { AuthService } from '../../core/service/auth.service';
 import { NotificationService } from '../../core/service/notification.service';
-import { FileUserMongoService } from '../../core/service/file-user-mongo.service'; 
+import { FileUserMongoService } from '../../core/service/file-user-mongo.service';
 import { ROLE_ROUTES } from '../../core/constant/role-route';
-import { Role } from '../../core/models/enum';
+import { Role } from '../../core/models/enums/enumUser';
 
 export const phoneValidator: ValidatorFn = (
   ctrl: AbstractControl,
@@ -60,9 +60,8 @@ export class CompleteProfileComponent implements OnInit {
   imageBase64: string | null = null;
   imageError = '';
 
-
-  cvFile: File | null = null; 
-  cvBase64: string | null = null; 
+  cvFile: File | null = null;
+  cvBase64: string | null = null;
   cvFileName: string | null = null;
   cvError = '';
 
@@ -84,7 +83,7 @@ export class CompleteProfileComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private fileUserMongoService: FileUserMongoService, 
+    private fileUserMongoService: FileUserMongoService,
     private notify: NotificationService,
     private router: Router,
   ) {}
@@ -338,7 +337,7 @@ export class CompleteProfileComponent implements OnInit {
       return;
     }
 
-    this.cvFile = file; 
+    this.cvFile = file;
 
     const reader = new FileReader();
     reader.onload = (e: any) => {

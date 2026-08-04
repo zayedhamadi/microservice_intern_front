@@ -1,0 +1,258 @@
+<div class="dp-post-wrap">
+
+    <!-- ===== Header ===== -->
+    <header class="dp-post-header">
+        <div>
+            <span class="dp-eyebrow">Recrutement</span>
+            <h1>Publier une offre d'emploi</h1>
+            <p class="dp-subtitle">Décrivez le poste, nous notifions automatiquement les candidats correspondants.</p>
+        </div>
+    </header>
+
+    <!-- ===== Stepper ===== -->
+    <div class="dp-stepper">
+        <div class="dp-stepper-track">
+            <div class="dp-stepper-fill" [style.width.%]="progressPercent"></div>
+        </div>
+        <ol class="dp-stepper-list">
+            <li *ngFor="let step of steps" class="dp-step" [class.active]="currentStep === step.id"
+                [class.done]="currentStep > step.id" (click)="goToStep(step.id)">
+                <span class="dp-step-dot">
+                    <ng-container *ngIf="currentStep > step.id; else stepNumber">✓</ng-container>
+                    <ng-template #stepNumber>{{ step.id }}</ng-template>
+                </span>
+                <span class="dp-step-label">{{ step.label }}</span>
+            </li>
+        </ol>
+    </div>
+
+    <div class="dp-post-body" [formGroup]="posteForm">
+
+        <!-- ===== Form column ===== -->
+        <div class="dp-form-col">
+
+            <!-- STEP 1 — Poste -->
+            <section class="dp-panel" *ngIf="currentStep === 1">
+                <span class="dp-panel-eyebrow">Étape 1</span>
+                <h2>De quel poste s'agit-il ?</h2>
+
+                <div class="dp-field">
+                    <label for="titre">Intitulé du poste *</label>
+                    <input id="titre" type="text" formControlName="titre" placeholder="Ex. Ingénieur DevOps Confirmé">
+                    <small class="dp-error" *ngIf="posteForm.get('titre')?.touched && posteForm.get('titre')?.invalid">
+                        Le titre doit contenir au moins 3 caractères.
+                    </small>
+                </div>
+
+                <div class="dp-field-row">
+                <div class="dp-field">
+                    <label for="departement">Département *</label>
+                    <select id="departement" formControlName="departementNom">
+                        <option value="" disabled>{{ loadingDepartements ? 'Chargement…' : 'Sélectionner' }}</option>
+                        <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+                    </select>
+                </div>
+
+                    <div class="dp-field">
+                        <label for="lieu">Lieu *</label>
+                        <input id="lieu" type="text" formControlName="lieu" placeholder="Ex. Tunis, Tunisie">
+                    </div>
+                </div>
+
+                <div class="dp-field">
+                    <label>Type de contrat *</label>
+                    <div class="dp-pill-group">
+                        <button type="button" *ngFor="let opt of typeContratOptions" class="dp-pill"
+                            [class.selected]="posteForm.value.typeContrat === opt.value"
+                            (click)="posteForm.patchValue({ typeContrat: opt.value })">
+                            {{ opt.label }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dp-field">
+                    <label>Mode de travail *</label>
+                    <div class="dp-pill-group">
+                        <button type="button" *ngFor="let opt of workTypeOptions" class="dp-pill"
+                            [class.selected]="posteForm.value.workType === opt.value"
+                            (click)="posteForm.patchValue({ workType: opt.value })">
+                            {{ opt.label }}
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 2 — Description -->
+            <section class="dp-panel" *ngIf="currentStep === 2">
+                <span class="dp-panel-eyebrow">Étape 2</span>
+                <h2>Décrivez le poste et le profil recherché</h2>
+
+                <div class="dp-field">
+                    <label for="description">Description du poste *</label>
+                    <textarea id="description" rows="6" formControlName="description"
+                        placeholder="Missions, responsabilités, environnement de travail…"></textarea>
+                    <small class="dp-hint">{{ posteForm.value.description?.length || 0 }} caractères (30 min.)</small>
+                </div>
+
+                <div class="dp-field">
+                    <label for="profil">Profil recherché *</label>
+                    <textarea id="profil" rows="4" formControlName="profilDemandeOfPoste"
+                        placeholder="Formation, savoir-être, qualités attendues…"></textarea>
+                </div>
+
+                <div class="dp-field-row">
+                    <div class="dp-field">
+                        <label for="niveauEtude">Niveau d'études</label>
+                        <input id="niveauEtude" type="text" formControlName="niveauEtudeRequis" placeholder="Ex. Bac+5">
+                    </div>
+                    <div class="dp-field">
+                        <label for="anneesExp">Années d'expérience min. *</label>
+                        <input id="anneesExp" type="number" min="0" formControlName="anneesExperienceMin">
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 3 — Compétences -->
+            <section class="dp-panel" *ngIf="currentStep === 3">
+                <span class="dp-panel-eyebrow">Étape 3</span>
+                <h2>Compétences et langues requises</h2>
+
+                <div class="dp-field">
+                    <label>Compétences requises *</label>
+                    <div class="dp-chip-input">
+                        <input type="text" [(ngModel)]="competenceInput" [ngModelOptions]="{standalone: true}"
+                            placeholder="Ex. Spring Boot — appuyez sur Entrée"
+                            (keydown.enter)="$event.preventDefault(); addCompetence()">
+                        <button type="button" class="dp-btn-add" (click)="addCompetence()">Ajouter</button>
+                    </div>
+                    <div class="dp-chips">
+                        <span class="dp-chip" *ngFor="let c of posteForm.value.competencesRequises">
+                            {{ c }}
+                            <button type="button" (click)="removeCompetence(c)">×</button>
+                        </span>
+                        <span class="dp-hint" *ngIf="!posteForm.value.competencesRequises?.length">
+                            Aucune compétence ajoutée pour l'instant.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="dp-field">
+                    <label>Langues requises</label>
+                    <div class="dp-chip-input">
+                        <input type="text" [(ngModel)]="langueInput" [ngModelOptions]="{standalone: true}"
+                            placeholder="Ex. Français — appuyez sur Entrée"
+                            (keydown.enter)="$event.preventDefault(); addLangue()">
+                        <button type="button" class="dp-btn-add" (click)="addLangue()">Ajouter</button>
+                    </div>
+                    <div class="dp-chips">
+                        <span class="dp-chip dp-chip-alt" *ngFor="let l of posteForm.value.languesRequises">
+                            {{ l }}
+                            <button type="button" (click)="removeLangue(l)">×</button>
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 4 — Conditions -->
+            <section class="dp-panel" *ngIf="currentStep === 4">
+                <span class="dp-panel-eyebrow">Étape 4</span>
+                <h2>Conditions et calendrier</h2>
+
+                <div class="dp-field-row">
+                    <div class="dp-field">
+                        <label for="salaire">Salaire mensuel (DT)</label>
+                        <input id="salaire" type="number" min="0" formControlName="salaire" placeholder="Optionnel">
+                    </div>
+                    <div class="dp-field">
+                        <label for="nombrePostes">Nombre de postes *</label>
+                        <input id="nombrePostes" type="number" min="1" formControlName="nombrePostes">
+                    </div>
+                </div>
+
+                <div class="dp-field-row">
+                    <div class="dp-field">
+                        <label for="dateDebut">Date de publication *</label>
+                        <input id="dateDebut" type="date" formControlName="datePosteRecrutement">
+                    </div>
+                    <div class="dp-field">
+                        <label for="dateFin">Date d'expiration *</label>
+                        <input id="dateFin" type="date" formControlName="dateExpirationPosteRecrutement">
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 5 — Publication -->
+            <section class="dp-panel" *ngIf="currentStep === 5">
+                <span class="dp-panel-eyebrow">Étape 5</span>
+                <h2>Prêt à publier</h2>
+                <p class="dp-subtitle">
+                    Vérifiez l'aperçu à droite. Une fois publiée, l'offre est visible immédiatement
+                    et tous les candidats inscrits reçoivent une notification par e-mail.
+                </p>
+            </section>
+
+            <!-- Navigation -->
+            <div class="dp-nav-buttons">
+                <button type="button" class="dp-btn-ghost" (click)="previousStep()" *ngIf="currentStep > 1">
+                    ← Précédent
+                </button>
+                <div class="dp-spacer"></div>
+                <button type="button" class="dp-btn-primary" (click)="nextStep()" *ngIf="currentStep < steps.length">
+                    Suivant →
+                </button>
+                <button type="button" class="dp-btn-publish" (click)="publish()" *ngIf="currentStep === steps.length"
+                    [disabled]="submitting">
+                    {{ submitting ? 'Publication…' : 'Publier l\'offre' }}
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== Preview column ===== -->
+        <aside class="dp-preview-col">
+            <div class="dp-preview-sticky">
+                <span class="dp-preview-label">Aperçu candidat</span>
+                <div class="dp-preview-card">
+                    <div class="dp-preview-top">
+                        <div class="dp-preview-logo">{{ (posteForm.value.departementNom || 'ST').charAt(0) }}</div>
+                        <div>
+                            <h3>{{ posteForm.value.titre || 'Intitulé du poste' }}</h3>
+                            <p class="dp-preview-dept">{{ posteForm.value.departementNom || 'Département' }} · SupraTech
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="dp-preview-meta">
+                        <span class="dp-meta-pill">{{ posteForm.value.lieu || 'Lieu' }}</span>
+                        <span class="dp-meta-pill">{{ workTypeLabel || 'Mode de travail' }}</span>
+                        <span class="dp-meta-pill">{{ contratLabel || 'Type de contrat' }}</span>
+                    </div>
+
+                    <p class="dp-preview-desc">
+                        {{ (posteForm.value.description || 'La description du poste apparaîtra ici au fur et à mesure de
+                        votre saisie.') | slice:0:220 }}
+                        <span *ngIf="posteForm.value.description?.length > 220">…</span>
+                    </p>
+
+                    <div class="dp-preview-skills" *ngIf="posteForm.value.competencesRequises?.length">
+                        <span class="dp-skill-tag" *ngFor="let c of posteForm.value.competencesRequises.slice(0,6)">{{ c
+                            }}</span>
+                    </div>
+
+                    <div class="dp-preview-footer">
+                        <div>
+                            <span class="dp-preview-salary">{{ salaireDisplay }}</span>
+                            <span class="dp-preview-exp" *ngIf="posteForm.value.anneesExperienceMin">
+                                · {{ posteForm.value.anneesExperienceMin }}+ ans d'expérience
+                            </span>
+                        </div>
+                        <span class="dp-preview-posts">{{ posteForm.value.nombrePostes || 1 }} poste(s)</span>
+                    </div>
+                </div>
+
+                <p class="dp-preview-note">
+                    Cet aperçu reflète ce que verront les candidats une fois l'offre publiée.
+                </p>
+            </div>
+        </aside>
+    </div>
+</div>

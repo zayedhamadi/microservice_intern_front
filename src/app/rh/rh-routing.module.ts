@@ -5,6 +5,10 @@ import { ListUsersComponent } from './components/list-users/list-users.component
 import { ConsulterProfilUserDetailsPerRHComponent } from './components/consulter-profil-user-details-per-rh/consulter-profil-user-details-per-rh.component';
 import { profileCompleteGuard } from '../core/guards/profile-complete.guard';
 import { SideBarComponent } from './sidebar/sidebar.component';
+import { ConsulterSpecificPosteRecrutementDetailleComponent } from './components/consulter-specific-poste-recrutement-detaille/consulter-specific-poste-recrutement-detaille.component';
+import { ListePosteRecrutementComponent } from './components/liste-poste-recrutement/liste-poste-recrutement.component';
+import { PosteRecrutementComponent } from './components/poste-recrutement/poste-recrutement.component';
+import { ListeDepartementComponent } from './components/liste-departement/liste-departement.component';
 
 const routes: Routes = [
   {
@@ -26,6 +30,30 @@ const routes: Routes = [
       {
         path: 'consulterprofilUser/:id',
         component: ConsulterProfilUserDetailsPerRHComponent,
+        canActivate: [profileCompleteGuard],
+      },
+
+      {
+        path: 'ConsulterSpecificPosteRecrutementDetaille/:id',
+        component: ConsulterSpecificPosteRecrutementDetailleComponent,
+        canActivate: [profileCompleteGuard],
+      },
+
+      {
+        path: 'NewPosteRecrutement',
+        component: PosteRecrutementComponent,
+        canActivate: [profileCompleteGuard],
+      },
+
+      {
+        path: 'ListePosteRecrutement',
+        component: ListePosteRecrutementComponent,
+        canActivate: [profileCompleteGuard],
+      },
+
+       {
+        path: 'ListeDepartement',
+        component: ListeDepartementComponent,
         canActivate: [profileCompleteGuard],
       },
 

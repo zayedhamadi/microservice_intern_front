@@ -1,4 +1,4 @@
-import { Role, NiveauEtude, Genre } from './enum';
+import { Role, NiveauEtude, Genre } from './enums/enumUser';
 
 export interface CompleteProfileRequest {
   role?: Role;

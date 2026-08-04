@@ -1,5 +1,4 @@
-import { Role, Genre, Compte } from "./enum";
-
+import { Role, Genre, Compte } from './enums/enumUser';
 
 export interface Cessation {
   id: number;

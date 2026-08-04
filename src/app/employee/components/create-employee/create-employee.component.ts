@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AdminEmployeeService } from '../../../core/service/admin-employee.service';
-import { Role } from '../../../core/models/enum';
+import { Role } from '../../../core/models/enums/enumUser';
 
 interface RoleOption {
   value: Role;
@@ -29,14 +29,13 @@ export class CreateEmployeeComponent {
       description: 'Accès à son espace personnel',
       icon: '👤',
     },
-    
+
     {
       value: Role.RH,
       label: 'RH',
       description: 'Gère congés, recrutements et profils',
       icon: '🗂️',
     },
-    
   ];
 
   constructor(

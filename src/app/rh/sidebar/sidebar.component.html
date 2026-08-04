@@ -44,18 +44,18 @@
 
             <div class="sb-section-label" *ngIf="!isCollapsed">GÉNÉRAL</div>
 
-<a class="sb-item" [routerLink]="dashboardRoute[currentRole]" routerLinkActive="active">
+            <a class="sb-item" [routerLink]="dashboardRoute[currentRole]" routerLinkActive="active">
                 <i class="fa-solid fa-gauge-high fa-fw"></i>
-            <span *ngIf="!isCollapsed">Accueil</span>
-            <div class="sb-tooltip" *ngIf="isCollapsed">Accueil</div>
-        </a>
+                <span *ngIf="!isCollapsed">Accueil</span>
+                <div class="sb-tooltip" *ngIf="isCollapsed">Accueil</div>
+            </a>
 
             <!-- ═══════════════ RH ═══════════════ -->
             <ng-container *ngIf="user?.role === 'RH'">
                 <div class="sb-divider"></div>
                 <div class="sb-section-label" *ngIf="!isCollapsed">RH</div>
 
-              
+
 
                 <a class="sb-item" routerLink="/rh/listUsers" routerLinkActive="active" (click)="clearNotifCount()">
                     <i class="fa-solid fa-users fa-fw"></i>
@@ -66,15 +66,15 @@
                     <div class="sb-tooltip" *ngIf="isCollapsed">Employés</div>
                 </a>
 
-                <a class="sb-item" routerLink="/rh/listConges" routerLinkActive="active">
+                <a class="sb-item" routerLink="/rh/NewPosteRecrutement" routerLinkActive="active">
                     <i class="fa-solid fa-calendar-days fa-fw"></i>
-                    <span *ngIf="!isCollapsed">Liste congés</span>
-                    <div class="sb-tooltip" *ngIf="isCollapsed">Liste congés</div>
+                    <span *ngIf="!isCollapsed">Nouvelle postes</span>
+                    <div class="sb-tooltip" *ngIf="isCollapsed">Nouvelle postes</div>
                 </a>
 
-                <a class="sb-item" routerLink="/rh/addDepartementByAdmin" routerLinkActive="active">
+                <a class="sb-item" routerLink="/rh/ListeDepartement" routerLinkActive="active">
                     <i class="fa-solid fa-building fa-fw"></i>
-                    <span *ngIf="!isCollapsed">Départements</span>
+                    <span *ngIf="!isCollapsed">liste des Départements</span>
                     <div class="sb-tooltip" *ngIf="isCollapsed">Départements</div>
                 </a>
 
@@ -89,9 +89,9 @@
             <ng-container *ngIf="user?.role === 'EMPLOYEE'">
                 <div class="sb-divider"></div>
                 <div class="sb-section-label" *ngIf="!isCollapsed">Administrateur</div>
-                
-        
-                
+
+
+
                 <a class="sb-item" routerLink="/rh/listUsers" routerLinkActive="active" (click)="clearNotifCount()">
                     <i class="fa-solid fa-users fa-fw"></i>
                     <span *ngIf="!isCollapsed">

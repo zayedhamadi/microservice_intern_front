@@ -1,4 +1,4 @@
-import { Role } from './enum';
+import { Role } from './enums/enumUser';
 
 export interface CreateEmployeeRequest {
   nom: string;
