@@ -1,1 +1,167 @@
-<p>liste-poste-recrutement works!</p>
+<div class="jobs-page">
+
+    <!-- Hero -->
+    <div class="jobs-hero">
+        <div class="jobs-hero-bg"></div>
+        <div class="jobs-hero-content">
+            <h1>Postes de recrutement</h1>
+            <p>Trouvez le bon profil pour chaque poste ouvert dans l'entreprise</p>
+            <div class="jobs-stats">
+                <div class="stat-chip">
+                    <span class="stat-value">{{ filteredPostes.length }}</span>
+                    <span class="stat-label">résultats</span>
+                </div>
+                <div class="stat-chip">
+                    <span class="stat-value">{{ postes.length }}</span>
+                    <span class="stat-label">postes au total</span>
+                </div>
+                <div class="stat-chip">
+                    <span class="stat-value">{{ departements.length }}</span>
+                    <span class="stat-label">départements</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barre de filtres -->
+    <div class="filters-bar">
+        <div class="filters-row">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Rechercher un poste, une compétence..." [(ngModel)]="filters.searchText"
+                    (input)="applyFilters()" />
+            </div>
+
+            <select class="filter-select" [(ngModel)]="sortBy" (change)="onSortChange()">
+                <option value="recent">🕒 Plus récent</option>
+                <option value="ancien">📅 Plus ancien</option>
+                <option value="salaireDesc">💰 Salaire ↓</option>
+                <option value="salaireAsc">💰 Salaire ↑</option>
+            </select>
+        </div>
+
+        <div class="filters-row filters-row-wrap">
+            <select class="filter-select" [(ngModel)]="filters.nom" (change)="applyFilters()">
+                <option value="">🏢 Département</option>
+                <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+            </select>
+
+            <select class="filter-select" [(ngModel)]="filters.typeContrat" (change)="applyFilters()">
+                <option value="">📄 Type de contrat</option>
+                <option *ngFor="let t of typeContratEnum" [value]="t">{{ t }}</option>
+            </select>
+
+            <select class="filter-select" [(ngModel)]="filters.workType" (change)="applyFilters()">
+                <option value="">🌍 Mode de travail</option>
+                <option *ngFor="let w of workTypeEnum" [value]="w">{{ w }}</option>
+            </select>
+
+            <select class="filter-select" [(ngModel)]="filters.status" (change)="applyFilters()">
+                <option value="">🏷️ Statut</option>
+                <option *ngFor="let s of statusEnum" [value]="s">{{ s }}</option>
+            </select>
+
+            <input type="text" class="filter-select" placeholder="📍 Lieu" [(ngModel)]="filters.lieu"
+                (input)="applyFilters()" />
+
+            <input type="number" min="0" class="filter-select filter-select-sm" placeholder="Exp. min"
+                [(ngModel)]="filters.anneesExperienceMin" (input)="applyFilters()" />
+        </div>
+
+        <!-- Chips de filtres actifs -->
+        <div class="active-filters" *ngIf="hasActiveFilters">
+            <span class="chip" *ngFor="let chip of activeFilterChips">
+                {{ chip.label }}
+                <i class="fa-solid fa-xmark" (click)="removeFilter(chip.key)"></i>
+            </span>
+            <button class="clear-all-btn" (click)="resetFilters()">Tout effacer</button>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="jobs-grid">
+        <div class="job-card skeleton" *ngFor="let i of [1,2,3,4,5,6]">
+            <div class="skeleton-line w-40"></div>
+            <div class="skeleton-line w-70 h-lg"></div>
+            <div class="skeleton-line w-50"></div>
+            <div class="skeleton-line w-90"></div>
+            <div class="skeleton-line w-90"></div>
+        </div>
+    </div>
+
+    <!-- Erreur -->
+    <div *ngIf="!isLoading && hasError" class="state-box">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>Une erreur est survenue lors du chargement.</p>
+        <button class="primary-btn" (click)="loadPostes()">Réessayer</button>
+    </div>
+
+    <!-- Empty -->
+    <div *ngIf="!isLoading && !hasError && filteredPostes.length === 0" class="state-box">
+        <i class="fa-solid fa-magnifying-glass-minus"></i>
+        <p>Aucun poste ne correspond à ces critères.</p>
+        <button class="ghost-btn" (click)="resetFilters()">Réinitialiser les filtres</button>
+    </div>
+
+    <!-- Grille de postes -->
+    <div class="jobs-grid" *ngIf="!isLoading && !hasError && filteredPostes.length > 0">
+        <div class="job-card"
+            *ngFor="let poste of filteredPostes | paginate: { itemsPerPage: itemsPerPage, currentPage: currentPage }; trackBy: trackByPoste">
+
+            <div class="job-card-top">
+                <div class="dept-avatar">{{ getDeptInitial(poste.departementNom) }}</div>
+                <div class="job-card-top-right">
+                    <span [ngClass]="getStatusBadgeClass(poste.status)">{{ poste.status }}</span>
+                    <span class="job-expiring" *ngIf="isExpiringSoon(poste)">
+                        <i class="fa-solid fa-hourglass-half"></i> Expire bientôt
+                    </span>
+                </div>
+            </div>
+
+            <h3 class="job-title">{{ poste.titre }}</h3>
+
+            <p class="job-dept">
+                <i class="fa-solid fa-building-user"></i> {{ poste.departementNom || 'Département non défini' }}
+            </p>
+
+            <p class="job-desc">{{ poste.description }}</p>
+
+            <div class="job-tags" *ngIf="poste.competencesRequises?.length">
+                <span class="job-tag" *ngFor="let comp of poste.competencesRequises?.slice(0, 4)">{{ comp }}</span>
+                <span class="job-tag job-tag-more" *ngIf="(poste.competencesRequises?.length || 0) > 4">
+                    +{{ (poste.competencesRequises?.length || 0) - 4 }}
+                </span>
+            </div>
+
+            <div class="job-info-row">
+                <span><i class="fa-solid" [ngClass]="getWorkTypeIcon(poste.workType)"></i> {{ poste.workType }}</span>
+                <span><i class="fa-solid fa-file-signature"></i> {{ poste.typeContrat }}</span>
+            </div>
+            <div class="job-info-row"
+                *ngIf="poste.lieu || poste.anneesExperienceMin !== undefined || poste.nombrePostes">
+                <span *ngIf="poste.lieu"><i class="fa-solid fa-location-dot"></i> {{ poste.lieu }}</span>
+                <span *ngIf="poste.anneesExperienceMin !== undefined">
+                    <i class="fa-solid fa-chart-line"></i> {{ poste.anneesExperienceMin }}+ ans
+                </span>
+                <span *ngIf="poste.nombrePostes">
+                    <i class="fa-solid fa-users"></i> {{ poste.nombrePostes }} poste(s)
+                </span>
+            </div>
+
+            <div class="job-card-footer">
+                <span class="job-salaire" *ngIf="poste.salaire">{{ poste.salaire | number }} TND</span>
+                <span *ngIf="!poste.salaire"></span>
+                <a [routerLink]="['/rh/ConsulterSpecificPosteRecrutementDetaille', poste.idPosteRecrutement]"
+                    class="job-link">
+                    Voir détails <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="jobs-pagination" *ngIf="!isLoading && filteredPostes.length > itemsPerPage">
+        <pagination-controls previousLabel="← Précédent" nextLabel="Suivant →" (pageChange)="onPageChange($event)">
+        </pagination-controls>
+    </div>
+</div>

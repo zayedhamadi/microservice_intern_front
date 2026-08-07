@@ -9,10 +9,10 @@ import { SideBarComponent } from './sidebar/sidebar.component';
 import { PosteRecrutementComponent } from './components/poste-recrutement/poste-recrutement.component';
 import { ListePosteRecrutementComponent } from './components/liste-poste-recrutement/liste-poste-recrutement.component';
 import { ConsulterSpecificPosteRecrutementDetailleComponent } from './components/consulter-specific-poste-recrutement-detaille/consulter-specific-poste-recrutement-detaille.component';
-import { ConsulterListPosteSelonDepartementComponent } from './components/consulter-list-poste-selon-departement/consulter-list-poste-selon-departement.component';
 import { ListeDepartementComponent } from './components/liste-departement/liste-departement.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
+import { NgxPaginationModule } from 'ngx-pagination';
+import { EditPosteRecrutementDetailleComponent } from './components/edit-poste-recrutement-detaille/edit-poste-recrutement-detaille.component';
 @NgModule({
   declarations: [
     DashboardRHComponent,
@@ -22,9 +22,15 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     PosteRecrutementComponent,
     ListePosteRecrutementComponent,
     ConsulterSpecificPosteRecrutementDetailleComponent,
-    ConsulterListPosteSelonDepartementComponent,
     ListeDepartementComponent,
+    EditPosteRecrutementDetailleComponent,
   ],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RHRoutingModule],
+  imports: [
+    CommonModule,
+    NgxPaginationModule,
+    FormsModule,
+    ReactiveFormsModule,
+    RHRoutingModule,
+  ],
 })
 export class RHModule {}

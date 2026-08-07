@@ -5,8 +5,11 @@ import { PosteRecutementService } from '../../../core/service/poste-recutement.s
 import { DepartementService } from '../../../core/service/departement.service';
 import { NotificationService } from '../../../core/service/notification.service';
 import { DepartementDTO } from '../../../core/models/departement';
-import { TypeContrat, WorkType, StatusPosteRecrutement } from '../../../core/models/enums/enumPosteRecrutemnt';
-
+import {
+  TypeContrat,
+  WorkType,
+  StatusPosteRecrutement,
+} from '../../../core/models/enums/enumPosteRecrutemnt';
 
 interface StepDef {
   id: number;
@@ -95,17 +98,16 @@ export class PosteRecrutementComponent implements OnInit {
     this.loadDepartements();
   }
 
-
   private loadDepartements(): void {
     this.loadingDepartements = true;
     this.departementService.getAllDepartements().subscribe({
       next: (data) => {
-        console.log(data)
+        console.log(data);
         this.departements = data;
         this.loadingDepartements = false;
       },
-      error: (error:any) => {
-        console.log(error)
+      error: (error: any) => {
+        console.log(error);
         this.loadingDepartements = false;
         this.notification.toastError(
           'Impossible de charger la liste des départements.',
@@ -117,7 +119,6 @@ export class PosteRecrutementComponent implements OnInit {
   private today(): string {
     return new Date().toISOString().slice(0, 10);
   }
-
 
   goToStep(step: number): void {
     if (step < this.currentStep || this.isStepValid(this.currentStep)) {
@@ -219,7 +220,6 @@ export class PosteRecrutementComponent implements OnInit {
     });
   }
 
-
   get contratLabel(): string {
     return (
       this.typeContratOptions.find(
@@ -273,7 +273,7 @@ export class PosteRecrutementComponent implements OnInit {
             'Votre offre est maintenant visible et les candidats ont été notifiés.',
           )
           .then(() => {
-            this.router.navigate(['/rh/NewPosteRecrutement']);
+            this.router.navigate(['/rh/ListePosteRecrutement']);
           });
       },
       error: (err) => {

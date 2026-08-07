@@ -1,4 +1,3 @@
-// dashboard-employee.component.ts
 import {
   Component,
   OnInit,
@@ -362,29 +361,7 @@ export class DashboardEmployeeComponent
     if (this.chartsReady) this.updateCharts();
     else this.pendingUpdate = () => this.updateCharts();
   }
-  /*
-  private applyStatsPayload(data: StatsPayload): void {
-    this.stats.totalUsers = data.users?.total ?? 0;
-    this.stats.deltaUsers = data.users?.delta ?? 0;
-    this.stats.totalRH = data.rh?.total ?? 0;
-    this.stats.deltaRH = data.rh?.delta ?? 0;
-    this.stats.totalEmployees = data.employees?.total ?? 0;
-    this.stats.deltaEmployees = data.employees?.delta ?? 0;
-    this.stats.totalCandidats = data.candidats?.total ?? 0;
-    this.stats.deltaCandidats = data.candidats?.delta ?? 0;
-    this.stats.totalInactifs = data.inactifs?.total ?? 0;
-    this.stats.deltaInactifs = data.inactifs?.delta ?? 0;
 
-    this.monthlyData = data.monthly ?? {};
-    this.inscrCessData = data.inscrCess ?? { inscriptions: [], cessations: [] };
-
-    this.mapRecentUsers(data.last5 ?? []);
-    this.loadRecentUsersImages();
-    this.computeRoleDistribution(data);
-
-    if (this.chartsReady) this.updateCharts();
-    else this.pendingUpdate = () => this.updateCharts();
-  }*/
   private mapRecentUsers(last5: any[]): void {
     this.recentUsers = last5.map((u: any) => ({
       id: u.id,
@@ -400,22 +377,6 @@ export class DashboardEmployeeComponent
       imageLoading: false,
     }));
   }
-  /*
-  private mapRecentUsers(last5: any[]): void {
-    this.recentUsers = last5.map((u: any) => ({
-      id: u.id,
-      cin: u.cin,
-      matricule: u.matricule,
-      nom: u.nom,
-      prenom: u.prenom,
-      email: u.email,
-      role: u.role,
-      etatCompte: u.etatCompte,
-      dateInscrit: u.dateInscrit,
-      image: null,
-      imageLoading: true,
-    }));
-  }*/
 
   private computeRoleDistribution(data: StatsPayload): void {
     const grand = (data.users?.total ?? 0) || 1;

@@ -1,0 +1,193 @@
+<div class="edit-page">
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="state-box">
+        <div class="spinner-border" role="status"></div>
+        <p>Chargement du poste...</p>
+    </div>
+
+    <!-- Erreur -->
+    <div *ngIf="!isLoading && hasError" class="state-box">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>Ce poste est introuvable ou une erreur est survenue.</p>
+        <button class="ghost-btn" (click)="goBack()">Retour</button>
+    </div>
+
+    <!-- Formulaire -->
+    <ng-container *ngIf="!isLoading && !hasError">
+
+        <button class="back-link" (click)="goBack()">
+            <i class="fa-solid fa-arrow-left"></i> Retour
+        </button>
+
+        <div class="edit-header">
+            <h1>Modifier le poste</h1>
+            <p>Mets à jour les informations puis enregistre les changements.</p>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="edit-layout">
+
+            <!-- Colonne principale -->
+            <div class="edit-main">
+
+                <!-- Infos générales -->
+                <div class="edit-card">
+                    <h2 class="section-title"><i class="fa-solid fa-align-left"></i> Informations générales</h2>
+
+                    <div class="form-group">
+                        <label>Titre du poste <span class="req">*</span></label>
+                        <input type="text" formControlName="titre" placeholder="Ex: Développeur Full Stack" />
+                        <span class="error-text" *ngIf="isInvalid('titre')">
+                            Le titre est requis (min. 3 caractères).
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description <span class="req">*</span></label>
+                        <textarea rows="5" formControlName="description"
+                            placeholder="Décris les missions, responsabilités..."></textarea>
+                        <span class="error-text" *ngIf="isInvalid('description')">
+                            La description est requise (min. 10 caractères).
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Profil recherché</label>
+                        <textarea rows="3" formControlName="profilDemandeOfPoste"
+                            placeholder="Décris le profil idéal..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Compétences -->
+                <div class="edit-card">
+                    <h2 class="section-title"><i class="fa-solid fa-screwdriver-wrench"></i> Compétences requises</h2>
+
+                    <div class="chip-input-row">
+                        <input type="text" [(ngModel)]="skillInput" [ngModelOptions]="{ standalone: true }"
+                            placeholder="Ex: Angular, Spring Boot..."
+                            (keydown.enter)="$event.preventDefault(); addSkill()" />
+                        <button type="button" class="add-chip-btn" (click)="addSkill()">
+                            <i class="fa-solid fa-plus"></i> Ajouter
+                        </button>
+                    </div>
+
+                    <div class="chip-list" *ngIf="competences.length">
+                        <span class="chip" *ngFor="let c of competences.controls; let i = index">
+                            {{ c.value }}
+                            <i class="fa-solid fa-xmark" (click)="removeSkill(i)"></i>
+                        </span>
+                    </div>
+                    <p class="empty-hint" *ngIf="!competences.length">Aucune compétence ajoutée.</p>
+                </div>
+
+                <!-- Langues -->
+                <div class="edit-card">
+                    <h2 class="section-title"><i class="fa-solid fa-language"></i> Langues requises</h2>
+
+                    <div class="chip-input-row">
+                        <input type="text" [(ngModel)]="langueInput" [ngModelOptions]="{ standalone: true }"
+                            placeholder="Ex: Français, Anglais..."
+                            (keydown.enter)="$event.preventDefault(); addLangue()" />
+                        <button type="button" class="add-chip-btn" (click)="addLangue()">
+                            <i class="fa-solid fa-plus"></i> Ajouter
+                        </button>
+                    </div>
+
+                    <div class="chip-list" *ngIf="langues.length">
+                        <span class="chip lang" *ngFor="let l of langues.controls; let i = index">
+                            {{ l.value }}
+                            <i class="fa-solid fa-xmark" (click)="removeLangue(i)"></i>
+                        </span>
+                    </div>
+                    <p class="empty-hint" *ngIf="!langues.length">Aucune langue ajoutée.</p>
+                </div>
+            </div>
+
+            <!-- Sidebar : paramètres du poste -->
+            <div class="edit-side">
+                <div class="side-card">
+                    <h3 class="side-title">Paramètres du poste</h3>
+
+                    <div class="form-group">
+                        <label>Département <span class="req">*</span></label>
+                        <select formControlName="departementNom">
+                            <option value="" disabled>Choisir un département</option>
+                            <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+                        </select>
+                        <span class="error-text" *ngIf="isInvalid('departementNom')">Champ requis.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Type de contrat <span class="req">*</span></label>
+                        <select formControlName="typeContrat">
+                            <option value="" disabled>Choisir un type</option>
+                            <option *ngFor="let t of typeContratEnum" [value]="t">{{ t }}</option>
+                        </select>
+                        <span class="error-text" *ngIf="isInvalid('typeContrat')">Champ requis.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mode de travail <span class="req">*</span></label>
+                        <select formControlName="workType">
+                            <option value="" disabled>Choisir un mode</option>
+                            <option *ngFor="let w of workTypeEnum" [value]="w">{{ w }}</option>
+                        </select>
+                        <span class="error-text" *ngIf="isInvalid('workType')">Champ requis.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Statut <span class="req">*</span></label>
+                        <select formControlName="status">
+                            <option value="" disabled>Choisir un statut</option>
+                            <option *ngFor="let s of statusEnum" [value]="s">{{ s }}</option>
+                        </select>
+                        <span class="error-text" *ngIf="isInvalid('status')">Champ requis.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lieu</label>
+                        <input type="text" formControlName="lieu" placeholder="Ex: Tunis" />
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Expérience min. (ans)</label>
+                            <input type="number" min="0" formControlName="anneesExperienceMin" />
+                        </div>
+                        <div class="form-group">
+                            <label>Postes à pourvoir</label>
+                            <input type="number" min="1" formControlName="nombrePostes" />
+                            <span class="error-text" *ngIf="isInvalid('nombrePostes')">Min. 1 poste.</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Niveau d'étude requis</label>
+                        <input type="text" formControlName="niveauEtudeRequis" placeholder="Ex: Bac+5" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Salaire (TND)</label>
+                        <input type="number" min="0" formControlName="salaire" placeholder="Optionnel" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date d'expiration</label>
+                        <input type="date" formControlName="dateExpirationPosteRecrutement" />
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="side-card actions-card">
+                    <button type="submit" class="save-btn" [disabled]="isSaving">
+                        <i class="fa-solid" [ngClass]="isSaving ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                        {{ isSaving ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+                    </button>
+                    <button type="button" class="cancel-btn" (click)="onCancel()" [disabled]="isSaving">
+                        <i class="fa-solid fa-xmark"></i> Annuler
+                    </button>
+                </div>
+            </div>
+        </form>
+    </ng-container>
+</div>

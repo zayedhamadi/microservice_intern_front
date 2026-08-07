@@ -9,6 +9,7 @@ import { ConsulterSpecificPosteRecrutementDetailleComponent } from './components
 import { ListePosteRecrutementComponent } from './components/liste-poste-recrutement/liste-poste-recrutement.component';
 import { PosteRecrutementComponent } from './components/poste-recrutement/poste-recrutement.component';
 import { ListeDepartementComponent } from './components/liste-departement/liste-departement.component';
+import { EditPosteRecrutementDetailleComponent } from './components/edit-poste-recrutement-detaille/edit-poste-recrutement-detaille.component';
 
 const routes: Routes = [
   {
@@ -40,6 +41,12 @@ const routes: Routes = [
       },
 
       {
+        path: 'editSpecificPosteRecrutementDetaille/:id',
+        component: EditPosteRecrutementDetailleComponent,
+        canActivate: [profileCompleteGuard],
+      },
+
+      {
         path: 'NewPosteRecrutement',
         component: PosteRecrutementComponent,
         canActivate: [profileCompleteGuard],
@@ -51,13 +58,11 @@ const routes: Routes = [
         canActivate: [profileCompleteGuard],
       },
 
-       {
+      {
         path: 'ListeDepartement',
         component: ListeDepartementComponent,
         canActivate: [profileCompleteGuard],
       },
-
-      
     ],
   },
 ];

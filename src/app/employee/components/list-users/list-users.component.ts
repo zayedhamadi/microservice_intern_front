@@ -274,7 +274,6 @@ export class ListUsersComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Pagination disponible ─────────────────────────────
 
   get totalPages(): number {
     return Math.ceil(this.filteredUsers.length / this.pageSize) || 1;
@@ -380,7 +379,6 @@ export class ListUsersComponent implements OnInit, OnDestroy {
     return pages;
   }
 
-  // ── Tabs ─────────────────────────────────────────────
 
   switchTab(tab: TabType): void {
     this.activeTab = tab;
@@ -388,7 +386,6 @@ export class ListUsersComponent implements OnInit, OnDestroy {
     if (tab === 'cessation') this.loadInactifUsers();
   }
 
-  // ── Utils ────────────────────────────────────────────
 
   countByRole(role: string): number {
     return this.allUsers.filter((u) => this.getNormalizedRole(u.role) === role)
@@ -400,7 +397,6 @@ export class ListUsersComponent implements OnInit, OnDestroy {
     return ((this.countByRole(role) / this.allUsers.length) * 100).toFixed(0);
   }
 
-  // Couleurs par rôle — RH / EMPLOYEE / CANDIDAT
   getRoleColor(role: string): string {
     const map: Record<string, string> = {
       EMPLOYEE: '#2563eb',

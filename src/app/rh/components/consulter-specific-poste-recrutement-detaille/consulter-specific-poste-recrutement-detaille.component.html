@@ -1,1 +1,147 @@
-<p>consulter-specific-poste-recrutement-detaille works!</p>
+<div class="detail-page">
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="state-box">
+        <div class="spinner-border" role="status"></div>
+        <p>Chargement du poste...</p>
+    </div>
+
+    <!-- Erreur -->
+    <div *ngIf="!isLoading && hasError" class="state-box">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>Ce poste est introuvable ou une erreur est survenue.</p>
+        <button class="ghost-btn" (click)="goBack()">Retour à la liste</button>
+    </div>
+
+    <!-- Contenu -->
+    <ng-container *ngIf="!isLoading && !hasError && poste">
+
+        <!-- Fil d'ariane / retour -->
+        <button class="back-link" (click)="goBack()">
+            <i class="fa-solid fa-arrow-left"></i> Retour aux postes
+        </button>
+
+        <div class="detail-layout">
+
+            <!-- Colonne principale -->
+            <main class="detail-main">
+
+                <!-- En-tête poste -->
+                <div class="detail-card header-card">
+                    <div class="header-top">
+                        <div class="header-top-left">
+                            <div class="dept-avatar-lg">{{ getDeptInitial(poste.departementNom) }}</div>
+                            <div>
+                                <h1 class="detail-title">{{ poste.titre }}</h1>
+                                <p class="detail-dept">
+                                    <i class="fa-solid fa-building-user"></i> {{ poste.departementNom || 'Département
+                                    non défini' }}
+                                </p>
+                            </div>
+                        </div>
+                        <span [ngClass]="getStatusBadgeClass(poste.status)">{{ poste.status }}</span>
+                    </div>
+
+                    <div class="header-meta">
+                        <span><i class="fa-solid" [ngClass]="getWorkTypeIcon(poste.workType)"></i> {{ poste.workType
+                            }}</span>
+                        <span><i class="fa-solid fa-file-signature"></i> {{ poste.typeContrat }}</span>
+                        <span *ngIf="poste.lieu"><i class="fa-solid fa-location-dot"></i> {{ poste.lieu }}</span>
+                        <span *ngIf="poste.datePosteRecrutement">
+                            <i class="fa-solid fa-clock"></i> Publié {{ daysAgo(poste.datePosteRecrutement) }}
+                        </span>
+                    </div>
+
+                    <div class="header-alerts">
+                        <span class="alert-pill expiring" *ngIf="isExpiringSoon()">
+                            <i class="fa-solid fa-hourglass-half"></i> Ce poste expire bientôt
+                        </span>
+                        <span class="alert-pill expired" *ngIf="isExpired()">
+                            <i class="fa-solid fa-ban"></i> Ce poste a expiré
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="detail-card">
+                    <h2 class="section-title"><i class="fa-solid fa-align-left"></i> Description du poste</h2>
+                    <p class="section-text">{{ poste.description || 'Aucune description fournie.' }}</p>
+                </div>
+
+                <!-- Profil recherché -->
+                <div class="detail-card" *ngIf="poste.profilDemandeOfPoste">
+                    <h2 class="section-title"><i class="fa-solid fa-user-check"></i> Profil recherché</h2>
+                    <p class="section-text">{{ poste.profilDemandeOfPoste }}</p>
+                </div>
+
+                <!-- Compétences -->
+                <div class="detail-card" *ngIf="poste.competencesRequises?.length">
+                    <h2 class="section-title"><i class="fa-solid fa-screwdriver-wrench"></i> Compétences requises</h2>
+                    <div class="tag-list">
+                        <span class="skill-tag" *ngFor="let comp of poste.competencesRequises">{{ comp }}</span>
+                    </div>
+                </div>
+
+                <!-- Langues -->
+                <div class="detail-card" *ngIf="poste.languesRequises?.length">
+                    <h2 class="section-title"><i class="fa-solid fa-language"></i> Langues requises</h2>
+                    <div class="tag-list">
+                        <span class="skill-tag lang" *ngFor="let langue of poste.languesRequises">{{ langue }}</span>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Sidebar -->
+            <aside class="detail-side">
+
+                <!-- Card actions -->
+                <div class="side-card actions-card">
+                    <button class="edit-btn" (click)="onEdit()">
+                        <i class="fa-solid fa-pen"></i> Modifier le poste
+                    </button>
+                    <button class="delete-btn" (click)="onDelete()" [disabled]="isDeleting">
+                        <i class="fa-solid" [ngClass]="isDeleting ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+                        {{ isDeleting ? 'Suppression...' : 'Supprimer le poste' }}
+                    </button>
+                </div>
+
+                <!-- Card infos clés -->
+                <div class="side-card">
+                    <h3 class="side-title">Informations clés</h3>
+
+                    <div class="info-row" *ngIf="poste.salaire">
+                        <span class="info-label"><i class="fa-solid fa-sack-dollar"></i> Salaire</span>
+                        <span class="info-value salaire">{{ poste.salaire | number }} TND</span>
+                    </div>
+
+                    <div class="info-row" *ngIf="poste.anneesExperienceMin !== undefined">
+                        <span class="info-label"><i class="fa-solid fa-chart-line"></i> Expérience</span>
+                        <span class="info-value">{{ poste.anneesExperienceMin }}+ ans</span>
+                    </div>
+
+                    <div class="info-row" *ngIf="poste.niveauEtudeRequis">
+                        <span class="info-label"><i class="fa-solid fa-graduation-cap"></i> Niveau d'étude</span>
+                        <span class="info-value">{{ poste.niveauEtudeRequis }}</span>
+                    </div>
+
+                    <div class="info-row" *ngIf="poste.nombrePostes">
+                        <span class="info-label"><i class="fa-solid fa-users"></i> Postes à pourvoir</span>
+                        <span class="info-value">{{ poste.nombrePostes }}</span>
+                    </div>
+
+                    <div class="info-row" *ngIf="poste.dateExpirationPosteRecrutement">
+                        <span class="info-label"><i class="fa-solid fa-calendar-xmark"></i> Expire le</span>
+                        <span class="info-value">{{ poste.dateExpirationPosteRecrutement | date: 'dd/MM/yyyy' }}</span>
+                    </div>
+
+                    <div class="info-row" *ngIf="poste.datePosteRecrutement">
+                        <span class="info-label"><i class="fa-solid fa-calendar-check"></i> Publié le</span>
+                        <span class="info-value">{{ poste.datePosteRecrutement | date: 'dd/MM/yyyy' }}</span>
+                    </div>
+                </div>
+
+               
+            </aside>
+        </div>
+    </ng-container>
+</div>
