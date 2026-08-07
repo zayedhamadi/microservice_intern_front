@@ -9,7 +9,9 @@ import { ForgetPaswwordComponent } from './auth/forget-paswword/forget-paswword.
 import { ResetPaswwordComponent } from './auth/reset-paswword/reset-paswword.component';
 import { HomeComponent } from './auth/home/home.component';
 import { ProfileComponent } from './profile/profile.component';
-import { UpdateProfilComponent } from './update-profil/update-profil.component';
+import { UpdateProfilComponent } from './communComponents/update-profil/update-profil.component';
+import { ConsulterleslistePosteParEmployeeOuCandidatComponent } from './communComponents/consulterlesliste-poste-par-employee-ou-candidat/consulterlesliste-poste-par-employee-ou-candidat.component';
+import { ConsulterspecificposteseloncandidatandadminComponent } from './communComponents/consulterspecificposteseloncandidatandadmin/consulterspecificposteseloncandidatandadmin.component';
 const routes: Routes = [
   { path: '', redirectTo: '/signin', pathMatch: 'full' },
   { path: 'signin', component: SigninComponent },
@@ -18,6 +20,16 @@ const routes: Routes = [
   { path: 'forgot-password', component: ForgetPaswwordComponent },
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
   { path: 'reset-password', component: ResetPaswwordComponent },
+
+  {
+     path: 'consulterspecifiPosteDisponibles/:id',
+     component: ConsulterspecificposteseloncandidatandadminComponent,
+   },
+ 
+   {
+     path: 'consulterlesPosteDisponibles',
+     component: ConsulterleslistePosteParEmployeeOuCandidatComponent,
+   },
   {
     path: 'complete-profile',
     component: CompleteProfileComponent,

@@ -23,11 +23,14 @@ import { CompleteProfileComponent } from './auth/complete-profile/complete-profi
 import { ValidationSignUpComponent } from './auth/validation-sign-up/validation-sign-up.component';
 import { JwtInterceptor } from './core/interceptor/jwt.interceptor';
 import { HomeComponent } from './auth/home/home.component';
-import { NavbarComponent } from './navbar/navbar.component';
+import { NavbarComponent } from './communComponents/navbar/navbar.component';
 import { ProfileComponent } from './profile/profile.component';
-import { UpdateProfilComponent } from './update-profil/update-profil.component';
+import { UpdateProfilComponent } from './communComponents/update-profil/update-profil.component';
 import { SafeUrlPipe } from './core/service/SafeUrlPipe';
-import { NotificationComponent } from './notification/notification.component';
+import { NotificationComponent } from './communComponents/notification/notification.component';
+import { ConsulterleslistePosteParEmployeeOuCandidatComponent } from './communComponents/consulterlesliste-poste-par-employee-ou-candidat/consulterlesliste-poste-par-employee-ou-candidat.component';
+import { ConsulterspecificposteseloncandidatandadminComponent } from './communComponents/consulterspecificposteseloncandidatandadmin/consulterspecificposteseloncandidatandadmin.component';
+import { NgxPaginationModule } from 'ngx-pagination';
 
 @NgModule({
   declarations: [
@@ -45,8 +48,11 @@ import { NotificationComponent } from './notification/notification.component';
     SafeUrlPipe,
     UpdateProfilComponent,
     NotificationComponent,
+    ConsulterleslistePosteParEmployeeOuCandidatComponent,
+    ConsulterspecificposteseloncandidatandadminComponent,
   ],
-  imports: [
+  imports: [    NgxPaginationModule,
+  
     BrowserModule,
     FormsModule,
     ReactiveFormsModule,

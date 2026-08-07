@@ -6,16 +6,22 @@ import { DashboardEmployeeComponent } from './components/dashboard-employee/dash
 import { CreateEmployeeComponent } from './components/create-employee/create-employee.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ListUsersComponent } from './components/list-users/list-users.component';
-import { ConsulterUserByAdminComponent } from './consulter-user-by-admin/consulter-user-by-admin.component';
+import { ConsulterUserByAdminComponent } from './components/consulter-user-by-admin/consulter-user-by-admin.component';
 import { DepartementComponent } from './components/departement/departement.component';
 
 @NgModule({
-  declarations: [DashboardEmployeeComponent, CreateEmployeeComponent, ListUsersComponent, ConsulterUserByAdminComponent, DepartementComponent],
+  declarations: [
+    DashboardEmployeeComponent,
+    CreateEmployeeComponent,
+    ListUsersComponent,
+    ConsulterUserByAdminComponent,
+    DepartementComponent,
+  ],
   imports: [
     CommonModule,
     EmployeeRoutingModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
   ],
 })
 export class EmployeeModule {}

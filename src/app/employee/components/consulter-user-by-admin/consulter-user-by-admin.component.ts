@@ -3,12 +3,12 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin, catchError, of } from 'rxjs';
 import Swal from 'sweetalert2';
-import { CertificationDTO } from '../../core/models/CertificationDTO';
-import { CertificationService } from '../../core/service/certification.service';
-import { UserService } from '../../core/service/user.service';
-import { CessationService } from '../../core/service/cessation.service';
-import { NotificationService } from '../../core/service/notification.service';
-import { UserDetailFullResponse } from '../../core/models/UserDetailFullResponse';
+import { CertificationDTO } from '../../../core/models/CertificationDTO';
+import { CertificationService } from '../../../core/service/certification.service';
+import { UserService } from '../../../core/service/user.service';
+import { CessationService } from '../../../core/service/cessation.service';
+import { NotificationService } from '../../../core/service/notification.service';
+import { UserDetailFullResponse } from '../../../core/models/UserDetailFullResponse';
 
 export type UserDetailRH = UserDetailFullResponse;
 
@@ -103,7 +103,6 @@ export class ConsulterUserByAdminComponent implements OnInit, OnDestroy {
         .getCertificationsByUserId(id)
         .pipe(
           catchError((error: any) => {
-            
             console.log(error);
             return of([]);
           }),
@@ -212,7 +211,6 @@ export class ConsulterUserByAdminComponent implements OnInit, OnDestroy {
       );
     }
   }
-
 
   async openCesserModal(): Promise<void> {
     if (!this.user) return;

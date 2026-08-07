@@ -3,12 +3,13 @@ import { RouterModule, Routes } from '@angular/router';
 import { DashboardEmployeeComponent } from './components/dashboard-employee/dashboard-employee.component';
 import { CreateEmployeeComponent } from './components/create-employee/create-employee.component';
 import { profileCompleteGuard } from '../core/guards/profile-complete.guard';
-import { SideBarComponent } from '../rh/sidebar/sidebar.component';
+import { SideBarComponent } from '../communComponents/sidebar/sidebar.component';
 import { ListUsersComponent } from './components/list-users/list-users.component';
-import { ConsulterUserByAdminComponent } from './consulter-user-by-admin/consulter-user-by-admin.component';
+import { ConsulterUserByAdminComponent } from './components/consulter-user-by-admin/consulter-user-by-admin.component';
 import { DepartementComponent } from './components/departement/departement.component';
-
-
+import { ConsulterleslistePosteParEmployeeOuCandidatComponent } from '../communComponents/consulterlesliste-poste-par-employee-ou-candidat/consulterlesliste-poste-par-employee-ou-candidat.component';
+import { ConsulterspecificposteseloncandidatandadminComponent } from '../communComponents/consulterspecificposteseloncandidatandadmin/consulterspecificposteseloncandidatandadmin.component';
+import { AuthGuard } from '../core/guards/auth.guard';
 
 const routes: Routes = [
   {
@@ -17,6 +18,18 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboardmanager', pathMatch: 'full' },
 
+      {
+        path: 'consulterlesPosteDisponibles',
+        component: ConsulterleslistePosteParEmployeeOuCandidatComponent,
+        canActivate: [AuthGuard, profileCompleteGuard],
+        data: { roles: ['EMPLOYEE', 'CANDIDAT'] },
+      },
+      {
+        path: 'consulterspecifiPosteDisponibles/:id',
+        component: ConsulterspecificposteseloncandidatandadminComponent,
+        canActivate: [AuthGuard, profileCompleteGuard],
+        data: { roles: ['EMPLOYEE', 'CANDIDAT'] },
+      },
       {
         path: 'listUsersManager',
         component: ListUsersComponent,

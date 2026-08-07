@@ -21,22 +21,33 @@ import { ROLE_ROUTES } from '../../core/constant/role-route';
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.css',
+  styleUrls: ['./sidebar.component.css'],
 })
 export class SideBarComponent implements OnInit, OnDestroy {
+  openSubmenus: Record<string, boolean> = {
+    postes: false, 
+    employees: false, 
+    candidat: false,
+  };
+
+  toggleSidebar(): void {
+    this.isCollapsed = !this.isCollapsed;
+    if (this.isCollapsed) {
+      this.openSubmenus = { postes: false, employees: false, candidat: false }; 
+    }
+  }
+
   isCollapsed = false;
   isLoggedIn = false;
   user: UserConnected | null = null;
-
   notifCount = 0;
   wsStatus: ConnectionStatus = 'DISCONNECTED';
 
-  openSubmenus: Record<string, boolean> = {};
-  private readonly destroy$ = new Subject<void>();
-
   readonly profileRoute = '/getMyprofile';
   readonly dashboardRoute = ROLE_ROUTES;
-  currentRole: keyof typeof ROLE_ROUTES = 'EMPLOYEE'; // Default fallback
+  currentRole: keyof typeof ROLE_ROUTES = 'EMPLOYEE';
+
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly authService: AuthService,
@@ -47,29 +58,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.syncAuth();
-
-    this.userService
-      .getMyProfile()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (p) => {
-          this.user = {
-            ...(this.user as UserConnected),
-            ...p,
-            image: p.imageBase64,
-          } as UserConnected;
-
-          // Set currentRole based on the user's role
-          if (
-            this.user?.role &&
-            ROLE_ROUTES[this.user.role as keyof typeof ROLE_ROUTES]
-          ) {
-            this.currentRole = this.user.role as keyof typeof ROLE_ROUTES;
-          }
-        },
-        error: () => {},
-      });
-
+    this.loadUserProfile();
     this.connectRealtime();
   }
 
@@ -79,18 +68,33 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.wsService.disconnect();
   }
 
-  // ─────────────────────────────────────────────
-  // AUTH
-  // ─────────────────────────────────────────────
-
   private syncAuth(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
     this.user = this.authService.getCurrentUser();
   }
 
-  // ─────────────────────────────────────────────
-  // TEMPS RÉEL — Notifications
-  // ─────────────────────────────────────────────
+  private loadUserProfile(): void {
+    this.userService
+      .getMyProfile()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (profile) => {
+          this.user = {
+            ...(this.user as UserConnected),
+            ...profile,
+            image: profile.imageBase64,
+          } as UserConnected;
+
+          if (
+            this.user?.role &&
+            ROLE_ROUTES[this.user.role as keyof typeof ROLE_ROUTES]
+          ) {
+            this.currentRole = this.user.role as keyof typeof ROLE_ROUTES;
+          }
+        },
+        error: () => {},
+      });
+  }
 
   private connectRealtime(): void {
     if (!this.isLoggedIn) return;
@@ -100,7 +104,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
     this.wsService.status$
       .pipe(takeUntil(this.destroy$))
-      .subscribe((s) => (this.wsStatus = s));
+      .subscribe((status) => (this.wsStatus = status));
 
     this.wsService.events$
       .pipe(takeUntil(this.destroy$))
@@ -112,10 +116,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
   clearNotifCount(): void {
     this.notifCount = 0;
   }
-
-  // ─────────────────────────────────────────────
-  // WEBSOCKET HELPERS (template)
-  // ─────────────────────────────────────────────
 
   get wsStatusLabel(): string {
     return wsStatusLabel(this.wsStatus);
@@ -133,23 +133,25 @@ export class SideBarComponent implements OnInit, OnDestroy {
     return eventColor(type as any);
   }
 
-  // ─────────────────────────────────────────────
-  // UI
-  // ─────────────────────────────────────────────
 
-  toggleSidebar(): void {
-    this.isCollapsed = !this.isCollapsed;
-    if (this.isCollapsed) this.openSubmenus = {};
-  }
 
-  toggleSubmenu(key: string, event: Event): void {
-    event.preventDefault();
-    event.stopPropagation();
+  toggleSubmenu(key: string, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     if (this.isCollapsed) {
       this.isCollapsed = false;
-      setTimeout(() => (this.openSubmenus[key] = true), 300);
+      setTimeout(() => {
+        this.openSubmenus[key] = true;
+      }, 300);
       return;
     }
+
+    Object.keys(this.openSubmenus).forEach((k) => {
+      if (k !== key) this.openSubmenus[k] = false;
+    });
     this.openSubmenus[key] = !this.openSubmenus[key];
   }
 

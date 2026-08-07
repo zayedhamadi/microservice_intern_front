@@ -9,14 +9,22 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subject, Subscription, takeUntil } from 'rxjs';
-import { HIDDEN_NAVBAR_ROUTES } from '../core/constant/layout-routes';
-import { AuthService } from '../core/service/auth.service';
-import { UserConnected } from '../core/models/userConnected';
-import { eventColor, eventIcon, WebSocketService } from '../core/service/web-socket.service';
-import { NotificationItem, AdminRealtimeEvent, buildNotificationText } from '../core/models/websocket';
-import { ROLE_ROUTES } from '../core/constant/role-route';
+import { HIDDEN_NAVBAR_ROUTES } from '../../core/constant/layout-routes';
+import { AuthService } from '../../core/service/auth.service';
+import { UserConnected } from '../../core/models/userConnected';
+import {
+  eventColor,
+  eventIcon,
+  WebSocketService,
+} from '../../core/service/web-socket.service';
+import {
+  NotificationItem,
+  AdminRealtimeEvent,
+  buildNotificationText,
+} from '../../core/models/websocket';
+import { ROLE_ROUTES } from '../../core/constant/role-route';
 
-import { WsRole } from '../core/service/web-socket.service';
+import { WsRole } from '../../core/service/web-socket.service';
 
 @Component({
   selector: 'app-navbar',
@@ -175,8 +183,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.NOTIF_STORAGE_KEY,
         JSON.stringify(this.notifications),
       );
-    } catch {
-    }
+    } catch {}
   }
 
   private formatTime(iso: string): string {
@@ -185,7 +192,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       minute: '2-digit',
     });
   }
-
 
   private updateVisibility(url: string): void {
     this.hideNavbar = HIDDEN_NAVBAR_ROUTES.some((r) => url.startsWith(r));

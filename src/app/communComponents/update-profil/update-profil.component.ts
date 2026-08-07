@@ -10,11 +10,11 @@ import {
 } from '@angular/forms';
 import Swal from 'sweetalert2';
 
-import { UpdateProfileRequest } from '../core/models/update_profile.model';
-import { UserService } from '../core/service/user.service';
-import { CertificationService } from '../core/service/certification.service';
-import { CertificationDTO } from '../core/models/CertificationDTO';
-import { FileUserMongoService } from '../core/service/file-user-mongo.service';
+import { UpdateProfileRequest } from '../../core/models/update_profile.model';
+import { UserService } from '../../core/service/user.service';
+import { CertificationService } from '../../core/service/certification.service';
+import { CertificationDTO } from '../../core/models/CertificationDTO';
+import { FileUserMongoService } from '../../core/service/file-user-mongo.service';
 
 const phoneValidator: ValidatorFn = (
   c: AbstractControl,
@@ -489,8 +489,9 @@ export class UpdateProfilComponent implements OnInit {
     } else if (this.cvMarkedForDeletion) {
       this.fileUserMongoService.deleteCv().subscribe({
         next: () => this.finishSubmit(),
-        error: (error: any) => { this.finishSubmit(), console.log(error) },
-       
+        error: (error: any) => {
+          (this.finishSubmit(), console.log(error));
+        },
       });
     } else {
       this.finishSubmit();

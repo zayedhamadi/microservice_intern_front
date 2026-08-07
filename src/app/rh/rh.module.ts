@@ -5,7 +5,7 @@ import { RHRoutingModule } from './rh-routing.module';
 import { DashboardRHComponent } from './components/dashboard-rh/dashboard-rh.component';
 import { ListUsersComponent } from './components/list-users/list-users.component';
 import { ConsulterProfilUserDetailsPerRHComponent } from './components/consulter-profil-user-details-per-rh/consulter-profil-user-details-per-rh.component';
-import { SideBarComponent } from './sidebar/sidebar.component';
+import { SideBarComponent } from '../communComponents/sidebar/sidebar.component';
 import { PosteRecrutementComponent } from './components/poste-recrutement/poste-recrutement.component';
 import { ListePosteRecrutementComponent } from './components/liste-poste-recrutement/liste-poste-recrutement.component';
 import { ConsulterSpecificPosteRecrutementDetailleComponent } from './components/consulter-specific-poste-recrutement-detaille/consulter-specific-poste-recrutement-detaille.component';
