@@ -51,7 +51,6 @@ export class AuthService {
     return isPlatformBrowser(this.platformId);
   }
 
-  // --- État réactif de connexion ---
 
   isLoggedInObservable(): Observable<boolean> {
     return this.loggedInSubject.asObservable();

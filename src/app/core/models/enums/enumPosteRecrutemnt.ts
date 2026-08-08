@@ -7,6 +7,16 @@ export enum TypeContrat {
   STAGE = 'STAGE',
 }
 
+
+
+
+export enum InterviewMode {
+  TELEPHONIQUE = 'TELEPHONIQUE',
+  PRESENTIEL = 'PRESENTIEL',
+  MEET = 'MEET',
+}
+
+
 export enum WorkType {
   SUR_SITE = 'SUR_SITE',
   HYBRIDE = 'HYBRIDE',
@@ -20,8 +30,10 @@ export enum StatusPosteRecrutement {
 }
 
 export enum InterviewType {
-  RH = 'RH',
+  RH_FINAL = 'RH_FINAL',
   TECHNIQUE = 'TECHNIQUE',
+  RH_INITIAL = 'RH_INITIAL',
+ 
 }
 export enum InterviewResult {
   REUSSI = 'REUSSI',
@@ -46,10 +58,19 @@ export enum CvChoice {
   NOUVEAU = 'NOUVEAU',
 }
 export enum ApplicationStatus {
-  EN_ATTENTE = 'EN_ATTENTE',
-  SELECTIONNE = 'SELECTIONNE',
-  ENTRETIEN_PLANIFIE = 'ENTRETIEN_PLANIFIE',
-  ACCEPTE = 'ACCEPTE',
-  REJETE = 'REJETE',
-  RETIRE = 'RETIRE',
+  EN_ATTENTE='EN_ATTENTE',
+
+  SELECTIONNE='SELECTIONNE',
+
+  EN_ENTRETIEN_RH='EN_ENTRETIEN_RH',
+
+  EN_ENTRETIEN_TECHNIQUE='EN_ENTRETIEN_TECHNIQUE',
+
+  EN_ENTRETIEN_FINAL='EN_ENTRETIEN_FINAL',
+
+  ACCEPTE='ACCEPTE',
+
+  REJETE='REJETE',
+
+  RETIRE='RETIRE',
 }
