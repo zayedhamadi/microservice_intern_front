@@ -1,0 +1,121 @@
+<div class="apply-page">
+
+    <button class="back-link" (click)="goToPosteDetail()">
+        <i class="fa-solid fa-arrow-left"></i> Retour au poste
+    </button>
+
+    <!-- Chargement -->
+    <div *ngIf="isLoadingPoste || isCheckingCandidature" class="state-box">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <p>Préparation de votre candidature…</p>
+    </div>
+
+    <!-- Erreur -->
+    <div *ngIf="!isLoadingPoste && hasErrorPoste" class="state-box">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>Impossible de charger ce poste.</p>
+    </div>
+
+    <div class="apply-layout" *ngIf="isReady && poste">
+
+        <!-- En-tête poste -->
+        <div class="apply-card poste-summary">
+            <div class="dept-avatar-lg">{{ poste.titre?.charAt(0)?.toUpperCase() }}</div>
+            <div>
+                <h1 class="apply-title">Postuler — {{ poste.titre }}</h1>
+                <p class="apply-subtitle">
+                    <i class="fa-solid fa-building-user"></i>
+                    {{ poste.departementNom || 'Département non défini' }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Déjà candidat (candidature active, non retirée) -->
+        <div class="apply-card already-applied" *ngIf="hasCandidatureActive">
+            <i class="fa-solid fa-circle-check"></i>
+            <div>
+                <p class="already-applied-title">Vous avez déjà postulé à ce poste</p>
+                <p class="already-applied-text">
+                    Suivez l'évolution de votre candidature depuis « Mes candidatures ».
+                </p>
+            </div>
+            <div class="already-applied-actions">
+                <button class="ghost-btn" (click)="goToPosteDetail()">Voir le poste</button>
+                <button class="edit-btn" [routerLink]="['/candidat/updatePosteForSpecificPoste', posteId]">
+                    <i class="fa-solid fa-pen"></i>
+                    Voir / modifier ma candidature
+                </button>
+            </div>
+        </div>
+
+        <!-- Formulaire de candidature (nouvelle candidature ou re-dépôt après retrait) -->
+        <form class="apply-card apply-form" *ngIf="canShowForm" (ngSubmit)="submit()">
+
+            <p class="already-applied-text redeposit-hint" *ngIf="maCandidature?.statut === ApplicationStatus.RETIRE">
+                <i class="fa-solid fa-circle-info"></i>
+                Vous aviez retiré votre candidature pour ce poste — vous pouvez postuler à nouveau ci-dessous.
+            </p>
+
+            <div class="apply-field">
+                <label class="apply-label">Curriculum vitae *</label>
+                <div class="cv-choice-toggle">
+                    <button type="button" class="cv-choice-btn" [class.active]="cvChoice === 'EXISTANT'"
+                        (click)="cvChoice = 'EXISTANT'">
+                        <i class="fa-solid fa-file-circle-check"></i>
+                        Utiliser mon CV enregistré
+                    </button>
+                    <button type="button" class="cv-choice-btn" [class.active]="cvChoice === 'NOUVEAU'"
+                        (click)="cvChoice = 'NOUVEAU'">
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                        Téléverser un nouveau CV
+                    </button>
+                </div>
+
+                <div class="apply-file-input" *ngIf="cvChoice === 'NOUVEAU'">
+                    <input #cvInput type="file" accept=".pdf,.doc,.docx" (change)="onCvFileSelected($event)" />
+                    <div class="apply-file-chip" *ngIf="selectedCvFile">
+                        <i class="fa-solid fa-file"></i>
+                        <span>{{ selectedCvFile.name }}</span>
+                        <button type="button" class="chip-remove" (click)="removeCvFile(cvInput)">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <p class="apply-file-help">PDF, DOC ou DOCX — 10 Mo maximum</p>
+                </div>
+            </div>
+
+            <div class="apply-field">
+                <label class="apply-label" for="lettreMotivation">Lettre de motivation (optionnel)</label>
+                <textarea id="lettreMotivation" class="apply-textarea" rows="6"
+                    placeholder="Expliquez pourquoi ce poste vous intéresse…" [(ngModel)]="lettreMotivationTexte"
+                    name="lettreMotivationTexte"></textarea>
+            </div>
+
+            <div class="apply-field">
+                <label class="apply-label">Lettre de motivation en PDF (optionnel)</label>
+                <div class="apply-file-input">
+                    <input #lettreInput type="file" accept="application/pdf" (change)="onLettrePdfSelected($event)" />
+                    <div class="apply-file-chip" *ngIf="selectedLettrePdf">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>{{ selectedLettrePdf.name }}</span>
+                        <button type="button" class="chip-remove" (click)="removeLettrePdf(lettreInput)">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <p class="apply-file-help">PDF uniquement — 10 Mo maximum</p>
+                </div>
+            </div>
+
+            <div class="apply-form-footer">
+                <button type="button" class="ghost-btn" (click)="goToPosteDetail()" [disabled]="isSubmitting">
+                    Annuler
+                </button>
+                <button type="submit" class="edit-btn" [disabled]="isSubmitting">
+                    <i class="fa-solid" [ngClass]="isSubmitting ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+                    {{ isSubmitting ? 'Envoi en cours…' : 'Envoyer ma candidature' }}
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>

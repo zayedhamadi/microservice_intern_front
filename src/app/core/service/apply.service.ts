@@ -26,7 +26,6 @@ export class ApplyService {
     return this.http.post<ApplicationDto>(this.baseUrl, formData);
   }
 
-  /** Postuler avec un CV téléversé spécifiquement pour cette candidature. */
   postulerAvecNouveauCv(
     idPosteRecrutement: string,
     cv: File,
@@ -48,13 +47,47 @@ export class ApplyService {
     );
   }
 
+  modifierCandidature(
+    idApplication: string,
+    lettreMotivationTexte?: string,
+    cv?: File,
+    lettreMotivationPdf?: File,
+    supprimerLettrePdf = false,
+  ): Observable<ApplicationDto> {
+    const formData = new FormData();
+    if (lettreMotivationTexte) {
+      formData.append('lettreMotivationTexte', lettreMotivationTexte);
+    }
+    if (cv) {
+      formData.append('cv', cv);
+    }
+    if (lettreMotivationPdf) {
+      formData.append('lettreMotivationPdf', lettreMotivationPdf);
+    }
+    formData.append('supprimerLettrePdf', String(supprimerLettrePdf));
+    return this.http.put<ApplicationDto>(
+      `${this.baseUrl}/${idApplication}`,
+      formData,
+    );
+  }
+
   getMaCandidaturePourPoste(posteId: string): Observable<ApplicationDto> {
     return this.http.get<ApplicationDto>(
       `${this.baseUrl}/mon-statut/${posteId}`,
     );
   }
 
+  getMesCandidatures(): Observable<ApplicationDto[]> {
+    return this.http.get<ApplicationDto[]>(`${this.baseUrl}/mes-candidatures`);
+  }
+
   retirerCandidature(idApplication: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${idApplication}`);
+  }
+
+  telechargerLettreMotivation(idApplication: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${idApplication}/lettre-motivation`, {
+      responseType: 'blob',
+    });
   }
 }

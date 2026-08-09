@@ -4,26 +4,21 @@
         <i class="fa-solid fa-arrow-left"></i> Retour aux postes
     </button>
 
-    <!-- Loading -->
     <div *ngIf="isLoading" class="state-box">
         <i class="fa-solid fa-spinner fa-spin"></i>
         <p>Chargement du poste…</p>
     </div>
 
-    <!-- Erreur -->
     <div *ngIf="!isLoading && hasError" class="state-box">
         <i class="fa-solid fa-triangle-exclamation"></i>
         <p>Impossible de charger ce poste.</p>
         <button class="ghost-btn" (click)="loadPoste()">Réessayer</button>
     </div>
 
-    <!-- Contenu -->
     <div class="detail-layout" *ngIf="!isLoading && !hasError && poste">
 
-        <!-- ================= Colonne principale ================= -->
         <div class="detail-main">
 
-            <!-- En-tête -->
             <div class="detail-card header-card">
                 <div class="header-top">
                     <div class="header-top-left">
@@ -62,19 +57,16 @@
                 </div>
             </div>
 
-            <!-- Description -->
             <div class="detail-card" *ngIf="poste.description">
                 <h2 class="section-title"><i class="fa-solid fa-align-left"></i> Description du poste</h2>
                 <p class="section-text">{{ poste.description }}</p>
             </div>
 
-            <!-- Profil recherché -->
             <div class="detail-card" *ngIf="poste.profilDemandeOfPoste">
                 <h2 class="section-title"><i class="fa-solid fa-user-check"></i> Profil recherché</h2>
                 <p class="section-text">{{ poste.profilDemandeOfPoste }}</p>
             </div>
 
-            <!-- Compétences -->
             <div class="detail-card" *ngIf="poste.competencesRequises?.length">
                 <h2 class="section-title"><i class="fa-solid fa-screwdriver-wrench"></i> Compétences requises</h2>
                 <div class="tag-list">
@@ -82,7 +74,6 @@
                 </div>
             </div>
 
-            <!-- Langues -->
             <div class="detail-card" *ngIf="poste.languesRequises?.length">
                 <h2 class="section-title"><i class="fa-solid fa-language"></i> Langues requises</h2>
                 <div class="tag-list">
@@ -97,7 +88,13 @@
 
             <!-- Bloc candidature (candidat uniquement) -->
             <div class="side-card candidature-card" *ngIf="isCandidat">
-                <h3 class="side-title">Votre candidature</h3>
+
+                <div class="candidature-header">
+                    <div class="candidature-icon">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </div>
+                    <h3 class="side-title">Votre candidature</h3>
+                </div>
 
                 <div *ngIf="isLoadingCandidature" class="candidature-loading">
                     <i class="fa-solid fa-spinner fa-spin"></i> Vérification en cours…
@@ -106,31 +103,52 @@
                 <ng-container *ngIf="!isLoadingCandidature">
 
                     <!-- Déjà candidat -->
-                    <div *ngIf="maCandidature" class="candidature-status">
-                        <span [ngClass]="getCandidatureStatusClass(maCandidature.statut)">
-                            {{ getCandidatureStatusLabel(maCandidature.statut) }}
-                        </span>
-                        <p class="candidature-date" *ngIf="maCandidature.dateCandidature">
-                            Postulé le {{ maCandidature.dateCandidature | date: 'dd/MM/yyyy' }}
-                        </p>
-
-                        <button class="delete-btn" *ngIf="canRetirer" [disabled]="isRetraitEnCours"
-                            (click)="retirerCandidature()">
-                            <i class="fa-solid"
-                                [ngClass]="isRetraitEnCours ? 'fa-spinner fa-spin' : 'fa-rotate-left'"></i>
-                            {{ isRetraitEnCours ? 'Retrait en cours…' : 'Retirer ma candidature' }}
+                <div *ngIf="maCandidature" class="candidature-status">
+                    <span class="status-badge" [ngClass]="getCandidatureStatusClass(maCandidature.statut)">
+                        <i class="fa-solid fa-circle status-dot"></i>
+                        {{ getCandidatureStatusLabel(maCandidature.statut) }}
+                    </span>
+                    <p class="candidature-date" *ngIf="maCandidature.dateCandidature">
+                        <i class="fa-regular fa-calendar"></i>
+                        Postulé le {{ maCandidature.dateCandidature | date: 'dd/MM/yyyy' }}
+                    </p>
+                
+                    <!-- Candidature RETIRE : proposer de repostuler -->
+                    <button class="edit-btn primary-cta" *ngIf="canRepostuler" (click)="goToApplyPage()">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Repostuler à ce poste</span>
+                    </button>
+                
+                    <!-- Candidature EN_ATTENTE : modifier ou retirer -->
+                    <ng-container *ngIf="canEditCandidature">
+                        <button class="edit-btn primary-cta"
+                            [routerLink]="['/candidat/updatePosteForSpecificPoste', poste.idPosteRecrutement]">
+                            <i class="fa-solid fa-pen"></i>
+                            <span>Voir / modifier ma candidature</span>
                         </button>
-                    </div>
-
+                    </ng-container>
+                
+                    <button class="delete-btn" *ngIf="canRetirer" [disabled]="isRetraitEnCours" (click)="retirerCandidature()">
+                        <i class="fa-solid" [ngClass]="isRetraitEnCours ? 'fa-spinner fa-spin' : 'fa-rotate-left'"></i>
+                        {{ isRetraitEnCours ? 'Retrait en cours…' : 'Retirer ma candidature' }}
+                    </button>
+                </div>
                     <!-- Pas encore candidat, poste ouvert -->
-                    <div *ngIf="!maCandidature && canApply">
-                        <p class="candidature-hint">Ce poste correspond à votre profil ? Postulez dès maintenant.</p>
-                        <button class="edit-btn" (click)="openApplyModal()">
-                            <i class="fa-solid fa-paper-plane"></i> Postuler à ce poste
+                    <div class="candidature-actions" *ngIf="!maCandidature && canApply">
+                        <p class="candidature-hint">
+                            Ce poste correspond à votre profil ? Envoyez votre candidature en quelques clics.
+                        </p>
+                        <button class="edit-btn primary-cta" (click)="goToApplyPage()">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Postuler à ce poste</span>
+                        </button>
+                        <button class="ghost-btn save-later-btn"
+                            [routerLink]="['/candidat/enregistrerPostePourPostulerApres', poste.idPosteRecrutement]">
+                            <i class="fa-regular fa-bookmark"></i>
+                            <span>Enregistrer pour plus tard</span>
                         </button>
                     </div>
 
-                    <!-- Poste fermé / expiré -->
                     <div *ngIf="!maCandidature && !canApply" class="candidature-hint muted">
                         <i class="fa-solid fa-circle-info"></i> Ce poste n'accepte plus de candidatures.
                     </div>
@@ -138,7 +156,6 @@
                 </ng-container>
             </div>
 
-            <!-- Détails pratiques -->
             <div class="side-card">
                 <h3 class="side-title">Détails du poste</h3>
 
@@ -163,68 +180,6 @@
                 </div>
             </div>
 
-        
-
-        </div>
-    </div>
-
-    <!-- ================= Modale de candidature ================= -->
-    <div class="apply-modal-overlay" *ngIf="isApplyModalOpen" (click)="closeApplyModal()">
-        <div class="apply-modal" (click)="$event.stopPropagation()">
-            <div class="apply-modal-header">
-                <h3>Postuler — {{ poste?.titre }}</h3>
-                <button class="modal-close-btn" (click)="closeApplyModal()" [disabled]="isSubmittingApply">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="apply-modal-body">
-
-                <div class="apply-field">
-                    <label class="apply-label">Curriculum vitae</label>
-                    <div class="cv-choice-toggle">
-                        <button type="button" class="cv-choice-btn" [class.active]="cvChoice === 'EXISTANT'"
-                            (click)="cvChoice = 'EXISTANT'">
-                            Utiliser mon CV enregistré
-                        </button>
-                        <button type="button" class="cv-choice-btn" [class.active]="cvChoice === 'NOUVEAU'"
-                            (click)="cvChoice = 'NOUVEAU'">
-                            Téléverser un nouveau CV
-                        </button>
-                    </div>
-
-                    <div class="apply-file-input" *ngIf="cvChoice === 'NOUVEAU'">
-                        <input type="file" accept=".pdf,.doc,.docx" (change)="onCvFileSelected($event)" />
-                        <span class="apply-file-hint" *ngIf="selectedCvFile">{{ selectedCvFile.name }}</span>
-                    </div>
-                </div>
-
-                <div class="apply-field">
-                    <label class="apply-label" for="lettreMotivation">Lettre de motivation (optionnel)</label>
-                    <textarea id="lettreMotivation" class="apply-textarea" rows="4"
-                        placeholder="Expliquez pourquoi ce poste vous intéresse…" [(ngModel)]="lettreMotivationTexte">
-          </textarea>
-                </div>
-
-                <div class="apply-field">
-                    <label class="apply-label">Lettre de motivation en PDF (optionnel)</label>
-                    <div class="apply-file-input">
-                        <input type="file" accept="application/pdf" (change)="onLettrePdfSelected($event)" />
-                        <span class="apply-file-hint" *ngIf="selectedLettrePdf">{{ selectedLettrePdf.name }}</span>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="apply-modal-footer">
-                <button class="ghost-btn" (click)="closeApplyModal()" [disabled]="isSubmittingApply">
-                    Annuler
-                </button>
-                <button class="edit-btn" (click)="submitApply()" [disabled]="isSubmittingApply">
-                    <i class="fa-solid" [ngClass]="isSubmittingApply ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
-                    {{ isSubmittingApply ? 'Envoi en cours…' : 'Envoyer ma candidature' }}
-                </button>
-            </div>
         </div>
     </div>
 

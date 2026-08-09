@@ -1,0 +1,133 @@
+<div class="apply-page">
+
+    <button class="back-link" (click)="goToPosteDetail()">
+        <i class="fa-solid fa-arrow-left"></i> Retour au poste
+    </button>
+
+    <div *ngIf="isLoading" class="state-box">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <p>Chargement de votre candidature…</p>
+    </div>
+
+    <div *ngIf="!isLoading && hasError" class="state-box">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>Impossible de charger votre candidature pour ce poste.</p>
+    </div>
+
+    <div class="apply-layout" *ngIf="!isLoading && !hasError && poste && maCandidature">
+
+        <div class="apply-card poste-summary">
+            <div class="dept-avatar-lg">{{ poste.titre?.charAt(0)?.toUpperCase() }}</div>
+            <div>
+                <h1 class="apply-title">Ma candidature — {{ poste.titre }}</h1>
+                <p class="apply-subtitle">
+                    <i class="fa-solid fa-building-user"></i>
+                    {{ poste.departementNom || 'Département non défini' }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Lecture seule si la candidature n'est plus modifiable -->
+        <div class="apply-card status-card" *ngIf="!canEdit">
+            <span class="status-pill">{{ getCandidatureStatusLabel(maCandidature.statut) }}</span>
+
+            <p class="status-hint" *ngIf="maCandidature.statut !== ApplicationStatus.RETIRE">
+                Votre candidature est en cours de traitement, elle ne peut plus être modifiée à ce stade.
+            </p>
+            <p class="status-hint" *ngIf="maCandidature.statut === ApplicationStatus.RETIRE">
+                Vous avez retiré cette candidature. Retournez sur la page du poste pour postuler à nouveau.
+            </p>
+            <p class="status-hint" *ngIf="maCandidature.commentaireRH">
+                <strong>Commentaire RH :</strong> {{ maCandidature.commentaireRH }}
+            </p>
+
+            <div class="apply-form-footer">
+                <button class="ghost-btn" (click)="goToPosteDetail()">Retour au poste</button>
+                <button class="delete-btn" *ngIf="canRetirer" [disabled]="isRetraitEnCours"
+                    (click)="retirerCandidature()">
+                    <i class="fa-solid" [ngClass]="isRetraitEnCours ? 'fa-spinner fa-spin' : 'fa-rotate-left'"></i>
+                    {{ isRetraitEnCours ? 'Retrait en cours…' : 'Retirer ma candidature' }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Formulaire de modification (uniquement si EN_ATTENTE) -->
+        <form class="apply-card apply-form" *ngIf="canEdit" (ngSubmit)="submit()">
+
+            <div class="apply-field">
+                <label class="apply-label">Curriculum vitae</label>
+
+                <div class="apply-file-chip existing" *ngIf="maCandidature.cvSnapshotFileName">
+                    <i class="fa-solid fa-file"></i>
+                    <span>{{ maCandidature.cvSnapshotFileName }}</span>
+                    <span class="chip-tag">actuel</span>
+                </div>
+
+                <div class="apply-file-input">
+                    <input #cvInput type="file" accept=".pdf,.doc,.docx" (change)="onCvFileSelected($event)" />
+                    <div class="apply-file-chip" *ngIf="selectedCvFile">
+                        <i class="fa-solid fa-file"></i>
+                        <span>{{ selectedCvFile.name }}</span>
+                        <button type="button" class="chip-remove" (click)="removeCvFile(cvInput)">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <p class="apply-file-help">Laissez vide pour garder votre CV actuel — PDF, DOC ou DOCX, 10 Mo
+                        maximum</p>
+                </div>
+            </div>
+
+            <div class="apply-field">
+                <label class="apply-label" for="lettreMotivation">Lettre de motivation</label>
+                <textarea id="lettreMotivation" class="apply-textarea" rows="6"
+                    placeholder="Expliquez pourquoi ce poste vous intéresse…" [(ngModel)]="lettreMotivationTexte"
+                    name="lettreMotivationTexte"></textarea>
+            </div>
+
+            <div class="apply-field">
+                <label class="apply-label">Lettre de motivation en PDF (optionnel)</label>
+
+                <div class="apply-file-chip existing"
+                    *ngIf="maCandidature.lettreMotivationPdfPresente && !supprimerLettrePdfExistante && !selectedLettrePdf">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>{{ maCandidature.lettreMotivationPdfFileName }}</span>
+                    <span class="chip-tag">actuelle</span>
+                    <button type="button" class="chip-remove" (click)="supprimerLettreExistante()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <p class="removed-hint" *ngIf="supprimerLettrePdfExistante">
+                    La lettre PDF actuelle sera supprimée.
+                    <button type="button" class="link-btn"
+                        (click)="annulerSuppressionLettreExistante()">Annuler</button>
+                </p>
+
+                <div class="apply-file-input">
+                    <input #lettreInput type="file" accept="application/pdf" (change)="onLettrePdfSelected($event)" />
+                    <div class="apply-file-chip" *ngIf="selectedLettrePdf">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>{{ selectedLettrePdf.name }}</span>
+                        <button type="button" class="chip-remove" (click)="removeNewLettrePdf(lettreInput)">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <p class="apply-file-help">PDF uniquement — 10 Mo maximum</p>
+                </div>
+            </div>
+
+            <div class="apply-form-footer">
+                <button type="button" class="delete-btn" [disabled]="isRetraitEnCours || isSubmitting"
+                    (click)="retirerCandidature()">
+                    <i class="fa-solid" [ngClass]="isRetraitEnCours ? 'fa-spinner fa-spin' : 'fa-rotate-left'"></i>
+                    {{ isRetraitEnCours ? 'Retrait en cours…' : 'Retirer ma candidature' }}
+                </button>
+                <button type="submit" class="edit-btn" [disabled]="isSubmitting || isRetraitEnCours">
+                    <i class="fa-solid" [ngClass]="isSubmitting ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+                    {{ isSubmitting ? 'Enregistrement…' : 'Enregistrer les modifications' }}
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
