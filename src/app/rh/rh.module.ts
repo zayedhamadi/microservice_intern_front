@@ -13,6 +13,10 @@ import { ListeDepartementComponent } from './components/liste-departement/liste-
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { EditPosteRecrutementDetailleComponent } from './components/edit-poste-recrutement-detaille/edit-poste-recrutement-detaille.component';
+import { ConsulteLesPosteQuiLesCandidatsPostulentComponent } from './components/consulte-les-poste-qui-les-candidats-postulent/consulte-les-poste-qui-les-candidats-postulent.component';
+import { ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent } from './components/consulte-liste-candidats-qui-postules-aune-poste-specifique/consulte-liste-candidats-qui-postules-aune-poste-specifique.component';
+import { CalendrierRHComponent } from './components/calendrier-rh/calendrier-rh.component';
+import { InterviewFormDialogComponent } from './components/interview-form-dialog/interview-form-dialog.component';
 @NgModule({
   declarations: [
     DashboardRHComponent,
@@ -24,6 +28,8 @@ import { EditPosteRecrutementDetailleComponent } from './components/edit-poste-r
     ConsulterSpecificPosteRecrutementDetailleComponent,
     ListeDepartementComponent,
     EditPosteRecrutementDetailleComponent,
+    ConsulteLesPosteQuiLesCandidatsPostulentComponent,
+    ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent,
   ],
   imports: [
     CommonModule,
@@ -31,6 +37,8 @@ import { EditPosteRecrutementDetailleComponent } from './components/edit-poste-r
     FormsModule,
     ReactiveFormsModule,
     RHRoutingModule,
+    CalendrierRHComponent,
+    InterviewFormDialogComponent,
   ],
 })
 export class RHModule {}

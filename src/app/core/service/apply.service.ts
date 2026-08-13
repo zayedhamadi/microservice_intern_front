@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ApplicationDto } from '../models/Application';
+import { ApplicationDto, ChangerStatutDto } from '../models/Application';
 import { environment } from '../environement/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -10,6 +10,14 @@ export class ApplyService {
 
   constructor(private http: HttpClient) {}
 
+
+  getCandidaturesClasseesPourPoste(
+    posteId: string,
+  ): Observable<ApplicationDto[]> {
+    return this.http.get<ApplicationDto[]>(
+      `${this.baseUrl}/poste/${posteId}/classees`,
+    );
+  }
   postulerAvecCvExistant(
     idPosteRecrutement: string,
     lettreMotivationTexte?: string,
@@ -89,5 +97,22 @@ export class ApplyService {
     return this.http.get(`${this.baseUrl}/${idApplication}/lettre-motivation`, {
       responseType: 'blob',
     });
+  }
+  getCandidaturesPourPoste(posteId: string): Observable<ApplicationDto[]> {
+    return this.http.get<ApplicationDto[]>(`${this.baseUrl}/poste/${posteId}`);
+  }
+
+  countCandidaturesPourPoste(posteId: string): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/poste/${posteId}/count`);
+  }
+
+  changerStatut(
+    idApplication: string,
+    dto: ChangerStatutDto,
+  ): Observable<ApplicationDto> {
+    return this.http.patch<ApplicationDto>(
+      `${this.baseUrl}/${idApplication}/statut`,
+      dto,
+    );
   }
 }

@@ -1,0 +1,142 @@
+<div class="rh-calendar-container">
+
+  <div class="page-header">
+    <div class="header-text">
+      <h1><i class="fa-solid fa-calendar-check"></i> Calendrier des entretiens</h1>
+      <p>Planifiez, suivez et gérez les entretiens de recrutement</p>
+    </div>
+    <button mat-raised-button color="primary" class="btn-new" (click)="openCreateDialog()">
+      <i class="fa-solid fa-plus"></i>&nbsp; Nouvel entretien
+    </button>
+  </div>
+
+  <div class="stats-strip">
+    @for (s of statuses; track s) {
+      <div class="stat-chip" [style.borderColor]="statusColors[s]">
+        <span class="dot" [style.backgroundColor]="statusColors[s]"></span>
+        <span class="stat-label">{{ s }}</span>
+        <span class="stat-count">{{ statusCounts[s] || 0 }}</span>
+      </div>
+    }
+  </div>
+
+  <mat-tab-group animationDuration="200ms" class="rh-tabs">
+
+  <mat-tab label="Calendrier">
+    <div class="tab-panel">
+      @if (loading) {
+      <div class="loader"><mat-spinner diameter="40"></mat-spinner></div>
+      }
+      <full-calendar #calendar [options]="calendarOptions"></full-calendar>
+  
+      <div class="calendar-legend">
+        <div class="legend-item"><span class="legend-swatch swatch-weekend"></span> Week-end</div>
+        <div class="legend-item"><span class="legend-swatch swatch-national"></span> Fête nationale</div>
+        <div class="legend-item"><span class="legend-swatch swatch-religious"></span> Fête religieuse</div>
+        <div class="legend-item"><span class="legend-swatch swatch-ramadan"></span> Ramadan</div>
+        <div class="legend-item"><span class="legend-swatch swatch-busy"></span> Journée chargée (+3 entretiens)</div>
+      </div>
+    </div>
+  </mat-tab>
+  
+
+    <mat-tab label="Liste">
+      <div class="tab-panel">
+
+        <div class="toolbar">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Rechercher</mat-label>
+            <input matInput placeholder="Candidat, poste, recruteur..."
+                   [ngModel]="searchTerm" (ngModelChange)="onSearchChange($event)">
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Statut</mat-label>
+            <mat-select [(ngModel)]="statusFilter" (selectionChange)="applyFilters()">
+              <mat-option value="">Tous</mat-option>
+              @for (s of statuses; track s) {
+                <mat-option [value]="s">{{ s }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="rh-table">
+            <thead>
+              <tr>
+                <th>Candidat</th>
+                <th>Poste</th>
+                <th>Recruteur</th>
+                <th>Date</th>
+                <th>Heure</th>
+                <th>Mode</th>
+                <th>Statut</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (i of filteredInterviews | paginate: { itemsPerPage: pageSize, currentPage: page }; track i.id) {
+                <tr>
+                  <td>
+                    <div class="candidate-cell">
+                      <div class="avatar">{{ i.candidateName.charAt(0) }}</div>
+                      {{ i.candidateName }}
+                    </div>
+                  </td>
+                  <td>{{ i.posteRecrutement }}</td>
+                  <td>{{ i.interviewerName }}</td>
+                  <td>{{ i.interviewDate | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ i.startTime }} - {{ i.endTime }}</td>
+                  <td><span class="mode-badge">{{ i.mode }}</span></td>
+                  <td>
+                    <span class="status-badge"
+                          [style.backgroundColor]="statusColors[i.status] + '22'"
+                          [style.color]="statusColors[i.status]">
+                      {{ i.status }}
+                    </span>
+                  </td>
+                  <td class="actions-cell">
+                    <button mat-icon-button matTooltip="Modifier" (click)="editInterview(i)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button matTooltip="Supprimer" color="warn" (click)="deleteInterview(i)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="empty-row">Aucun entretien trouvé</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination-wrapper">
+          <pagination-controls
+            previousLabel="Précédent"
+            nextLabel="Suivant"
+            (pageChange)="page = $event">
+          </pagination-controls>
+        </div>
+
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Statistiques">
+      <div class="tab-panel stats-panel">
+        <mat-card class="chart-card">
+          <h3>Répartition des entretiens par statut</h3>
+          <div class="chart-holder">
+            <canvas baseChart [data]="barChartData" [options]="chartOptions" type="doughnut"></canvas>
+          </div>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+
+</div>

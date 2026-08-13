@@ -1,59 +1,119 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { DashboardEmployeeComponent } from './components/dashboard-employee/dashboard-employee.component';
+
 import { CreateEmployeeComponent } from './components/create-employee/create-employee.component';
-import { profileCompleteGuard } from '../core/guards/profile-complete.guard';
-import { SideBarComponent } from '../communComponents/sidebar/sidebar.component';
+
 import { ListUsersComponent } from './components/list-users/list-users.component';
+
 import { ConsulterUserByAdminComponent } from './components/consulter-user-by-admin/consulter-user-by-admin.component';
+
 import { DepartementComponent } from './components/departement/departement.component';
-import { ConsulterleslistePosteParEmployeeOuCandidatComponent } from '../communComponents/consulterlesliste-poste-par-employee-ou-candidat/consulterlesliste-poste-par-employee-ou-candidat.component';
-import { ConsulterspecificposteseloncandidatandadminComponent } from '../communComponents/consulterspecificposteseloncandidatandadmin/consulterspecificposteseloncandidatandadmin.component';
+
+import { CalendrierEmployeeComponent } from './components/calendrier-employee/calendrier-employee.component';
+
+import { SideBarComponent } from '../communComponents/sidebar/sidebar.component';
+
 import { AuthGuard } from '../core/guards/auth.guard';
+
+import { profileCompleteGuard } from '../core/guards/profile-complete.guard';
+
+import { ConsulterleslistePosteParEmployeeOuCandidatComponent } from '../communComponents/consulterlesliste-poste-par-employee-ou-candidat/consulterlesliste-poste-par-employee-ou-candidat.component';
+
+import { ConsulterspecificposteseloncandidatandadminComponent } from '../communComponents/consulterspecificposteseloncandidatandadmin/consulterspecificposteseloncandidatandadmin.component';
 
 const routes: Routes = [
   {
     path: '',
     component: SideBarComponent,
+
     children: [
-      { path: '', redirectTo: 'dashboardmanager', pathMatch: 'full' },
+      // =========================
+      // DEFAULT
+      // =========================
 
       {
-        path: 'consulterlesPosteDisponibles',
-        component: ConsulterleslistePosteParEmployeeOuCandidatComponent,
-        canActivate: [AuthGuard, profileCompleteGuard],
-        data: { roles: ['EMPLOYEE', 'CANDIDAT'] },
+        path: '',
+        redirectTo: 'dashboardmanager',
+        pathMatch: 'full',
       },
-      {
-        path: 'consulterspecifiPosteDisponibles/:id',
-        component: ConsulterspecificposteseloncandidatandadminComponent,
-        canActivate: [AuthGuard, profileCompleteGuard],
-        data: { roles: ['EMPLOYEE', 'CANDIDAT'] },
-      },
-      {
-        path: 'listUsersManager',
-        component: ListUsersComponent,
-        canActivate: [profileCompleteGuard],
-      },
+
+      // =========================
+      // DASHBOARD
+      // =========================
+
       {
         path: 'dashboardmanager',
         component: DashboardEmployeeComponent,
         canActivate: [profileCompleteGuard],
       },
 
+      // =========================
+      // CALENDRIER
+      // =========================
+
+      {
+        path: 'calendrierEmployee',
+        component: CalendrierEmployeeComponent,
+        canActivate: [profileCompleteGuard],
+        data: {
+          roles: ['EMPLOYEE'],
+        },
+      },
+
+      // =========================
+      // EMPLOYEES
+      // =========================
+
+      {
+        path: 'listUsersManager',
+        component: ListUsersComponent,
+        canActivate: [profileCompleteGuard],
+      },
+
+      {
+        path: 'createEmployee',
+        component: CreateEmployeeComponent,
+        canActivate: [profileCompleteGuard],
+      },
+
+      {
+        path: 'consulterUserByAdmin/:id',
+        component: ConsulterUserByAdminComponent,
+        canActivate: [profileCompleteGuard],
+      },
+
+      // =========================
+      // DEPARTEMENT
+      // =========================
+
       {
         path: 'departement',
         component: DepartementComponent,
         canActivate: [profileCompleteGuard],
       },
+
+      // =========================
+      // POSTES
+      // =========================
+
       {
-        path: 'consulterUserByAdmin/:id',
-        component: ConsulterUserByAdminComponent,
+        path: 'consulterlesPosteDisponibles',
+        component: ConsulterleslistePosteParEmployeeOuCandidatComponent,
+        canActivate: [AuthGuard, profileCompleteGuard],
+        data: {
+          roles: ['EMPLOYEE', 'CANDIDAT'],
+        },
       },
+
       {
-        path: 'createEmployee',
-        component: CreateEmployeeComponent,
-        canActivate: [profileCompleteGuard],
+        path: 'consulterspecifiPosteDisponibles/:id',
+        component: ConsulterspecificposteseloncandidatandadminComponent,
+        canActivate: [AuthGuard, profileCompleteGuard],
+        data: {
+          roles: ['EMPLOYEE', 'CANDIDAT'],
+        },
       },
     ],
   },

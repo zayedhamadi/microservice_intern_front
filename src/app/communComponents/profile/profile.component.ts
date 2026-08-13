@@ -6,13 +6,13 @@ import { Router } from '@angular/router';
 import {
   UserCommonProfile,
   UserFullProfile,
-} from '../core/models/userConneccted';
-import { UserService } from '../core/service/user.service';
-import { CertificationService } from '../core/service/certification.service';
-import { CertificationDTO } from '../core/models/CertificationDTO';
-import { NotificationService } from '../core/service/notification.service';
-import { FileUserMongoService } from '../core/service/file-user-mongo.service';
-import { CvDto } from '../core/models/CvDto';
+} from '../../core/models/userConneccted';
+import { UserService } from '../../core/service/user.service';
+import { CertificationService } from '../../core/service/certification.service';
+import { CertificationDTO } from '../../core/models/CertificationDTO';
+import { NotificationService } from '../../core/service/notification.service';
+import { FileUserMongoService } from '../../core/service/file-user-mongo.service';
+import { CvDto } from '../../core/models/CvDto';
 
 type ProfileTab = 'profil' | 'etudes' | 'cv' | 'certifications' | 'position';
 
@@ -156,8 +156,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
       ? this.user.imageBase64
       : `data:image/jpeg;base64,${this.user.imageBase64}`;
   }
-
-
 
   openCvModal(): void {
     if (!this.hasCv) return;

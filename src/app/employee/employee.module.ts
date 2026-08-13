@@ -8,6 +8,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ListUsersComponent } from './components/list-users/list-users.component';
 import { ConsulterUserByAdminComponent } from './components/consulter-user-by-admin/consulter-user-by-admin.component';
 import { DepartementComponent } from './components/departement/departement.component';
+import { CalendrierEmployeeComponent } from './components/calendrier-employee/calendrier-employee.component';
 
 @NgModule({
   declarations: [
@@ -16,6 +17,7 @@ import { DepartementComponent } from './components/departement/departement.compo
     ListUsersComponent,
     ConsulterUserByAdminComponent,
     DepartementComponent,
+    CalendrierEmployeeComponent,
   ],
   imports: [
     CommonModule,

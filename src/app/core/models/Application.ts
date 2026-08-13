@@ -7,7 +7,10 @@ export interface StatusChange {
   auteurKeycloakId?: string;
 }
 
-
+export interface ChangerStatutDto {
+  nouveauStatut: ApplicationStatus;
+  commentaireRH?: string;
+}
 export interface ApplicationDto {
   idApplication?: string;
   candidatKeycloakId?: string;

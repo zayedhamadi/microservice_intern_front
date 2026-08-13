@@ -24,7 +24,7 @@ import { ValidationSignUpComponent } from './auth/validation-sign-up/validation-
 import { JwtInterceptor } from './core/interceptor/jwt.interceptor';
 import { HomeComponent } from './auth/home/home.component';
 import { NavbarComponent } from './communComponents/navbar/navbar.component';
-import { ProfileComponent } from './profile/profile.component';
+import { ProfileComponent } from './communComponents/profile/profile.component';
 import { UpdateProfilComponent } from './communComponents/update-profil/update-profil.component';
 import { SafeUrlPipe } from './core/service/SafeUrlPipe';
 import { NotificationComponent } from './communComponents/notification/notification.component';
@@ -51,8 +51,9 @@ import { NgxPaginationModule } from 'ngx-pagination';
     ConsulterleslistePosteParEmployeeOuCandidatComponent,
     ConsulterspecificposteseloncandidatandadminComponent,
   ],
-  imports: [    NgxPaginationModule,
-  
+  imports: [
+    NgxPaginationModule,
+
     BrowserModule,
     FormsModule,
     ReactiveFormsModule,

@@ -1,0 +1,224 @@
+<div class="page-candidats">
+
+    <!-- ===== En-tête poste ===== -->
+    <div class="carte-hero">
+        <button class="btn-retour" (click)="retour()">
+            <i class="bi bi-arrow-left"></i> Retour aux postes
+        </button>
+
+        <ng-container *ngIf="poste; else chargementPoste">
+            <div class="infos-poste">
+                <h1>{{ poste.titre }}</h1>
+                <div class="badges-poste">
+                    <span class="badge-info"><i class="bi bi-diagram-3"></i>{{ poste.departementNom }}</span>
+                    <span class="badge-info"><i class="bi bi-file-earmark-text"></i>{{ poste.typeContrat }}</span>
+                    <span class="badge-info"><i class="bi bi-laptop"></i>{{ poste.workType }}</span>
+                    <span class="badge-info" *ngIf="poste.lieu"><i class="bi bi-geo-alt"></i>{{ poste.lieu }}</span>
+                </div>
+            </div>
+        </ng-container>
+        <ng-template #chargementPoste>
+            <div class="skeleton-titre" *ngIf="isLoadingPoste"></div>
+        </ng-template>
+    </div>
+
+    <!-- ===== Bandeau statistiques ===== -->
+    <div class="stats-bandeau">
+        <div class="stat-carte stat-neutre">
+            <div class="stat-icone"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-corps">
+                <span class="stat-valeur">{{ totalCandidatures }}</span>
+                <span class="stat-label">Candidatures</span>
+            </div>
+        </div>
+
+        <div class="stat-carte stat-attente">
+            <div class="stat-icone"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-corps">
+                <span class="stat-valeur">{{ compteParStatut(ApplicationStatus.EN_ATTENTE) }}</span>
+                <span class="stat-label">En attente</span>
+            </div>
+        </div>
+
+        <div class="stat-carte stat-entretien">
+            <div class="stat-icone"><i class="bi bi-chat-dots-fill"></i></div>
+            <div class="stat-corps">
+                <span class="stat-valeur">{{ compteParStatut(ApplicationStatus.EN_ENTRETIEN_RH) +
+                    compteParStatut(ApplicationStatus.EN_ENTRETIEN_TECHNIQUE)
+                    + compteParStatut(ApplicationStatus.EN_ENTRETIEN_FINAL) }}</span>
+                <span class="stat-label">En entretien</span>
+            </div>
+        </div>
+
+        <div class="stat-carte stat-succes">
+            <div class="stat-icone"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="stat-corps">
+                <span class="stat-valeur">{{ compteParStatut(ApplicationStatus.ACCEPTE) }}</span>
+                <span class="stat-label">Acceptés</span>
+            </div>
+        </div>
+
+        <div class="stat-carte stat-ia">
+            <div class="stat-icone"><i class="bi bi-cpu-fill"></i></div>
+            <div class="stat-corps">
+                <span class="stat-valeur">{{ scoreMoyen }}%</span>
+                <span class="stat-label">Score IA moyen</span>
+            </div>
+        </div>
+
+        <div class="stat-carte stat-ia">
+            <div class="stat-icone"><i class="bi bi-stars"></i></div>
+            <div class="stat-corps">
+                <span class="stat-valeur">{{ nombreProfilsExcellents }}</span>
+                <span class="stat-label">Profils excellents (≥70%)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Barre d'outils : recherche, filtres, tri, export ===== -->
+    <div class="toolbar">
+        <div class="champ-recherche">
+            <i class="bi bi-search"></i>
+            <input type="text" placeholder="Rechercher un candidat, une compétence..." [ngModel]="searchTerm"
+                (ngModelChange)="onSearchInput($event)" />
+        </div>
+
+        <div class="champ-filtre">
+            <label>Statut</label>
+            <select [(ngModel)]="statutSelectionne" (change)="onFiltreChange()">
+                <option value="">Tous</option>
+                <option *ngFor="let opt of statutOptions" [value]="opt.valeur">{{ opt.label }}</option>
+            </select>
+        </div>
+
+        <div class="filtre-score">
+            <label>Score min. IA <strong>{{ scoreMinimum }}%</strong></label>
+            <input type="range" min="0" max="100" step="10" [(ngModel)]="scoreMinimum" (change)="onFiltreChange()" />
+        </div>
+
+        <div class="tri-boutons">
+            <button [class.actif]="sortBy === 'score'" (click)="changerTri('score')">
+                Score
+                <i class="bi" [class.bi-caret-down-fill]="sortBy==='score' && sortDir==='desc'"
+                    [class.bi-caret-up-fill]="sortBy==='score' && sortDir==='asc'"></i>
+            </button>
+            <button [class.actif]="sortBy === 'date'" (click)="changerTri('date')">
+                Date
+                <i class="bi" [class.bi-caret-down-fill]="sortBy==='date' && sortDir==='desc'"
+                    [class.bi-caret-up-fill]="sortBy==='date' && sortDir==='asc'"></i>
+            </button>
+            <button [class.actif]="sortBy === 'nom'" (click)="changerTri('nom')">
+                Nom
+                <i class="bi" [class.bi-caret-down-fill]="sortBy==='nom' && sortDir==='desc'"
+                    [class.bi-caret-up-fill]="sortBy==='nom' && sortDir==='asc'"></i>
+            </button>
+        </div>
+
+        <button class="btn-reset" *ngIf="filtresActifs > 0" (click)="reinitialiserFiltres()">
+            <i class="bi bi-x-circle"></i> Réinitialiser ({{ filtresActifs }})
+        </button>
+
+        <button class="btn-export" (click)="exporterCsv()" [disabled]="!candidaturesFiltrees.length">
+            <i class="bi bi-download"></i> Exporter CSV
+        </button>
+    </div>
+
+    <!-- ===== États ===== -->
+    <div class="etat-chargement" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Chargement des candidatures...</p>
+    </div>
+
+    <div class="etat-erreur" *ngIf="errorMessage && !isLoading">
+        <i class="bi bi-exclamation-triangle"></i>
+        <p>{{ errorMessage }}</p>
+        <button (click)="chargerCandidatures()">Réessayer</button>
+    </div>
+
+    <div class="etat-vide" *ngIf="!isLoading && !errorMessage && !candidaturesFiltrees.length">
+        <i class="bi bi-inbox"></i>
+        <p>Aucune candidature ne correspond à ces critères.</p>
+    </div>
+
+    <!-- ===== Liste des candidats ===== -->
+    <div class="grille-candidats" *ngIf="!isLoading && candidaturesAffichees.length">
+        <div class="carte-candidat" *ngFor="let candidature of candidaturesAffichees; trackBy: trackByCandidature">
+
+            <div class="carte-header">
+                <div class="identite">
+                    <div class="avatar">{{ (candidature.nomComplet || '?').charAt(0) }}</div>
+                    <div>
+                        <h3>{{ candidature.nomComplet }}</h3>
+                        <p class="sous-titre">{{ candidature.specialite || candidature.formation }}</p>
+                    </div>
+                </div>
+                <span class="badge-statut" [ngClass]="classeStatut(candidature.statut)">
+                    {{ labelStatut(candidature.statut) }}
+                </span>
+            </div>
+
+            <!-- Bloc score IA / matching : anneau de compatibilité -->
+            <div class="bloc-score">
+                <div class="anneau-score" [ngClass]="classeScore(candidature.scoreMatching)"
+                    [style.--pct]="candidature.scoreMatching ?? 0">
+                    <span>{{ candidature.scoreMatching !== undefined && candidature.scoreMatching !== null
+                        ? (candidature.scoreMatching | number:'1.0-0') + '%'
+                        : '—' }}</span>
+                </div>
+                <div class="score-texte">
+                    <span class="score-titre"><i class="bi bi-cpu"></i> Compatibilité IA</span>
+                    <span class="score-label" [ngClass]="classeScore(candidature.scoreMatching)">
+                        {{ labelScore(candidature.scoreMatching) }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="carte-infos">
+                <p><i class="bi bi-envelope"></i> {{ candidature.email }}</p>
+                <p *ngIf="candidature.telephone"><i class="bi bi-telephone"></i> {{ candidature.telephone }}</p>
+                <p *ngIf="candidature.anneesExperienceCandidat !== undefined">
+                    <i class="bi bi-briefcase"></i> {{ candidature.anneesExperienceCandidat }} an(s) d'expérience
+                </p>
+                <p><i class="bi bi-calendar3"></i> Candidature du {{ candidature.dateCandidature | date:'dd/MM/yyyy' }}
+                </p>
+            </div>
+
+            <div class="competences" *ngIf="candidature.competences?.length">
+                <span class="chip" *ngFor="let comp of candidature.competences">{{ comp }}</span>
+            </div>
+
+            <div class="carte-actions">
+                <button class="btn-action btn-profil" (click)="voirProfilCandidat(candidature)">
+                    <i class="bi bi-person"></i> Profil
+                </button>
+                <button class="btn-action btn-lettre" *ngIf="candidature.lettreMotivationPdfPresente"
+                    (click)="telechargerLettreMotivation(candidature)">
+                    <i class="bi bi-file-earmark-pdf"></i> Lettre
+                </button>
+
+                <div class="dropdown-statut" *ngIf="prochainStatutsPossibles(candidature).length">
+                    <select [disabled]="candidatureEnCoursDeMaj === candidature.idApplication"
+                        (change)="changerStatut(candidature, $any($event.target).value)">
+                        <option value="" selected disabled>Changer le statut...</option>
+                        <option *ngFor="let opt of prochainStatutsPossibles(candidature)" [value]="opt.valeur">
+                            → {{ opt.label }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Pagination ===== -->
+    <div class="pagination" *ngIf="totalPages > 1">
+        <button (click)="allerPage(pageActuelle - 1)" [disabled]="pageActuelle === 1">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <button *ngFor="let page of pagesAffichees" [class.actif]="page === pageActuelle" (click)="allerPage(page)">
+            {{ page }}
+        </button>
+        <button (click)="allerPage(pageActuelle + 1)" [disabled]="pageActuelle === totalPages">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+</div>

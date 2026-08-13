@@ -48,7 +48,6 @@ export class ListUsersComponent implements OnInit, OnDestroy {
 
   activeStatus = 'ALL';
 
-  // Les 3 seuls rôles existants dans le système
   roles = ['ALL', 'RH', 'EMPLOYEE', 'CANDIDAT'];
 
   quickSearchId = '';
@@ -243,7 +242,6 @@ export class ListUsersComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  // ── Sort ──────────────────────────────────────────────
 
   sort(field: string): void {
     if (this.sortField === field) {

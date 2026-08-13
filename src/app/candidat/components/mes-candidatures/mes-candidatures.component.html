@@ -1,1 +1,208 @@
-<p>mes-candidatures works!</p>
+<div class="candidatures-page">
+
+    <!-- En-tête + stats -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Mes candidatures</h1>
+            <p class="page-subtitle">Suivez l'état de toutes vos candidatures en un coup d'œil.</p>
+        </div>
+    </div>
+
+    <div class="stats-row" *ngIf="!isLoading && !hasError">
+        <div class="stat-card">
+            <span class="stat-value">{{ totalCount }}</span>
+            <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-card pending">
+            <span class="stat-value">{{ countEnAttente }}</span>
+            <span class="stat-label">En attente</span>
+        </div>
+        <div class="stat-card progress">
+            <span class="stat-value">{{ countEnCours }}</span>
+            <span class="stat-label">En cours d'entretien</span>
+        </div>
+        <div class="stat-card success">
+            <span class="stat-value">{{ countAcceptees }}</span>
+            <span class="stat-label">Acceptées</span>
+        </div>
+        <div class="stat-card muted">
+            <span class="stat-value">{{ countClotures }}</span>
+            <span class="stat-label">Clôturées</span>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="state-box">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <p>Chargement de vos candidatures…</p>
+    </div>
+
+    <!-- Erreur -->
+    <div *ngIf="!isLoading && hasError" class="state-box">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>Impossible de charger vos candidatures.</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading && !hasError">
+
+        <!-- Barre de filtres -->
+        <div class="filters-bar">
+            <div class="search-input">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Rechercher un poste, un département…" [(ngModel)]="searchTerm"
+                    (ngModelChange)="onFilterChange()" />
+            </div>
+
+            <select class="filter-select" [(ngModel)]="statutFilter" (ngModelChange)="onFilterChange()">
+                <option value="TOUS">Tous les statuts</option>
+                <option [value]="ApplicationStatus.EN_ATTENTE">En attente</option>
+                <option [value]="ApplicationStatus.SELECTIONNE">Profil sélectionné</option>
+                <option [value]="ApplicationStatus.EN_ENTRETIEN_RH">Entretien RH</option>
+                <option [value]="ApplicationStatus.EN_ENTRETIEN_TECHNIQUE">Entretien technique</option>
+                <option [value]="ApplicationStatus.EN_ENTRETIEN_FINAL">Entretien final</option>
+                <option [value]="ApplicationStatus.ACCEPTE">Recruté(e)</option>
+                <option [value]="ApplicationStatus.REJETE">Non retenue</option>
+                <option [value]="ApplicationStatus.RETIRE">Retirée</option>
+            </select>
+
+            <select class="filter-select" [(ngModel)]="typeContratFilter" (ngModelChange)="onFilterChange()">
+                <option value="TOUS">Tous les contrats</option>
+                <option *ngFor="let t of typeContratOptions" [value]="t">{{ t }}</option>
+            </select>
+
+            <select class="filter-select" [(ngModel)]="workTypeFilter" (ngModelChange)="onFilterChange()">
+                <option value="TOUS">Tous les modes</option>
+                <option *ngFor="let w of workTypeOptions" [value]="w">{{ w }}</option>
+            </select>
+
+            <select class="filter-select" [(ngModel)]="departementFilter" (ngModelChange)="onFilterChange()">
+                <option value="TOUS">Tous les départements</option>
+                <option *ngFor="let d of departementOptions" [value]="d">{{ d }}</option>
+            </select>
+
+            <select class="filter-select" [(ngModel)]="sortOption" (ngModelChange)="onFilterChange()">
+                <option value="date-desc">Plus récentes d'abord</option>
+                <option value="date-asc">Plus anciennes d'abord</option>
+                <option value="titre-asc">Titre (A → Z)</option>
+                <option value="titre-desc">Titre (Z → A)</option>
+            </select>
+
+            <button class="ghost-btn reset-btn" *ngIf="hasActiveFilters" (click)="resetFilters()">
+                <i class="fa-solid fa-xmark"></i> Réinitialiser
+            </button>
+        </div>
+
+        <!-- Résumé résultats + taille de page -->
+        <div class="results-bar" *ngIf="filteredItems.length > 0">
+            <span class="results-count">
+                {{ rangeStart }}–{{ rangeEnd }} sur {{ filteredItems.length }} candidature(s)
+            </span>
+            <div class="page-size-select">
+                <label for="pageSize">Par page</label>
+                <select id="pageSize" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+                    <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- État vide -->
+        <div class="state-box" *ngIf="filteredItems.length === 0">
+            <i class="fa-solid fa-inbox"></i>
+            <p *ngIf="!hasActiveFilters">Vous n'avez encore postulé à aucun poste.</p>
+            <p *ngIf="hasActiveFilters">Aucune candidature ne correspond à ces filtres.</p>
+            <button class="ghost-btn" *ngIf="hasActiveFilters" (click)="resetFilters()">Réinitialiser les
+                filtres</button>
+        </div>
+
+        <!-- Liste des candidatures -->
+        <div class="candidature-list">
+            <div class="candidature-card" *ngFor="let item of pagedItems">
+
+                <div class="card-main" (click)="voirPoste(item.candidature.posteRecrutementId)">
+                    <div class="dept-avatar">{{ getDeptInitial(item.poste?.departementNom) }}</div>
+
+                    <div class="card-body">
+                        <div class="card-top">
+                            <h3 class="card-title">{{ item.poste?.titre || 'Poste indisponible' }}</h3>
+                            <span [ngClass]="getStatusClass(item.candidature.statut)">
+                                <i class="fa-solid fa-circle status-dot"></i>
+                                {{ getStatusLabel(item.candidature.statut) }}
+                            </span>
+                        </div>
+
+                        <p class="card-dept" *ngIf="item.poste?.departementNom">
+                            <i class="fa-solid fa-building-user"></i> {{ item.poste?.departementNom }}
+                        </p>
+
+                        <div class="card-meta">
+                            <span *ngIf="item.poste?.workType">
+                                <i class="fa-solid" [ngClass]="getWorkTypeIcon(item.poste?.workType)"></i>
+                                {{ item.poste?.workType }}
+                            </span>
+                            <span *ngIf="item.poste?.typeContrat">
+                                <i class="fa-solid fa-file-signature"></i> {{ item.poste?.typeContrat }}
+                            </span>
+                            <span *ngIf="item.poste?.lieu">
+                                <i class="fa-solid fa-location-dot"></i> {{ item.poste?.lieu }}
+                            </span>
+                            <span *ngIf="item.candidature.dateCandidature">
+                                <i class="fa-regular fa-calendar"></i>
+                                Postulé le {{ item.candidature.dateCandidature | date: 'dd/MM/yyyy' }}
+                            </span>
+                        </div>
+
+                        <p class="card-comment" *ngIf="item.candidature.commentaireRH">
+                            <i class="fa-solid fa-comment-dots"></i> {{ item.candidature.commentaireRH }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <button class="action-btn" (click)="voirPoste(item.candidature.posteRecrutementId)">
+                        <i class="fa-solid fa-eye"></i> Voir le poste
+                    </button>
+
+                    <button class="action-btn primary" *ngIf="canModifier(item.candidature)"
+                        (click)="modifierCandidature(item.candidature.posteRecrutementId)">
+                        <i class="fa-solid fa-pen"></i> Modifier
+                    </button>
+
+                    <button class="action-btn primary" *ngIf="canRepostuler(item.candidature)"
+                        (click)="repostuler(item.candidature.posteRecrutementId)">
+                        <i class="fa-solid fa-paper-plane"></i> Repostuler
+                    </button>
+
+                    <button class="action-btn" *ngIf="item.candidature.lettreMotivationPdfPresente"
+                        (click)="telechargerLettre(item)">
+                        <i class="fa-solid fa-file-pdf"></i> Lettre PDF
+                    </button>
+
+                    <button class="action-btn danger" *ngIf="canRetirer(item.candidature)"
+                        [disabled]="isRetraitEnCoursId === item.candidature.idApplication"
+                        (click)="retirerCandidature(item)">
+                        <i class="fa-solid"
+                            [ngClass]="isRetraitEnCoursId === item.candidature.idApplication ? 'fa-spinner fa-spin' : 'fa-rotate-left'"></i>
+                        Retirer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" *ngIf="totalPages > 1">
+            <button class="page-nav-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+
+            <button class="page-number-btn" *ngFor="let page of pageNumbers" [class.active]="page === currentPage"
+                (click)="goToPage(page)">
+                {{ page }}
+            </button>
+
+            <button class="page-nav-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+    </ng-container>
+</div>

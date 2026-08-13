@@ -1,0 +1,395 @@
+:host {
+  display: block;
+  font-family: 'Roboto', 'Segoe UI', sans-serif;
+}
+
+.rh-calendar-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 24px 32px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(30, 58, 138, 0.25);
+}
+
+.header-text h1 {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-text p {
+  margin: 0;
+  opacity: 0.85;
+  font-size: 14px;
+}
+
+.btn-new {
+  border-radius: 24px !important;
+  padding: 0 20px !important;
+  height: 44px;
+  font-weight: 600;
+}
+
+.stats-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1.5px solid;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.stat-count {
+  font-weight: 700;
+}
+
+.rh-tabs {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.tab-panel {
+  padding: 20px;
+  position: relative;
+  min-height: 300px;
+}
+
+.loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+  z-index: 5;
+}
+
+.toolbar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.search-field {
+  flex: 1;
+  min-width: 240px;
+}
+
+.filter-field {
+  width: 220px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #eef1f5;
+}
+
+.rh-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.rh-table thead {
+  background: #f8fafc;
+}
+
+.rh-table th {
+  text-align: left;
+  padding: 12px 14px;
+  font-weight: 600;
+  color: #475569;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rh-table td {
+  padding: 12px 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.candidate-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.mode-badge {
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 4px;
+}
+
+.empty-row {
+  text-align: center;
+  padding: 32px;
+  color: #94a3b8;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.stats-panel {
+  display: flex;
+  justify-content: center;
+}
+
+.chart-card {
+  padding: 20px;
+  max-width: 480px;
+  width: 100%;
+  border-radius: 16px !important;
+}
+
+.chart-card h3 {
+  text-align: center;
+  margin-top: 0;
+  color: #334155;
+}
+
+.chart-holder {
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+::ng-deep .fc {
+  font-family: inherit;
+}
+
+::ng-deep .fc-toolbar-title {
+  font-size: 18px !important;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+::ng-deep .fc-button-primary {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .toolbar {
+    flex-direction: column;
+  }
+  .filter-field {
+    width: 100%;
+  }
+}/* ===== Calendrier tunisien : week-end, fêtes, Ramadan, journées chargées ===== */
+
+::ng-deep .fc-day-weekend-tn,
+::ng-deep .fc-day-holiday-national,
+::ng-deep .fc-day-holiday-religious,
+::ng-deep .fc-day-ramadan {
+  position: relative;
+}
+
+/* Week-end tunisien (Samedi / Dimanche) */
+::ng-deep .fc-day-weekend-tn {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.10), rgba(239, 68, 68, 0.03)) !important;
+}
+
+::ng-deep .fc-day-weekend-tn .fc-daygrid-day-number {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* Fêtes nationales (dates fixes) */
+::ng-deep .fc-day-holiday-national {
+  background: linear-gradient(180deg, rgba(30, 58, 138, 0.12), rgba(30, 58, 138, 0.04)) !important;
+}
+
+::ng-deep .fc-day-holiday-national .fc-daygrid-day-number {
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+::ng-deep .fc-day-holiday-national::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1e3a8a;
+}
+
+/* Fêtes religieuses (Aïd el-Fitr, Aïd el-Adha, Mouled, Nouvel An musulman) */
+::ng-deep .fc-day-holiday-religious {
+  background: linear-gradient(180deg, rgba(217, 119, 6, 0.14), rgba(217, 119, 6, 0.04)) !important;
+}
+
+::ng-deep .fc-day-holiday-religious .fc-daygrid-day-number {
+  color: #b45309;
+  font-weight: 700;
+}
+
+::ng-deep .fc-day-holiday-religious::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d97706;
+}
+
+/* Ramadan (période, hors jours fériés eux-mêmes) */
+::ng-deep .fc-day-ramadan {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.12), rgba(139, 92, 246, 0.03)) !important;
+}
+
+::ng-deep .fc-day-ramadan .fc-daygrid-day-number {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+/* Superposition week-end + jour férié : dégradé combiné */
+::ng-deep .fc-day-weekend-tn.fc-day-holiday-national {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(30, 58, 138, 0.12) 100%) !important;
+}
+
+::ng-deep .fc-day-weekend-tn.fc-day-holiday-religious {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(217, 119, 6, 0.14) 100%) !important;
+}
+
+/* Badge "journée chargée" (> 3 entretiens le même jour) */
+::ng-deep .fc-daygrid-day-frame {
+  position: relative;
+}
+
+::ng-deep .fc-day-busy-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.5);
+  z-index: 4;
+  cursor: help;
+}
+
+/* Légende sous le calendrier */
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #eef1f5;
+  font-size: 12px;
+  color: #475569;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.swatch-weekend {
+  background: rgba(239, 68, 68, 0.35);
+}
+
+.swatch-national {
+  background: rgba(30, 58, 138, 0.35);
+}
+
+.swatch-religious {
+  background: rgba(217, 119, 6, 0.4);
+}
+
+.swatch-ramadan {
+  background: rgba(139, 92, 246, 0.35);
+}
+
+.swatch-busy {
+  background: #ef4444;
+}

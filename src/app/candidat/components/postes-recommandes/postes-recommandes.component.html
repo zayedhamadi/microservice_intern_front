@@ -1,0 +1,26 @@
+<div class="page-postes-recommandes">
+  <h1>Postes recommandés pour toi</h1>
+
+  <div class="etat-chargement" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Analyse de ton profil en cours...</p>
+  </div>
+
+  <div class="etat-erreur" *ngIf="errorMessage && !isLoading">
+    <p>{{ errorMessage }}</p>
+    <button (click)="charger()">Réessayer</button>
+  </div>
+
+  <div class="etat-vide" *ngIf="!isLoading && !errorMessage && !postes.length">
+    <p>Aucune recommandation pour le moment — complète ton profil (compétences, expérience) pour de meilleurs résultats.</p>
+  </div>
+
+  <div class="grille-postes" *ngIf="!isLoading && postes.length">
+    <div class="carte-poste" *ngFor="let poste of postes">
+      <h3>{{ poste.titre }}</h3>
+      <p>{{ poste.departementNom }}</p>
+  <!--    <div class="score-badge">{{ poste.score | number:'1.0-0' }}% — {{ labelScore(poste.score) }}</div>
+      <a [routerLink]="['/candidat/postes', poste.idPosteRecrutement]">Voir l'offre</a>
+  --> </div>
+  </div>
+</div>
