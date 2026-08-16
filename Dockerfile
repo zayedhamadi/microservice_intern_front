@@ -1,13 +1,12 @@
 # =========================================================
 # STAGE 1 : BUILD - compile l'app Angular
 # =========================================================
-FROM node:20-alpine AS build
-
+FROM node:22-alpine AS build
 WORKDIR /app
 
 # Cache des dépendances : on copie package*.json en premier
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 COPY . .
 

@@ -1,0 +1,91 @@
+<h2 mat-dialog-title
+    style="font-size: 20px; font-weight: 800; letter-spacing: -0.02em; padding: 20px 24px 10px; color: var(--text-main);">
+    <i class="fa-solid fa-calendar-check" style="color: var(--primary); margin-right: 8px;"></i> Planifier un entretien
+</h2>
+
+<mat-dialog-content [formGroup]="form" style="padding: 10px 24px 24px; font-family: inherit;">
+    <!-- Fiche candidat épurée -->
+    <div
+        style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid var(--border); padding: 16px 20px; border-radius: 12px; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <span style="font-size: 15px; font-weight: 700; color: #0f172a;">{{ data.context.candidateName }}</span>
+            <span
+                style="font-size: 11px; background: rgba(79, 70, 229, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-weight: 700; text-transform: uppercase;">
+                {{ typeLabels[data.context.typeEntretien] }}
+            </span>
+        </div>
+        <div
+            style="font-size: 13px; color: var(--text-muted); font-weight: 500; display: flex; flex-direction: column; gap: 2px;">
+            <span><i class="fa-regular fa-envelope" style="margin-right:6px;"></i>{{ data.context.candidateEmail
+                }}</span>
+            <span><i class="fa-solid fa-briefcase" style="margin-right:6px;"></i>Poste : <strong>{{
+                    data.context.posteRecrutement }}</strong></span>
+        </div>
+    </div>
+
+    <!-- Sélections de formulaires et inputs -->
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+        <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Type d'entretien</mat-label>
+            <mat-select formControlName="typeEntretien">
+                <mat-option [value]="data.context.typeEntretien">{{ typeLabels[data.context.typeEntretien]
+                    }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Date et heure de rendez-vous</mat-label>
+            <input matInput type="datetime-local" formControlName="dateEntretien" [min]="minDateTime" />
+            <mat-error *ngIf="form.get('dateEntretien')?.hasError('required')">La date et l'heure sont
+                requises.</mat-error>
+            <mat-error *ngIf="form.get('dateEntretien')?.hasError('datePassee')">La date doit se situer dans le
+                futur.</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Mode de convocation</mat-label>
+            <mat-select formControlName="mode">
+                <mat-option value="TELEPHONIQUE" [disabled]="!telephoneAutorise">Téléphonique</mat-option>
+                <mat-option value="MEET">Google Meet (Visioconférence)</mat-option>
+                <mat-option value="PRESENTIEL">Présentiel (Sur site)</mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.get('mode')?.hasError('telephoneNonAutorise')">Téléphone disponible uniquement pour
+                les entretiens initiaux.</mat-error>
+        </mat-form-field>
+
+        <!-- Formulaires conditionnels fluides -->
+        <mat-form-field *ngIf="form.get('mode')?.value === 'PRESENTIEL'" appearance="outline" style="width:100%">
+            <mat-label>Adresse physique des locaux</mat-label>
+            <input matInput formControlName="lieu"
+                placeholder="Ex: Bureau 302, Rue de la Bourse, Les Berges du Lac 2, Tunis" />
+            <mat-error *ngIf="form.get('lieu')?.hasError('required')">L'adresse exacte est requise.</mat-error>
+        </mat-form-field>
+
+        <mat-form-field *ngIf="form.get('mode')?.value === 'MEET'" appearance="outline" style="width:100%">
+            <mat-label>Lien d'invitation Google Meet</mat-label>
+            <input matInput formControlName="lienVisio" placeholder="https://meet.google.com/abc-defg-hij" />
+            <mat-error *ngIf="form.get('lienVisio')?.hasError('required')">Le lien Meet est obligatoire pour la
+                visioconférence.</mat-error>
+            <mat-error *ngIf="form.get('lienVisio')?.hasError('pattern')">L'URL du lien doit débuter par
+                https://</mat-error>
+        </mat-form-field>
+    </div>
+
+    <!-- Notification d'invitation automatique -->
+    <div
+        style="font-size: 12.5px; color: var(--text-muted); margin-top: 18px; display: flex; align-items: center; gap: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 14px; border-radius: 8px;">
+        <i class="fa-solid fa-paper-plane" style="color: #16a34a;"></i>
+        <span>Une convocation par email incluant le planning sera envoyée à <strong>{{ data.context.candidateEmail
+                }}</strong>.</span>
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end"
+    style="padding: 16px 24px 20px; border-top: 1px solid var(--border); background-color: #fafafa; gap: 12px;">
+    <button mat-button type="button" (click)="annuler()"
+        style="font-weight: 600; color: var(--text-muted);">Annuler</button>
+    <button mat-raised-button color="primary" type="button" (click)="enregistrer()"
+        style="font-weight: 600; background-color: var(--primary) !important; border-radius: var(--radius-sm); padding: 0 20px; height: 40px; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15)">
+        Confirmer et Envoyer
+    </button>
+</mat-dialog-actions>

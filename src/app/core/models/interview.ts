@@ -1,15 +1,36 @@
-
 export interface InterviewDialogData {
   interview?: Interview;
   selectedDate?: string;
 }
 
+export interface Interview {
+  id?: string;
+  candidateName: string;
+  candidateEmail?: string;
+  posteRecrutement: string;
+  posteId?: string;
+  interviewerName: string;
+  interviewDate: string;
+  startTime: string;
+  endTime: string;
+  mode: InterviewMode;
+  location?: string;
+  meetingLink?: string;
+  status: InterviewStatus;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface InterviewDialogData {
+  interview?: Interview;
+  selectedDate?: string;
+}
 export enum InterviewMode {
   PRESENTIEL = 'PRESENTIEL',
   DISTANCIEL = 'DISTANCIEL',
   TELEPHONIQUE = 'TELEPHONIQUE',
 }
-
 export enum InterviewStatus {
   PLANIFIE = 'PLANIFIE',
   CONFIRME = 'CONFIRME',
@@ -18,26 +39,24 @@ export enum InterviewStatus {
   ANNULE = 'ANNULE',
   REPORTE = 'REPORTE',
 }
-
 export interface Interview {
-  id?: number;
+  id?: string;
   candidateName: string;
   candidateEmail?: string;
   posteRecrutement: string;
-  posteId?: number;
+  posteId?: string;
   interviewerName: string;
-  interviewDate: string; // format ISO 'yyyy-MM-dd'
-  startTime: string; // 'HH:mm'
-  endTime: string; // 'HH:mm'
+  interviewDate: string;
+  startTime: string;
+  endTime: string;
   mode: InterviewMode;
   location?: string;
   meetingLink?: string;
   status: InterviewStatus;
-  notes?: string; // HTML généré par Quill
+  notes?: string;
   createdAt?: string;
   updatedAt?: string;
 }
-
 export interface InterviewPage {
   content: Interview[];
   totalElements: number;
@@ -45,7 +64,6 @@ export interface InterviewPage {
   number: number;
   size: number;
 }
-
 export interface InterviewStats {
   status: string;
   count: number;

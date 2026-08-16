@@ -31,6 +31,7 @@ import { NotificationComponent } from './communComponents/notification/notificat
 import { ConsulterleslistePosteParEmployeeOuCandidatComponent } from './communComponents/consulterlesliste-poste-par-employee-ou-candidat/consulterlesliste-poste-par-employee-ou-candidat.component';
 import { ConsulterspecificposteseloncandidatandadminComponent } from './communComponents/consulterspecificposteseloncandidatandadmin/consulterspecificposteseloncandidatandadmin.component';
 import { NgxPaginationModule } from 'ngx-pagination';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 @NgModule({
   declarations: [
@@ -63,6 +64,8 @@ import { NgxPaginationModule } from 'ngx-pagination';
     BrowserAnimationsModule,
   ],
   providers: [
+    provideCharts(withDefaultRegisterables()),
+
     DatePipe,
     provideHttpClient(withFetch(), withInterceptorsFromDi()),
     {

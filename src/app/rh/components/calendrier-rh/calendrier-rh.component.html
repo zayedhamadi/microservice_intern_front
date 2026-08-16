@@ -1,63 +1,149 @@
 <div class="rh-calendar-container">
-
+  <!-- Page Header -->
   <div class="page-header">
     <div class="header-text">
-      <h1><i class="fa-solid fa-calendar-check"></i> Calendrier des entretiens</h1>
-      <p>Planifiez, suivez et gérez les entretiens de recrutement</p>
+      <h1><i class="fa-solid fa-calendar-days"></i> Calendrier des entretiens</h1>
+      <p>Planifiez, suivez et gérez efficacement vos sessions de recrutement.</p>
     </div>
     <button mat-raised-button color="primary" class="btn-new" (click)="openCreateDialog()">
       <i class="fa-solid fa-plus"></i>&nbsp; Nouvel entretien
     </button>
   </div>
 
-  <div class="stats-strip">
-    @for (s of statuses; track s) {
-      <div class="stat-chip" [style.borderColor]="statusColors[s]">
-        <span class="dot" [style.backgroundColor]="statusColors[s]"></span>
-        <span class="stat-label">{{ s }}</span>
-        <span class="stat-count">{{ statusCounts[s] || 0 }}</span>
+  <mat-tab-group animationDuration="250ms" class="rh-tabs">
+    <!-- Tab 1: Calendrier & Agenda -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <i class="fa-solid fa-calendar-week" style="margin-right: 8px;"></i> Vue Calendrier
+      </ng-template>
+      <div class="agenda-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="agenda-sidebar">
+          <div class="mini-calendar">
+            <div class="mini-nav">
+              <button type="button" (click)="prevMonth()"><i class="fa-solid fa-chevron-left"></i></button>
+              <span class="mini-title">{{ periodLabel }}</span>
+              <button type="button" (click)="nextMonth()"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <div class="mini-grid mini-grid-labels">
+              <span *ngFor="let j of ['D','L','M','M','J','V','S']">{{ j }}</span>
+            </div>
+            <div class="mini-grid" *ngFor="let semaine of miniWeeks">
+              <button type="button" *ngFor="let jour of semaine" class="mini-cell" [class.hors-mois]="!jour.inMonth"
+                [class.aujourdhui]="jour.isToday" [class.selectionne]="jour.isSelected" (click)="selectMiniDay(jour)">
+                {{ jour.day }}
+                <span class="mini-dot" *ngIf="jour.hasEvents"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="sidebar-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Filtrer par candidat, poste..." [ngModel]="searchTerm"
+              (ngModelChange)="onSearchChange($event)" />
+          </div>
+
+          <div class="status-checklist">
+            <span class="checklist-title">Filtrer par Statut</span>
+            <label class="checklist-item" *ngFor="let s of statuses">
+              <input type="checkbox" [checked]="isStatusVisible(s)" (change)="toggleStatus(s)" />
+              <span class="checklist-swatch" [style.backgroundColor]="statusColors[s]"></span>
+              {{ statusLabels[s] || s }}
+              <span class="checklist-count">{{ statusCounts[s] || 0 }}</span>
+            </label>
+          </div>
+        </aside>
+
+        <!-- Main Panel -->
+        <div class="agenda-main">
+          <div class="agenda-toolbar">
+            <div class="agenda-toolbar-left">
+              <button type="button" class="btn-today" (click)="goToday()">
+                <i class="fa-solid fa-calendar-day"></i> Aujourd'hui
+              </button>
+              <button type="button" class="icon-btn" (click)="prevMonth()"><i
+                  class="fa-solid fa-chevron-left"></i></button>
+              <button type="button" class="icon-btn" (click)="nextMonth()"><i
+                  class="fa-solid fa-chevron-right"></i></button>
+              <span class="agenda-period">{{ periodLabel }} · {{ visibleInterviews.length }} Entretien(s)</span>
+            </div>
+            <div class="view-switch">
+              <button type="button" [class.actif]="view === 'day'" (click)="setView('day')">Jour</button>
+              <button type="button" [class.actif]="view === 'week'" (click)="setView('week')">Semaine</button>
+              <button type="button" [class.actif]="view === 'month'" (click)="setView('month')">Mois</button>
+              <button type="button" [class.actif]="view === 'agenda'" (click)="setView('agenda')">Agenda</button>
+            </div>
+          </div>
+
+          <div class="loader" *ngIf="loading">
+            <mat-spinner diameter="40"></mat-spinner>
+          </div>
+
+          <!-- Agenda Group List -->
+          <div class="agenda-list" *ngIf="view === 'agenda'">
+            <div class="agenda-day" *ngFor="let groupe of agendaGroups" [id]="'jour-' + groupe.iso">
+              <div class="agenda-day-marker" [class.aujourdhui]="groupe.isToday">
+                <span class="agenda-day-number">{{ groupe.dayNumber }}</span>
+                <div class="agenda-day-label">
+                  <strong>{{ groupe.weekday }}</strong>
+                  <span>{{ groupe.monthYear }}</span>
+                </div>
+              </div>
+              <div class="agenda-day-events">
+                <div class="agenda-event" *ngFor="let i of groupe.items" (click)="editInterview(i)">
+                  <span class="agenda-event-time"><i class="fa-regular fa-clock" style="margin-right:6px;"></i>{{
+                    i.startTime }} – {{ i.endTime }}</span>
+                  <span class="agenda-event-tag" [style.backgroundColor]="statusColors[i.status] + '15'"
+                    [style.color]="statusColors[i.status]">{{ i.posteRecrutement }}</span>
+                  <span class="agenda-event-name">{{ i.candidateName }}</span>
+                  <span class="agenda-event-mode">{{ i.mode }}</span>
+                  <span class="agenda-event-status" [style.backgroundColor]="statusColors[i.status] + '1c'"
+                    [style.color]="statusColors[i.status]">{{ statusLabels[i.status] || i.status }}</span>
+                  <button type="button" class="agenda-event-delete" matTooltip="Supprimer"
+                    (click)="$event.stopPropagation(); deleteInterview(i)">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="agenda-empty" *ngIf="!loading && !agendaGroups.length">
+              <i class="fa-solid fa-calendar-xmark" style="font-size: 32px;"></i>
+              <p>Aucun entretien planifié pour ces filtres.</p>
+            </div>
+          </div>
+
+          <!-- FullCalendar Wrapper -->
+          <div class="fc-wrapper" [hidden]="view === 'agenda'">
+            <full-calendar #calendar [options]="calendarOptions"></full-calendar>
+            <div class="calendar-legend">
+              <div class="legend-item"><span class="legend-swatch swatch-weekend"></span> Week-end</div>
+              <div class="legend-item"><span class="legend-swatch swatch-national"></span> Fête nationale</div>
+              <div class="legend-item"><span class="legend-swatch swatch-religious"></span> Fête religieuse</div>
+              <div class="legend-item"><span class="legend-swatch swatch-ramadan"></span> Ramadan</div>
+              <div class="legend-item"><span class="legend-swatch swatch-busy"></span> Journée chargée (+3)</div>
+            </div>
+          </div>
+        </div>
       </div>
-    }
-  </div>
+    </mat-tab>
 
-  <mat-tab-group animationDuration="200ms" class="rh-tabs">
-
-  <mat-tab label="Calendrier">
-    <div class="tab-panel">
-      @if (loading) {
-      <div class="loader"><mat-spinner diameter="40"></mat-spinner></div>
-      }
-      <full-calendar #calendar [options]="calendarOptions"></full-calendar>
-  
-      <div class="calendar-legend">
-        <div class="legend-item"><span class="legend-swatch swatch-weekend"></span> Week-end</div>
-        <div class="legend-item"><span class="legend-swatch swatch-national"></span> Fête nationale</div>
-        <div class="legend-item"><span class="legend-swatch swatch-religious"></span> Fête religieuse</div>
-        <div class="legend-item"><span class="legend-swatch swatch-ramadan"></span> Ramadan</div>
-        <div class="legend-item"><span class="legend-swatch swatch-busy"></span> Journée chargée (+3 entretiens)</div>
-      </div>
-    </div>
-  </mat-tab>
-  
-
-    <mat-tab label="Liste">
+    <!-- Tab 2: Liste tabulaire -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <i class="fa-solid fa-list" style="margin-right: 8px;"></i> Vue Table
+      </ng-template>
       <div class="tab-panel">
-
         <div class="toolbar">
           <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Rechercher</mat-label>
-            <input matInput placeholder="Candidat, poste, recruteur..."
-                   [ngModel]="searchTerm" (ngModelChange)="onSearchChange($event)">
+            <mat-label>Rechercher un candidat ou un poste</mat-label>
+            <input matInput placeholder="Rechercher..." [ngModel]="searchTerm" (ngModelChange)="onSearchChange($event)">
             <mat-icon matPrefix>search</mat-icon>
           </mat-form-field>
-
           <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Statut</mat-label>
+            <mat-label>Filtrer par statut</mat-label>
             <mat-select [(ngModel)]="statusFilter" (selectionChange)="applyFilters()">
-              <mat-option value="">Tous</mat-option>
-              @for (s of statuses; track s) {
-                <mat-option [value]="s">{{ s }}</mat-option>
-              }
+              <mat-option value="">Tous les statuts</mat-option>
+              <mat-option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] || s }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
@@ -69,65 +155,65 @@
                 <th>Candidat</th>
                 <th>Poste</th>
                 <th>Recruteur</th>
-                <th>Date</th>
-                <th>Heure</th>
+                <th>Date d'entretien</th>
+                <th>Heure d'entretien</th>
                 <th>Mode</th>
                 <th>Statut</th>
-                <th></th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              @for (i of filteredInterviews | paginate: { itemsPerPage: pageSize, currentPage: page }; track i.id) {
-                <tr>
-                  <td>
-                    <div class="candidate-cell">
-                      <div class="avatar">{{ i.candidateName.charAt(0) }}</div>
-                      {{ i.candidateName }}
-                    </div>
-                  </td>
-                  <td>{{ i.posteRecrutement }}</td>
-                  <td>{{ i.interviewerName }}</td>
-                  <td>{{ i.interviewDate | date:'dd/MM/yyyy' }}</td>
-                  <td>{{ i.startTime }} - {{ i.endTime }}</td>
-                  <td><span class="mode-badge">{{ i.mode }}</span></td>
-                  <td>
-                    <span class="status-badge"
-                          [style.backgroundColor]="statusColors[i.status] + '22'"
-                          [style.color]="statusColors[i.status]">
-                      {{ i.status }}
-                    </span>
-                  </td>
-                  <td class="actions-cell">
-                    <button mat-icon-button matTooltip="Modifier" (click)="editInterview(i)">
-                      <mat-icon>edit</mat-icon>
+              <tr *ngFor="let i of filteredInterviews | paginate: { itemsPerPage: pageSize, currentPage: page }">
+                <td>
+                  <div class="candidate-cell">
+                    <div class="avatar">{{ i.candidateName.charAt(0) }}</div>
+                    {{ i.candidateName }}
+                  </div>
+                </td>
+                <td>{{ i.posteRecrutement }}</td>
+                <td>{{ i.interviewerName }}</td>
+                <td><strong>{{ i.interviewDate | date:'dd MMM yyyy' }}</strong></td>
+                <td>{{ i.startTime }} - {{ i.endTime }}</td>
+                <td><span class="mode-badge">{{ i.mode }}</span></td>
+                <td>
+                  <span class="status-badge" [style.backgroundColor]="statusColors[i.status] + '18'"
+                    [style.color]="statusColors[i.status]">{{ statusLabels[i.status] || i.status }}</span>
+                </td>
+                <td>
+                  <div class="actions-cell">
+                    <button mat-icon-button matTooltip="Modifier l'entretien" (click)="editInterview(i)">
+                      <mat-icon style="color: var(--text-muted)">edit</mat-icon>
                     </button>
-                    <button mat-icon-button matTooltip="Supprimer" color="warn" (click)="deleteInterview(i)">
+                    <button mat-icon-button matTooltip="Supprimer l'entretien" color="warn"
+                      (click)="deleteInterview(i)">
                       <mat-icon>delete</mat-icon>
                     </button>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="8" class="empty-row">Aucun entretien trouvé</td>
-                </tr>
-              }
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="!filteredInterviews.length">
+                <td colspan="8" class="empty-row" style="text-align: center; padding: 48px; color: var(--text-muted)">
+                  <i class="fa-solid fa-ban"
+                    style="font-size:24px; margin-bottom: 8px; display:block; color:var(--text-light)"></i>
+                  Aucun entretien trouvé
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
-
         <div class="pagination-wrapper">
-          <pagination-controls
-            previousLabel="Précédent"
-            nextLabel="Suivant"
-            (pageChange)="page = $event">
-          </pagination-controls>
+          <pagination-controls previousLabel="Précédent" nextLabel="Suivant"
+            (pageChange)="page = $event"></pagination-controls>
         </div>
-
       </div>
     </mat-tab>
 
-    <mat-tab label="Statistiques">
-      <div class="tab-panel stats-panel">
+    <!-- Tab 3: Statistiques -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <i class="fa-solid fa-chart-pie" style="margin-right: 8px;"></i> Statistiques
+      </ng-template>
+      <div class="tab-panel stats-panel" style="display:flex; justify-content:center; padding: 24px 0;">
         <mat-card class="chart-card">
           <h3>Répartition des entretiens par statut</h3>
           <div class="chart-holder">
@@ -136,7 +222,5 @@
         </mat-card>
       </div>
     </mat-tab>
-
   </mat-tab-group>
-
 </div>

@@ -1,15 +1,19 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { firstValueFrom, Subject } from 'rxjs';
 
 import { ApplyService } from '../../../core/service/apply.service';
 import { PosteRecutementService } from '../../../core/service/poste-recutement.service';
 import { ApplicationDto } from '../../../core/models/Application';
 import { PosteRecrutment } from '../../../core/models/PosteRecrutment';
 import { ApplicationStatus } from '../../../core/models/enums/enumPosteRecrutemnt';
-import { LABELS_STATUT, TRANSITIONS_POSSIBLES } from '../../../core/constant/selectPoste';
+import {
+  LABELS_STATUT,
+  TRANSITIONS_POSSIBLES,
+} from '../../../core/constant/selectPoste';
+import { PlanificationCandidatureContext, RecrutementInterviewType } from '../../../core/service/recrutement-interview.service';
 
 type SortField = 'score' | 'date' | 'nom';
 type SortDir = 'asc' | 'desc';
@@ -19,6 +23,26 @@ interface StatutOption {
   label: string;
 }
 
+/**
+ * Statut ACTUEL de la candidature -> type d'entretien à planifier, quand RH fait
+ * avancer le candidat (tout sauf REJETE). Correspond exactement à
+ * InterviewService.statutRequisPourPlanifier() côté back : c'est le statut requis
+ * AVANT de pouvoir planifier ce type d'entretien.
+ *
+ * SELECTIONNE            -> entretien RH initial (fera passer le statut à EN_ENTRETIEN_RH)
+ * EN_ENTRETIEN_TECHNIQUE -> entretien technique   (déjà à ce statut, atteint après succès du RH initial)
+ * EN_ENTRETIEN_FINAL     -> entretien RH final    (déjà à ce statut, atteint après succès du technique)
+ *
+ * Si le statut actuel n'a pas d'entrée ici (ex: EN_ATTENTE -> SELECTIONNE), il
+ * n'y a pas encore d'entretien à planifier : on garde le changement de statut simple.
+ */
+const INTERVIEW_TYPE_PAR_STATUT_COURANT: Partial<
+  Record<ApplicationStatus, RecrutementInterviewType>
+> = {
+  [ApplicationStatus.SELECTIONNE]: 'rh-initial',
+  [ApplicationStatus.EN_ENTRETIEN_TECHNIQUE]: 'technique',
+  [ApplicationStatus.EN_ENTRETIEN_FINAL]: 'rh-final',
+};
 
 @Component({
   selector: 'app-consulte-liste-candidats-qui-postules-aune-poste-specifique',
@@ -232,9 +256,9 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     return Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length);
   }
 
- get nombreProfilsExcellents(): number {
-    return this.candidatures.filter((c) => (c.scoreMatching ?? 0) >= 70).length;  
-}
+  get nombreProfilsExcellents(): number {
+    return this.candidatures.filter((c) => (c.scoreMatching ?? 0) >= 70).length;
+  }
 
   get filtresActifs(): number {
     return [
@@ -289,7 +313,166 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     return suivants.map((v) => ({ valeur: v, label: LABELS_STATUT[v] }));
   }
 
-  async changerStatut(
+  private async selectionnerEtPlanifier(
+    candidature: ApplicationDto,
+  ): Promise<void> {
+    const confirmation = await Swal.fire({
+      icon: 'question',
+      title: 'Sélectionner ce candidat ?',
+      text: `${candidature.nomComplet} sera sélectionné(e) et vous pourrez ensuite planifier son entretien RH.`,
+      showCancelButton: true,
+      confirmButtonText: 'Sélectionner et planifier',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#7c3aed',
+    });
+
+    if (!confirmation.isConfirmed) return;
+
+    const candidatureMaj = await this.mettreAJourStatut(
+      candidature,
+      ApplicationStatus.SELECTIONNE,
+    );
+
+    if (!candidatureMaj) return;
+
+    this.ouvrirCalendrierPourPlanification(candidatureMaj, 'rh-initial');
+  }
+
+  private async rejeterCandidature(candidature: ApplicationDto): Promise<void> {
+    const confirmation = await Swal.fire({
+      icon: 'warning',
+      title: 'Rejeter cette candidature ?',
+      text: `${candidature.nomComplet} recevra un email avec votre commentaire.`,
+      input: 'textarea',
+      inputLabel: 'Motif du refus',
+      inputPlaceholder: 'Expliquez brièvement la décision...',
+      inputAttributes: {
+        maxlength: '2000',
+      },
+      inputValidator: (value) => {
+        if (!value || !value.trim()) {
+          return 'Le commentaire est obligatoire pour rejeter une candidature.';
+        }
+        return undefined;
+      },
+      showCancelButton: true,
+      confirmButtonText: 'Rejeter la candidature',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#dc2626',
+    });
+
+    if (!confirmation.isConfirmed) return;
+
+    const candidatureMaj = await this.mettreAJourStatut(
+      candidature,
+      ApplicationStatus.REJETE,
+      confirmation.value.trim(),
+    );
+
+    if (candidatureMaj) {
+      await Swal.fire({
+        icon: 'success',
+        title: 'Candidature rejetée',
+        text: 'Le candidat a été informé par email.',
+        timer: 1800,
+        showConfirmButton: false,
+      });
+    }
+  }
+
+  private async mettreAJourStatut(
+    candidature: ApplicationDto,
+    nouveauStatut: ApplicationStatus,
+    commentaireRH?: string,
+  ): Promise<ApplicationDto | null> {
+    if (!candidature.idApplication) return null;
+
+    this.candidatureEnCoursDeMaj = candidature.idApplication;
+
+    try {
+      const candidatureMaj = await firstValueFrom(
+        this.applyService.changerStatut(candidature.idApplication, {
+          nouveauStatut,
+          commentaireRH,
+        }),
+      );
+
+      const index = this.candidatures.findIndex(
+        (c) => c.idApplication === candidatureMaj.idApplication,
+      );
+
+      if (index !== -1) {
+        this.candidatures[index] = candidatureMaj;
+      }
+
+      this.appliquerFiltresEtTri();
+
+      return candidatureMaj;
+    } catch (error) {
+      console.error('Erreur de mise à jour du statut :', error);
+
+      await Swal.fire(
+        'Erreur',
+        'Impossible de mettre à jour le statut de la candidature.',
+        'error',
+      );
+
+      return null;
+    } finally {
+      this.candidatureEnCoursDeMaj = null;
+    }
+  }
+
+ 
+
+  /**
+   * - REJETE : inchangé — RH saisit un commentaire, la candidature passe à
+   *   REJETE directement (le back envoie déjà l'email de refus).
+   * - Tout le reste : si le statut ACTUEL correspond à une étape où un entretien
+   *   peut être planifié, on envoie RH vers le calendrier avec le contexte du
+   *   candidat plutôt que de changer le statut nous-mêmes. C'est la création de
+   *   l'entretien (date + type + mode) côté calendrier qui met à jour le statut
+   *   et envoie la convocation par email — plus de changement de statut "à l'aveugle".
+   * - Cas restants sans entretien associé (ex: EN_ATTENTE -> SELECTIONNE) :
+   *   on garde l'ancien comportement (commentaire + changement de statut simple).
+   */
+  private ouvrirCalendrierPourPlanification(
+  candidature: ApplicationDto,
+  typeEntretien: RecrutementInterviewType,
+): void {
+  if (!candidature.idApplication) return;
+  this.router.navigate(['/rh/calendrierRH'], {
+    state: {
+      planifierEntretien: {
+        applicationId: candidature.idApplication,
+        candidateName: candidature.nomComplet ?? 'Candidat',
+        candidateEmail: candidature.email ?? '',
+        posteRecrutement: this.poste?.titre ?? '',
+        typeEntretien,
+      } as PlanificationCandidatureContext,
+    },
+  });
+}
+
+async changerStatut(candidature: ApplicationDto, nouveauStatut: ApplicationStatus): Promise<void> {
+  if (!candidature.idApplication) return;
+  if (nouveauStatut === ApplicationStatus.REJETE) {
+    await this.rejeterCandidature(candidature);
+    return;
+  }
+  if (nouveauStatut === ApplicationStatus.SELECTIONNE) {
+    await this.selectionnerEtPlanifier(candidature);
+    return;
+  }
+  const typeEntretien = candidature.statut ? INTERVIEW_TYPE_PAR_STATUT_COURANT[candidature.statut] : undefined;
+  if (typeEntretien) {
+    this.ouvrirCalendrierPourPlanification(candidature, typeEntretien);
+    return;
+  }
+  await this.demanderCommentaireEtChangerStatut(candidature, nouveauStatut);
+}
+
+  private async demanderCommentaireEtChangerStatut(
     candidature: ApplicationDto,
     nouveauStatut: ApplicationStatus,
   ): Promise<void> {
