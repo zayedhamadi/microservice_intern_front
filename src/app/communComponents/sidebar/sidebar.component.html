@@ -290,86 +290,187 @@
                  EMPLOYEE
             ================================================== -->
 
-            <ng-container *ngIf="user?.role === 'EMPLOYEE'">
+    <ng-container *ngIf="user?.role === 'EMPLOYEE'">
+    
+        <!-- ========================================================= -->
+        <!-- MANAGEMENT -->
+        <!-- ========================================================= -->
+    
+        <div class="sb-divider"></div>
+    
+        <div class="sb-section-label" *ngIf="!isCollapsed">
+            MANAGEMENT
+        </div>
+    
+    
+        <!-- ========================================================= -->
+        <!-- EMPLOYÉS -->
+        <!-- ========================================================= -->
+    
+        <div class="sb-submenu-wrapper">
+    
+            <button type="button" class="sb-item sb-submenu-toggle" (click)="toggleSubmenu('employees', $event)"
+                [class.open]="isSubmenuOpen('employees')" [attr.aria-expanded]="isSubmenuOpen('employees')"
+                aria-controls="employees-submenu">
+    
+                <i class="fa-solid fa-users fa-fw"></i>
+    
+                <span *ngIf="!isCollapsed">
+                    Employés
+                </span>
+    
+                <i *ngIf="!isCollapsed" class="fa-solid fa-chevron-down sb-arrow"
+                    [class.rotated]="isSubmenuOpen('employees')">
+                </i>
+    
+                <span class="sb-tooltip" *ngIf="isCollapsed">
+                    Employés
+                </span>
+    
+            </button>
+    
+    
+            <!-- Sous-menu employés -->
+    
+            <div id="employees-submenu" class="sb-submenu" [class.open]="isSubmenuOpen('employees')">
+    
+                <!-- Liste -->
+    
+                <a class="sb-sub-item" routerLink="/manager/listUsersManager" routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: true }">
+    
+                    <i class="fa-solid fa-list fa-fw"></i>
+    
+                    <span *ngIf="!isCollapsed">
+                        Liste des employés
+                    </span>
+    
+                </a>
+    
+    
+                <!-- Ajouter -->
+    
+                <a class="sb-sub-item" routerLink="/manager/createEmployee" routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: true }">
+    
+                    <i class="fa-solid fa-user-plus fa-fw"></i>
+    
+                    <span *ngIf="!isCollapsed">
+                        Ajouter un employé
+                    </span>
+    
+                </a>
+    
+            </div>
+    
+        </div>
+    
 
-                <div class="sb-divider"></div>
 
 
-                <div class="sb-section-label" *ngIf="!isCollapsed">
-                    MANAGEMENT
-                </div>
-
-
-                <!-- EMPLOYÉS -->
-
-                <div class="sb-submenu-wrapper">
-
-                    <a href="#" class="sb-item sb-submenu-toggle" (click)="toggleSubmenu('employees', $event)"
-                        [class.open]="isSubmenuOpen('employees')">
-
-                        <i class="fa-solid fa-users fa-fw"></i>
-
-                        <span *ngIf="!isCollapsed">
-                            Employés
-                        </span>
-
-                        <i *ngIf="!isCollapsed" class="fa-solid fa-chevron-down sb-arrow"
-                            [class.rotated]="isSubmenuOpen('employees')"></i>
-
-
-                        <div class="sb-tooltip" *ngIf="isCollapsed">
-                            Employés
-                        </div>
-
-                    </a>
-
-
-                    <div class="sb-submenu" [class.open]="isSubmenuOpen('employees')">
-
-                        <a class="sb-sub-item" routerLink="/manager/listUsersManager" routerLinkActive="active">
-
-                            <i class="fa-solid fa-list fa-fw"></i>
-
-                            <span *ngIf="!isCollapsed">
-                                Liste des employés
-                            </span>
-
-                        </a>
-
-
-                        <a class="sb-sub-item" routerLink="/manager/createEmployee" routerLinkActive="active">
-
-                            <i class="fa-solid fa-user-plus fa-fw"></i>
-
-                            <span *ngIf="!isCollapsed">
-                                Ajouter un employé
-                            </span>
-
-                        </a>
-
-                    </div>
-
-                </div>
-
-
-                <!-- POSTES -->
-
+        <div class="sb-submenu-wrapper">
+        
+            <button type="button" class="sb-item sb-submenu-toggle" (click)="toggleSubmenu('recrutement', $event)"
+                [class.open]="isSubmenuOpen('employees')" [attr.aria-expanded]="isSubmenuOpen('employees')"
+                aria-controls="employees-submenu">
+        
+            <i class="fa-solid fa-user-tie fa-fw"></i>
+        
+                <span *ngIf="!isCollapsed">
+                    Recrutement
+                </span>
+        
+                <i *ngIf="!isCollapsed" class="fa-solid fa-chevron-down sb-arrow" [class.rotated]="isSubmenuOpen('employees')">
+                </i>
+        
+                <span class="sb-tooltip" *ngIf="isCollapsed">
+                    Recrutement
+                </span>
+        
+            </button>
+        
+        
+            <!-- Sous-menu employés -->
+        
+            <div id="employees-submenu" class="sb-submenu" [class.open]="isSubmenuOpen('recrutement')">
+        
+                <!-- Liste -->
+        
                 <a class="sb-item" routerLink="/manager/consulterlesPosteDisponibles" routerLinkActive="active">
-
+                
                     <i class="fa-solid fa-briefcase fa-fw"></i>
-
+                
                     <span *ngIf="!isCollapsed">
                         Postes disponibles
                     </span>
-
-                    <div class="sb-tooltip" *ngIf="isCollapsed">
+                
+                    <span class="sb-tooltip" *ngIf="isCollapsed">
                         Postes disponibles
-                    </div>
-
+                    </span>
+                
                 </a>
-
-            </ng-container>
-
+        
+        
+                <!-- Ajouter -->
+        
+                <a class="sb-sub-item" routerLink="/manager/consulterlistUSersPourFaireDesEntretientTechniques" routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: true }">
+        
+                    <i class="fa-solid fa-user-plus fa-fw"></i>
+        
+                    <span *ngIf="!isCollapsed">
+                   consulter liste pour faire deuxieme entretient tecdhnique 
+                    </span>
+        
+                </a>
+        
+            </div>
+        
+        </div>
+    
+        <!-- ========================================================= -->
+        <!-- DÉPARTEMENTS -->
+        <!-- ========================================================= -->
+    
+        <a class="sb-item" routerLink="/manager/departement" routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }">
+    
+            <i class="fa-solid fa-building fa-fw"></i>
+    
+            <span *ngIf="!isCollapsed">
+                Départements
+            </span>
+    
+            <span class="sb-tooltip" *ngIf="isCollapsed">
+                Départements
+            </span>
+    
+        </a>
+    
+    
+     
+        
+    
+    
+        <!-- ========================================================= -->
+        <!-- RECRUTEMENT -->
+        <!-- ========================================================= -->
+    
+        <a class="sb-item" routerLink="/manager/recrutement" routerLinkActive="active">
+    
+            <i class="fa-solid fa-user-tie fa-fw"></i>
+    
+            <span *ngIf="!isCollapsed">
+                Recrutement
+            </span>
+    
+            <span class="sb-tooltip" *ngIf="isCollapsed">
+                Recrutement
+            </span>
+    
+        </a>
+    
+    </ng-container>
 
             <!-- =================================================
                  CANDIDAT

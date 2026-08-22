@@ -22,6 +22,7 @@ import { profileCompleteGuard } from '../core/guards/profile-complete.guard';
 import { ConsulterleslistePosteParEmployeeOuCandidatComponent } from '../communComponents/consulterlesliste-poste-par-employee-ou-candidat/consulterlesliste-poste-par-employee-ou-candidat.component';
 
 import { ConsulterspecificposteseloncandidatandadminComponent } from '../communComponents/consulterspecificposteseloncandidatandadmin/consulterspecificposteseloncandidatandadmin.component';
+import { ListeUsersPourFaireEntretientTechniqueComponent } from './components/liste-users-pour-faire-entretient-technique/liste-users-pour-faire-entretient-technique.component';
 
 const routes: Routes = [
   {
@@ -46,6 +47,12 @@ const routes: Routes = [
       {
         path: 'dashboardmanager',
         component: DashboardEmployeeComponent,
+        canActivate: [profileCompleteGuard],
+      },
+
+      {
+        path: 'consulterlistUSersPourFaireDesEntretientTechniques',
+        component: ListeUsersPourFaireEntretientTechniqueComponent,
         canActivate: [profileCompleteGuard],
       },
 

@@ -1,0 +1,145 @@
+<div class="etq-container">
+    <header class="etq-header">
+        <div class="etq-header-title">
+            <h1><i class="fa-solid fa-user-tie" aria-hidden="true"></i> Entretiens techniques</h1>
+            <p>Suivi des candidats en entretien technique, regroupés par poste</p>
+        </div>
+        <div class="etq-header-stats">
+            <div class="etq-stat">
+                <span class="etq-stat-value">{{ filteredPostes.length }}</span>
+                <span class="etq-stat-label">Postes concernés</span>
+            </div>
+            <div class="etq-stat">
+                <span class="etq-stat-value">{{ totalCandidats() }}</span>
+                <span class="etq-stat-label">Candidats</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="etq-toolbar">
+        <div class="etq-search">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="text" aria-label="Rechercher un candidat, un email ou un poste"
+                placeholder="Rechercher un candidat, un email ou un poste..." [(ngModel)]="searchTerm"
+                (ngModelChange)="applyFilters()" />
+        </div>
+
+        <select aria-label="Filtrer par statut" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+            <option value="">Tous les statuts</option>
+            <option value="A_PLANIFIER">À planifier</option>
+            <option *ngFor="let s of statusOptions" [value]="s">{{ statusLabels[s] }}</option>
+        </select>
+
+        <button type="button" class="etq-refresh" (click)="chargerDonnees()" title="Actualiser" aria-label="Actualiser">
+            <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <div *ngIf="loading" class="etq-state">
+        <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+        <p>Chargement des entretiens techniques...</p>
+    </div>
+
+    <div *ngIf="!loading && error" class="etq-state etq-state-error">
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+        <p>{{ error }}</p>
+        <button type="button" (click)="chargerDonnees()">Réessayer</button>
+    </div>
+
+    <div *ngIf="!loading && !error && filteredPostes.length === 0" class="etq-state">
+        <i class="fa-solid fa-inbox" aria-hidden="true"></i>
+        <p>Aucun candidat en entretien technique pour le moment.</p>
+    </div>
+
+    <div class="etq-list" *ngIf="!loading && !error">
+        <div class="etq-poste-card" *ngFor="let poste of filteredPostes; trackBy: trackByPosteId">
+            <div class="etq-poste-header" (click)="toggleExpand(poste.posteId)" role="button" tabindex="0"
+                (keyup.enter)="toggleExpand(poste.posteId)">
+                <div class="etq-poste-info">
+                    <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
+                    <div>
+                        <h3>{{ poste.posteTitre }}</h3>
+                        <span class="etq-poste-dept" *ngIf="poste.departementNom">{{ poste.departementNom }}</span>
+                    </div>
+                </div>
+                <div class="etq-poste-meta">
+                    <span class="etq-count">{{ poste.nombreCandidats }} candidat{{ poste.nombreCandidats > 1 ? 's' : ''
+                        }}</span>
+                    <i class="fa-solid" aria-hidden="true"
+                        [ngClass]="expandedPosteId === poste.posteId ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                </div>
+            </div>
+
+            <div class="etq-poste-body" *ngIf="expandedPosteId === poste.posteId">
+                <table class="etq-table">
+                    <thead>
+                        <tr>
+                            <th>Candidat</th>
+                            <th>Date</th>
+                            <th>Horaire</th>
+                            <th>Mode</th>
+                            <th>Statut</th>
+                            <th>Résultat</th>
+                            <th>Interviewer</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let c of poste.candidats; trackBy: trackByInterviewId">
+                            <td>
+                                <div class="etq-candidat">
+                                    <span class="etq-candidat-nom">{{ c.candidateName }}</span>
+                                    <span class="etq-candidat-email">{{ c.candidateEmail }}</span>
+                                </div>
+                            </td>
+                            <td>{{ c.interviewDate || '—' }}</td>
+                            <td>{{ c.startTime ? (c.startTime + ' - ' + c.endTime) : '—' }}</td>
+                            <td>
+                                <span class="etq-mode" *ngIf="c.mode">
+                                    <i class="fa-solid" aria-hidden="true" [ngClass]="{
+                      'fa-building': c.mode === 'PRESENTIEL',
+                      'fa-video': c.mode === 'DISTANCIEL',
+                      'fa-phone': c.mode === 'TELEPHONIQUE'
+                    }"></i>
+                                    {{ modeLabels[c.mode] || c.mode }}
+                                </span>
+                                <span *ngIf="!c.mode" class="etq-muted">—</span>
+                            </td>
+                            <td>
+                                <span [ngClass]="statusClass(c.status)">{{ statusLabel(c.status) }}</span>
+                            </td>
+                            <td>
+                                <span *ngIf="c.resultat" [ngClass]="resultatClass(c.resultat)">
+                                    {{ c.resultat === 'REUSSI' ? 'Réussi' : 'Échoué' }}
+                                </span>
+                                <span *ngIf="!c.resultat" class="etq-muted">—</span>
+                            </td>
+                            <td>{{ c.interviewerName || '—' }}</td>
+                            <td class="etq-actions">
+                                <button *ngIf="aPlanifier(c)" type="button" class="etq-btn etq-btn-planifier"
+                                    (click)="planifier(poste, c)" title="Planifier l'entretien technique">
+                                    <i class="fa-solid fa-calendar-plus" aria-hidden="true"></i> Planifier
+                                </button>
+                                <button *ngIf="!aPlanifier(c)" type="button" class="etq-btn etq-btn-voir"
+                                    (click)="voirDansCalendrier(c)" title="Voir dans le calendrier">
+                                    <i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Voir
+                                </button>
+                                <button *ngIf="peutSaisirResultat(c)" type="button" class="etq-btn etq-btn-resultat"
+                                    (click)="enregistrerResultat(c)" title="Saisir le résultat">
+                                    <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> Résultat
+                                </button>
+                                <button type="button" class="etq-btn etq-btn-details" (click)="voirDetails(poste, c)"
+                                    [disabled]="detailsLoadingId === c.applicationId"
+                                    title="Voir le commentaire RH et l'entretien RH initial">
+                                    <i class="fa-solid" aria-hidden="true"
+                                        [ngClass]="detailsLoadingId === c.applicationId ? 'fa-spinner fa-spin' : 'fa-circle-info'"></i>
+                                    Détails
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

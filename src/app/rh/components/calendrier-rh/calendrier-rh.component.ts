@@ -1,17 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import {  Location } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
 import {
   FullCalendarModule,
   FullCalendarComponent,
@@ -39,11 +31,12 @@ import Swal from 'sweetalert2';
 import { debounceTime, Subject } from 'rxjs';
 import {
   Interview,
-  InterviewStatus,
   InterviewDialogData,
 } from '../../../core/models/interview';
 import { InterviewService } from '../../../core/service/interview.service';
 import { InterviewFormDialogComponent } from '../interview-form-dialog/interview-form-dialog.component';
+
+
 import {
   STATUS_COLORS,
   AgendaGroup,
@@ -61,6 +54,7 @@ import {
   PlanifierEntretienCandidatureDialogComponent,
   PlanifierEntretienDialogResult,
 } from '../planifier-entretien-candidature-dialog/planifier-entretien-candidature-dialog.component';
+import { InterviewStatus } from '../../../core/models/enums/enumPosteRecrutemnt';
 
 const BUSY_DAY_THRESHOLD = 3;
 
@@ -69,6 +63,7 @@ const BUSY_DAY_THRESHOLD = 3;
   templateUrl: './calendrier-rh.component.html',
   styleUrl: './calendrier-rh.component.css',
 })
+  
 export class CalendrierRHComponent implements OnInit {
   @ViewChild('calendar') calendarComponent!: FullCalendarComponent;
   interviews: Interview[] = [];
@@ -212,24 +207,81 @@ export class CalendrierRHComponent implements OnInit {
 
   loadInterviews(): void {
     this.loading = true;
+
     forkJoin({
       libres: this.interviewService.getAll(),
       recrutement: this.recrutementInterviewService.getAll(),
     }).subscribe({
       next: ({ libres, recrutement }) => {
-        this.interviews = [...(libres || []), ...(recrutement || [])];
+        const toutesLesInterviews: Interview[] = [
+          ...(libres ?? []),
+          ...(recrutement ?? []),
+        ];
+
+        // Suppression des doublons
+        this.interviews = this.deduplicateInterviews(toutesLesInterviews);
+
         this.applyFilters();
         this.computeEventCountByDate();
         this.refreshCalendarEvents();
         this.computeStats();
         this.buildMiniCalendar();
+
         this.loading = false;
       },
       error: () => {
         this.loading = false;
-        Swal.fire('Erreur', 'Impossible de charger', 'error');
+        Swal.fire('Erreur', 'Impossible de charger les entretiens.', 'error');
       },
     });
+  }
+  private deduplicateInterviews(items: Interview[]): Interview[] {
+    const uniqueInterviews: Interview[] = [];
+    const indexes = new Map<string, number>();
+
+    for (const interview of items) {
+      const idKey =
+        interview.id !== null && interview.id !== undefined
+          ? `id:${String(interview.id)}`
+          : null;
+
+      // Clé de secours si les deux services renvoient des IDs différents
+      const dataKey = [
+        this.normalizeValue(interview.candidateName),
+        this.normalizeValue(interview.posteRecrutement),
+        this.normalizeValue(interview.interviewDate),
+        this.normalizeValue(interview.startTime),
+        this.normalizeValue(interview.endTime),
+      ].join('|');
+
+      let existingIndex: number | undefined;
+
+      if (idKey) {
+        existingIndex = indexes.get(idKey);
+      }
+
+      if (existingIndex === undefined) {
+        existingIndex = indexes.get(`data:${dataKey}`);
+      }
+
+      if (existingIndex === undefined) {
+        existingIndex = uniqueInterviews.push(interview) - 1;
+      }
+
+      if (idKey) {
+        indexes.set(idKey, existingIndex);
+      }
+
+      indexes.set(`data:${dataKey}`, existingIndex);
+    }
+
+    return uniqueInterviews;
+  }
+
+  private normalizeValue(value: unknown): string {
+    return String(value ?? '')
+      .trim()
+      .toLowerCase();
   }
 
   get visibleInterviews(): Interview[] {
@@ -496,7 +548,7 @@ export class CalendrierRHComponent implements OnInit {
 
   onEventClick(arg: EventClickArg): void {
     const interview: Interview = arg.event.extendedProps['interview'];
-    this.openDialog({ interview });
+    this.editInterview(interview);
   }
 
   openCreateDialog(): void {
@@ -505,18 +557,6 @@ export class CalendrierRHComponent implements OnInit {
 
   editInterview(interview: Interview): void {
     this.openDialog({ interview });
-  }
-
-  private openDialog(data: InterviewDialogData): void {
-    const ref = this.dialog.open(InterviewFormDialogComponent, {
-      width: '720px',
-      maxWidth: '95vw',
-      autoFocus: false,
-      data,
-    });
-    ref.afterClosed().subscribe((result) => {
-      if (result) this.loadInterviews();
-    });
   }
 
   deleteInterview(interview: Interview): void {
@@ -543,6 +583,17 @@ export class CalendrierRHComponent implements OnInit {
           error: () => Swal.fire('Erreur', 'La suppression a échoué.', 'error'),
         });
       }
+    });
+  }
+  private openDialog(data: InterviewDialogData): void {
+    const ref = this.dialog.open(InterviewFormDialogComponent, {
+      width: '720px',
+      maxWidth: '95vw',
+      autoFocus: false,
+      data,
+    });
+    ref.afterClosed().subscribe((result) => {
+      if (result) this.loadInterviews();
     });
   }
 }

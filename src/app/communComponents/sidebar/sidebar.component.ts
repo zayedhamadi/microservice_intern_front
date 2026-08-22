@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-
 import { Subject, takeUntil } from 'rxjs';
 
 import { AuthService } from '../../core/service/auth.service';
@@ -7,7 +6,6 @@ import { UserService } from '../../core/service/user.service';
 import { WebSocketService } from '../../core/service/web-socket.service';
 
 import { UserConnected } from '../../core/models/userConnected';
-
 import {
   AdminRealtimeEvent,
   ConnectionStatus,
@@ -22,47 +20,50 @@ import {
 
 import { ROLE_ROUTES, CALENDAR_ROUTES } from '../../core/constant/role-route';
 
+type SubmenuKey = 'postes' | 'employees' | 'recrutement' | 'candidat';
+
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css'],
 })
 export class SideBarComponent implements OnInit, OnDestroy {
-  // =========================
+  // =========================================================
   // SIDEBAR
-  // =========================
+  // =========================================================
 
   isCollapsed = false;
+  isMobileOpen = false;
 
-  openSubmenus: Record<string, boolean> = {
+  openSubmenus: Record<SubmenuKey, boolean> = {
     postes: false,
     employees: false,
+    recrutement: false,
     candidat: false,
   };
 
-  // =========================
-  // AUTH
-  // =========================
+  // =========================================================
+  // AUTHENTIFICATION
+  // =========================================================
 
   isLoggedIn = false;
-
   user: UserConnected | null = null;
 
-  // =========================
+  // =========================================================
   // NOTIFICATIONS
-  // =========================
+  // =========================================================
 
   notifCount = 0;
 
-  // =========================
+  // =========================================================
   // WEBSOCKET
-  // =========================
+  // =========================================================
 
   wsStatus: ConnectionStatus = 'DISCONNECTED';
 
-  // =========================
+  // =========================================================
   // ROUTES
-  // =========================
+  // =========================================================
 
   readonly profileRoute = '/getMyprofile';
 
@@ -72,6 +73,10 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
   currentRole: keyof typeof ROLE_ROUTES = 'EMPLOYEE';
 
+  // =========================================================
+  // LIFECYCLE
+  // =========================================================
+
   private readonly destroy$ = new Subject<void>();
 
   constructor(
@@ -80,54 +85,46 @@ export class SideBarComponent implements OnInit, OnDestroy {
     private readonly wsService: WebSocketService,
   ) {}
 
-  // =========================
-  // INIT
-  // =========================
-
   ngOnInit(): void {
-    this.syncAuth();
-
+    this.syncAuthentication();
     this.loadUserProfile();
-
     this.connectRealtime();
   }
 
-  // =========================
-  // DESTROY
-  // =========================
-
   ngOnDestroy(): void {
     this.destroy$.next();
-
     this.destroy$.complete();
 
     this.wsService.disconnect();
   }
 
-  // =========================
-  // AUTH
-  // =========================
+  // =========================================================
+  // AUTHENTIFICATION
+  // =========================================================
 
-  private syncAuth(): void {
+  private syncAuthentication(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
-
     this.user = this.authService.getCurrentUser();
 
     this.updateCurrentRole();
   }
 
-  // =========================
-  // USER PROFILE
-  // =========================
+  // =========================================================
+  // PROFIL
+  // =========================================================
 
   private loadUserProfile(): void {
+    if (!this.isLoggedIn) {
+      return;
+    }
+
     this.userService
       .getMyProfile()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (profile) => {
           this.user = {
-            ...(this.user as UserConnected),
+            ...(this.user ?? {}),
             ...profile,
             image: profile.imageBase64,
           } as UserConnected;
@@ -136,14 +133,17 @@ export class SideBarComponent implements OnInit, OnDestroy {
         },
 
         error: (error) => {
-          console.error('Erreur lors du chargement du profil :', error);
+          console.error(
+            'Erreur lors du chargement du profil utilisateur :',
+            error,
+          );
         },
       });
   }
 
-  // =========================
-  // ROLE
-  // =========================
+  // =========================================================
+  // RÔLE
+  // =========================================================
 
   private updateCurrentRole(): void {
     const role = this.user?.role;
@@ -153,25 +153,21 @@ export class SideBarComponent implements OnInit, OnDestroy {
     }
   }
 
-  // =========================
-  // DASHBOARD ROUTE
-  // =========================
+  // =========================================================
+  // ROUTES
+  // =========================================================
 
   getDashboardRoute(): string {
     return this.dashboardRoute[this.currentRole];
   }
 
-  // =========================
-  // CALENDAR ROUTE
-  // =========================
-
   getCalendarRoute(): string {
     return this.calendarRoute[this.currentRole];
   }
 
-  // =========================
+  // =========================================================
   // WEBSOCKET
-  // =========================
+  // =========================================================
 
   private connectRealtime(): void {
     if (!this.isLoggedIn) {
@@ -182,35 +178,66 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
     this.wsService.connect(token);
 
-    this.wsService.status$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((status) => {
+    this.wsService.status$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (status) => {
         this.wsStatus = status;
-      });
+      },
 
-    this.wsService.events$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((event: AdminRealtimeEvent) => {
+      error: (error) => {
+        console.error('Erreur du statut WebSocket :', error);
+      },
+    });
+
+    this.wsService.events$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (event: AdminRealtimeEvent) => {
         if (event.type !== 'STATS_UPDATE') {
           this.notifCount++;
         }
-      });
+      },
+
+      error: (error) => {
+        console.error(
+          'Erreur lors de la réception de l’événement WebSocket :',
+          error,
+        );
+      },
+    });
   }
 
-  // =========================
+  // =========================================================
   // NOTIFICATIONS
-  // =========================
+  // =========================================================
 
   clearNotifCount(): void {
     this.notifCount = 0;
   }
 
-  // =========================
-  // WEBSOCKET STATUS
-  // =========================
+  getNotificationLabel(): string {
+    if (this.notifCount > 99) {
+      return '99+';
+    }
+
+    return this.notifCount.toString();
+  }
+
+  // =========================================================
+  // WEBSOCKET UI
+  // =========================================================
 
   get wsStatusLabel(): string {
-    return wsStatusLabel(this.wsStatus);
+    switch (this.wsStatus) {
+      case 'CONNECTED':
+        return 'Temps réel actif';
+
+      case 'CONNECTING':
+        return 'Connexion...';
+
+      case 'ERROR':
+        return 'Connexion interrompue';
+
+      default:
+        return 'Hors ligne';
+    }
   }
 
   get wsStatusClass(): string {
@@ -225,77 +252,132 @@ export class SideBarComponent implements OnInit, OnDestroy {
     return eventColor(type as any);
   }
 
-  // =========================
-  // SIDEBAR COLLAPSE
-  // =========================
+  // =========================================================
+  // USER INFORMATION
+  // =========================================================
+
+  getFullName(): string {
+    const firstName = this.user?.prenom ?? '';
+    const lastName = this.user?.nom ?? '';
+
+    return `${firstName} ${lastName}`.trim() || 'Utilisateur';
+  }
+
+  getUserRoleLabel(): string {
+    switch (this.user?.role) {
+      case 'RH':
+        return 'Ressources humaines';
+
+      case 'EMPLOYEE':
+        return 'Employé';
+
+      case 'CANDIDAT':
+        return 'Candidat';
+
+      case 'ADMIN':
+        return 'Administrateur';
+
+      default:
+        return this.user?.role ?? 'Utilisateur';
+    }
+  }
+
+  getAvatarSrc(): string | null {
+    const image = this.user?.image;
+
+    if (!image) {
+      return null;
+    }
+
+    if (image.startsWith('data:')) {
+      return image;
+    }
+
+    return `data:image/jpeg;base64,${image}`;
+  }
+
+  getUserInitials(): string {
+    const firstName = this.user?.prenom?.charAt(0) ?? '';
+
+    const lastName = this.user?.nom?.charAt(0) ?? '';
+
+    const initials = `${firstName}${lastName}`.trim();
+
+    return initials ? initials.toUpperCase() : 'U';
+  }
+
+  // =========================================================
+  // SIDEBAR
+  // =========================================================
 
   toggleSidebar(): void {
     this.isCollapsed = !this.isCollapsed;
 
     if (this.isCollapsed) {
-      this.openSubmenus = {
-        postes: false,
-        employees: false,
-        candidat: false,
-      };
+      this.closeAllSubmenus();
     }
   }
 
-  // =========================
-  // SUBMENUS
-  // =========================
+  // =========================================================
+  // MOBILE
+  // =========================================================
 
-  toggleSubmenu(key: string, event?: Event): void {
-    if (event) {
-      event.preventDefault();
+  toggleMobileSidebar(): void {
+    this.isMobileOpen = !this.isMobileOpen;
+  }
 
-      event.stopPropagation();
-    }
+  closeMobileSidebar(): void {
+    this.isMobileOpen = false;
+  }
+
+  // =========================================================
+  // SOUS-MENUS
+  // =========================================================
+
+  toggleSubmenu(key: SubmenuKey, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
 
     if (this.isCollapsed) {
       this.isCollapsed = false;
 
       setTimeout(() => {
         this.openSubmenus[key] = true;
-      }, 300);
+      }, 250);
 
       return;
     }
 
-    Object.keys(this.openSubmenus).forEach((k) => {
-      if (k !== key) {
-        this.openSubmenus[k] = false;
+    Object.keys(this.openSubmenus).forEach((submenu) => {
+      const submenuKey = submenu as SubmenuKey;
+
+      if (submenuKey !== key) {
+        this.openSubmenus[submenuKey] = false;
       }
     });
 
     this.openSubmenus[key] = !this.openSubmenus[key];
   }
 
-  isSubmenuOpen(key: string): boolean {
-    return !!this.openSubmenus[key];
+  isSubmenuOpen(key: SubmenuKey): boolean {
+    return this.openSubmenus[key];
   }
 
-  // =========================
-  // AVATAR
-  // =========================
-
-  getAvatarSrc(): string | null {
-    const img = this.user?.image;
-
-    if (!img) {
-      return null;
-    }
-
-    return img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
+  private closeAllSubmenus(): void {
+    this.openSubmenus = {
+      postes: false,
+      employees: false,
+      recrutement: false,
+      candidat: false,
+    };
   }
 
-  // =========================
+  // =========================================================
   // LOGOUT
-  // =========================
+  // =========================================================
 
   logout(): void {
-    this.authService.logout();
-
     this.wsService.disconnect();
+    this.authService.logout();
   }
 }

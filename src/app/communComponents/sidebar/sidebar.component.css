@@ -6,7 +6,571 @@
     background: #f1f5f9;
     display: flex;
 }
+/* =========================================================
+   SECTION
+   ========================================================= */
 
+.sb-section-label {
+    padding: 10px 16px 6px;
+
+    font-size: 0.68rem;
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+
+    color: #9ca3af;
+}
+
+
+/* =========================================================
+   DIVIDER
+   ========================================================= */
+
+.sb-divider {
+    height: 1px;
+    margin: 14px 12px;
+
+    background: #e5e7eb;
+}
+
+
+/* =========================================================
+   ITEM PRINCIPAL
+   ========================================================= */
+
+.sb-item {
+    position: relative;
+
+    width: 100%;
+    min-height: 44px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 10px 14px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #374151;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    font-size: 0.88rem;
+    font-weight: 500;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+.sb-item:hover {
+    background: #f5f3ff;
+    color: #6d28d9;
+}
+
+
+.sb-item.active {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+
+/* =========================================================
+   ICÔNES
+   ========================================================= */
+
+.sb-item>i:first-child {
+    width: 20px;
+
+    flex-shrink: 0;
+
+    font-size: 15px;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   SUBMENU TOGGLE
+   ========================================================= */
+
+.sb-submenu-toggle {
+    font-family: inherit;
+    text-align: left;
+}
+
+
+.sb-submenu-toggle.open {
+    background: #f5f3ff;
+    color: #6d28d9;
+}
+
+
+/* =========================================================
+   ARROW
+   ========================================================= */
+
+.sb-arrow {
+    margin-left: auto;
+
+    font-size: 10px;
+
+    transition:
+        transform 0.2s ease;
+}
+
+
+.sb-arrow.rotated {
+    transform: rotate(180deg);
+}
+
+
+/* =========================================================
+   SUBMENU
+   ========================================================= */
+
+.sb-submenu {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    margin-left: 20px;
+    padding-left: 14px;
+
+    max-height: 0;
+
+    overflow: hidden;
+
+    opacity: 0;
+
+    transition:
+        max-height 0.25s ease,
+        opacity 0.2s ease;
+}
+
+
+.sb-submenu.open {
+    max-height: 180px;
+
+    opacity: 1;
+
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+
+/* =========================================================
+   SUBMENU ITEMS
+   ========================================================= */
+
+.sb-sub-item {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    min-height: 38px;
+
+    padding: 8px 12px;
+
+    border-radius: 7px;
+
+    color: #6b7280;
+
+    text-decoration: none;
+
+    font-size: 0.82rem;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease;
+}
+
+
+.sb-sub-item:hover {
+    background: #f9fafb;
+
+    color: #6d28d9;
+}
+
+
+.sb-sub-item.active {
+    background: #f3f0ff;
+
+    color: #6d28d9;
+
+    font-weight: 600;
+}
+
+
+.sb-sub-item i {
+    width: 18px;
+
+    text-align: center;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   TOOLTIP SIDEBAR COLLAPSED
+   ========================================================= */
+
+.sb-tooltip {
+    position: absolute;
+
+    left: calc(100% + 10px);
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    z-index: 1000;
+
+    padding: 8px 11px;
+
+    border-radius: 7px;
+
+    background: #1e1b2e;
+
+    color: #fff;
+
+    white-space: nowrap;
+
+    font-size: 0.78rem;
+
+    pointer-events: none;
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    transition:
+        opacity 0.15s ease,
+        visibility 0.15s ease;
+}
+
+
+/* Afficher tooltip au hover */
+
+.sb-item:hover .sb-tooltip,
+.sb-submenu-toggle:hover .sb-tooltip {
+    opacity: 1;
+
+    visibility: visible;
+}
+
+
+/* =========================================================
+   SIDEBAR COLLAPSED
+   ========================================================= */
+
+.sidebar.collapsed .sb-item {
+    justify-content: center;
+
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* =========================================================
+   SECTION
+   ========================================================= */
+
+.sb-section-label {
+    padding: 10px 16px 6px;
+
+    font-size: 0.68rem;
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+
+    color: #9ca3af;
+}
+
+
+/* =========================================================
+   DIVIDER
+   ========================================================= */
+
+.sb-divider {
+    height: 1px;
+    margin: 14px 12px;
+
+    background: #e5e7eb;
+}
+
+
+/* =========================================================
+   ITEM PRINCIPAL
+   ========================================================= */
+
+.sb-item {
+    position: relative;
+
+    width: 100%;
+    min-height: 44px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 10px 14px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #374151;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    font-size: 0.88rem;
+    font-weight: 500;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+.sb-item:hover {
+    background: #f5f3ff;
+    color: #6d28d9;
+}
+
+
+.sb-item.active {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+
+/* =========================================================
+   ICÔNES
+   ========================================================= */
+
+.sb-item>i:first-child {
+    width: 20px;
+
+    flex-shrink: 0;
+
+    font-size: 15px;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   SUBMENU TOGGLE
+   ========================================================= */
+
+.sb-submenu-toggle {
+    font-family: inherit;
+    text-align: left;
+}
+
+
+.sb-submenu-toggle.open {
+    background: #f5f3ff;
+    color: #6d28d9;
+}
+
+
+/* =========================================================
+   ARROW
+   ========================================================= */
+
+.sb-arrow {
+    margin-left: auto;
+
+    font-size: 10px;
+
+    transition:
+        transform 0.2s ease;
+}
+
+
+.sb-arrow.rotated {
+    transform: rotate(180deg);
+}
+
+
+/* =========================================================
+   SUBMENU
+   ========================================================= */
+
+.sb-submenu {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    margin-left: 20px;
+    padding-left: 14px;
+
+    max-height: 0;
+
+    overflow: hidden;
+
+    opacity: 0;
+
+    transition:
+        max-height 0.25s ease,
+        opacity 0.2s ease;
+}
+
+
+.sb-submenu.open {
+    max-height: 180px;
+
+    opacity: 1;
+
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+
+/* =========================================================
+   SUBMENU ITEMS
+   ========================================================= */
+
+.sb-sub-item {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    min-height: 38px;
+
+    padding: 8px 12px;
+
+    border-radius: 7px;
+
+    color: #6b7280;
+
+    text-decoration: none;
+
+    font-size: 0.82rem;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease;
+}
+
+
+.sb-sub-item:hover {
+    background: #f9fafb;
+
+    color: #6d28d9;
+}
+
+
+.sb-sub-item.active {
+    background: #f3f0ff;
+
+    color: #6d28d9;
+
+    font-weight: 600;
+}
+
+
+.sb-sub-item i {
+    width: 18px;
+
+    text-align: center;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   TOOLTIP SIDEBAR COLLAPSED
+   ========================================================= */
+
+.sb-tooltip {
+    position: absolute;
+
+    left: calc(100% + 10px);
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    z-index: 1000;
+
+    padding: 8px 11px;
+
+    border-radius: 7px;
+
+    background: #1e1b2e;
+
+    color: #fff;
+
+    white-space: nowrap;
+
+    font-size: 0.78rem;
+
+    pointer-events: none;
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    transition:
+        opacity 0.15s ease,
+        visibility 0.15s ease;
+}
+
+
+/* Afficher tooltip au hover */
+
+.sb-item:hover .sb-tooltip,
+.sb-submenu-toggle:hover .sb-tooltip {
+    opacity: 1;
+
+    visibility: visible;
+}
+
+
+/* =========================================================
+   SIDEBAR COLLAPSED
+   ========================================================= */
+
+.sidebar.collapsed .sb-item {
+    justify-content: center;
+
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+
+.sidebar.collapsed .sb-submenu {
+    display: none;
+}
+.sidebar.collapsed .sb-submenu {
+    display: none;
+}
 /* =============================================
    SIDEBAR
 ============================================= */

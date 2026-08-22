@@ -13,7 +13,7 @@ export enum TypeContrat {
 export enum InterviewMode {
   TELEPHONIQUE = 'TELEPHONIQUE',
   PRESENTIEL = 'PRESENTIEL',
-  MEET = 'MEET',
+  DISTANCIEL = 'DISTANCIEL',
 }
 
 
@@ -28,7 +28,7 @@ export enum StatusPosteRecrutement {
   EXPIRE = 'EXPIRE',
   FERME = 'FERME',
 }
-
+export type InterviewSource = 'LIBRE' | 'CANDIDATURE';
 export enum InterviewType {
   RH_FINAL = 'RH_FINAL',
   TECHNIQUE = 'TECHNIQUE',
@@ -41,9 +41,11 @@ export enum InterviewResult {
 }
 export enum InterviewStatus {
   PLANIFIE = 'PLANIFIE',
+  CONFIRME = 'CONFIRME',
+  EN_COURS = 'EN_COURS',
   TERMINE = 'TERMINE',
   ANNULE = 'ANNULE',
-  REPLANIFIE = 'REPLANIFIE',
+  REPORTE = 'REPORTE',
   ABSENT = 'ABSENT',
 }
 export enum EtatEntretien {

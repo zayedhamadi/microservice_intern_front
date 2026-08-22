@@ -1,62 +1,50 @@
-export interface InterviewDialogData {
-  interview?: Interview;
-  selectedDate?: string;
-}
+import {
+  InterviewResult,
+  InterviewMode,
+  InterviewStatus,
+  InterviewSource,
+  InterviewType,
+} from './enums/enumPosteRecrutemnt';
 
 export interface Interview {
   id?: string;
+  source?: InterviewSource;
+  applicationId?: string;
+  candidatKeycloakId?: string;
   candidateName: string;
   candidateEmail?: string;
   posteRecrutement: string;
   posteId?: string;
+  recruteurKeycloakId?: string;
   interviewerName: string;
-  interviewDate: string;
-  startTime: string;
-  endTime: string;
+  type?: InterviewType;
+  interviewDate: string; // 'yyyy-MM-dd'
+  startTime: string; // 'HH:mm'
+  endTime: string; // 'HH:mm'
   mode: InterviewMode;
   location?: string;
   meetingLink?: string;
   status: InterviewStatus;
+  resultat?: InterviewResult;
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface InterviewDialogData {
-  interview?: Interview;
-  selectedDate?: string;
-}
-export enum InterviewMode {
-  PRESENTIEL = 'PRESENTIEL',
-  DISTANCIEL = 'DISTANCIEL',
-  TELEPHONIQUE = 'TELEPHONIQUE',
-}
-export enum InterviewStatus {
-  PLANIFIE = 'PLANIFIE',
-  CONFIRME = 'CONFIRME',
-  EN_COURS = 'EN_COURS',
-  TERMINE = 'TERMINE',
-  ANNULE = 'ANNULE',
-  REPORTE = 'REPORTE',
-}
-export interface Interview {
-  id?: string;
+export interface PlanificationCandidatureContext {
+  applicationId: string;
   candidateName: string;
   candidateEmail?: string;
   posteRecrutement: string;
-  posteId?: string;
-  interviewerName: string;
-  interviewDate: string;
-  startTime: string;
-  endTime: string;
-  mode: InterviewMode;
-  location?: string;
-  meetingLink?: string;
-  status: InterviewStatus;
-  notes?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  typeEntretien: 'rh-initial' | 'technique' | 'rh-final';
 }
+
+export interface InterviewDialogData {
+  interview?: Interview;
+  selectedDate?: string;
+  planificationCandidature?: PlanificationCandidatureContext;
+}
+
 export interface InterviewPage {
   content: Interview[];
   totalElements: number;
@@ -64,6 +52,7 @@ export interface InterviewPage {
   number: number;
   size: number;
 }
+
 export interface InterviewStats {
   status: string;
   count: number;

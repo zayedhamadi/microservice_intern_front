@@ -6,14 +6,21 @@ import { firstValueFrom, Subject } from 'rxjs';
 
 import { ApplyService } from '../../../core/service/apply.service';
 import { PosteRecutementService } from '../../../core/service/poste-recutement.service';
+import { InterviewService } from '../../../core/service/interview.service';
 import { ApplicationDto } from '../../../core/models/Application';
 import { PosteRecrutment } from '../../../core/models/PosteRecrutment';
-import { ApplicationStatus } from '../../../core/models/enums/enumPosteRecrutemnt';
+import {
+  ApplicationStatus,
+  InterviewResult,
+} from '../../../core/models/enums/enumPosteRecrutemnt';
 import {
   LABELS_STATUT,
   TRANSITIONS_POSSIBLES,
 } from '../../../core/constant/selectPoste';
-import { PlanificationCandidatureContext, RecrutementInterviewType } from '../../../core/service/recrutement-interview.service';
+import {
+  PlanificationCandidatureContext,
+  RecrutementInterviewType,
+} from '../../../core/service/recrutement-interview.service';
 
 type SortField = 'score' | 'date' | 'nom';
 type SortDir = 'asc' | 'desc';
@@ -24,25 +31,49 @@ interface StatutOption {
 }
 
 /**
- * Statut ACTUEL de la candidature -> type d'entretien à planifier, quand RH fait
- * avancer le candidat (tout sauf REJETE). Correspond exactement à
- * InterviewService.statutRequisPourPlanifier() côté back : c'est le statut requis
- * AVANT de pouvoir planifier ce type d'entretien.
- *
- * SELECTIONNE            -> entretien RH initial (fera passer le statut à EN_ENTRETIEN_RH)
- * EN_ENTRETIEN_TECHNIQUE -> entretien technique   (déjà à ce statut, atteint après succès du RH initial)
- * EN_ENTRETIEN_FINAL     -> entretien RH final    (déjà à ce statut, atteint après succès du technique)
- *
- * Si le statut actuel n'a pas d'entrée ici (ex: EN_ATTENTE -> SELECTIONNE), il
- * n'y a pas encore d'entretien à planifier : on garde le changement de statut simple.
+ * Statuts dont le passage NE DOIT JAMAIS se faire par le PATCH générique de
+ * statut : ils sont réservés au workflow d'entretien (planification + résultat).
+ * Le backend (ApplyService.STATUTS_RESERVES_AU_WORKFLOW_ENTRETIEN) rejette
+ * de toute façon toute tentative de PATCH direct sur ces valeurs.
  */
-const INTERVIEW_TYPE_PAR_STATUT_COURANT: Partial<
-  Record<ApplicationStatus, RecrutementInterviewType>
-> = {
-  [ApplicationStatus.SELECTIONNE]: 'rh-initial',
-  [ApplicationStatus.EN_ENTRETIEN_TECHNIQUE]: 'technique',
-  [ApplicationStatus.EN_ENTRETIEN_FINAL]: 'rh-final',
-};
+const STATUTS_RESERVES_WORKFLOW_ENTRETIEN: ApplicationStatus[] = [
+  ApplicationStatus.EN_ENTRETIEN_RH,
+  ApplicationStatus.EN_ENTRETIEN_TECHNIQUE,
+  ApplicationStatus.EN_ENTRETIEN_FINAL,
+];
+
+/**
+ * Statut ACTUEL de la candidature -> type d'entretien concerné à cette étape.
+ * EN_ENTRETIEN_RH est bien couvert : à ce stade l'entretien RH initial est
+ * soit déjà planifié (résultat à enregistrer), soit reste à planifier —
+ * gererEtapeEntretien() décide dynamiquement lequel des deux cas s'applique.
+ */
+function typeEntretienPourStatutCourant(
+  statut: ApplicationStatus,
+): RecrutementInterviewType | undefined {
+  switch (statut) {
+    case ApplicationStatus.EN_ENTRETIEN_RH:
+      return 'rh-initial';
+    case ApplicationStatus.EN_ENTRETIEN_TECHNIQUE:
+      return 'technique';
+    case ApplicationStatus.EN_ENTRETIEN_FINAL:
+      return 'rh-final';
+    default:
+      return undefined;
+  }
+}
+
+/** Type d'entretien côté UI -> valeur d'enum InterviewType côté backend/DTO */
+function typeBackendPourTypeUi(typeUi: RecrutementInterviewType): string {
+  switch (typeUi) {
+    case 'rh-initial':
+      return 'RH_INITIAL';
+    case 'technique':
+      return 'TECHNIQUE';
+    case 'rh-final':
+      return 'RH_FINAL';
+  }
+}
 
 @Component({
   selector: 'app-consulte-liste-candidats-qui-postules-aune-poste-specifique',
@@ -61,7 +92,6 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     }),
   );
 
-  // AJOUT — pour pouvoir référencer l'enum dans le template
   readonly ApplicationStatus = ApplicationStatus;
   posteId = '';
   poste: PosteRecrutment | null = null;
@@ -97,7 +127,9 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     private readonly router: Router,
     private readonly applyService: ApplyService,
     private readonly posteService: PosteRecutementService,
+    private readonly interviewService: InterviewService,
   ) {}
+
   chargerCandidatures(): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -116,6 +148,7 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
       },
     });
   }
+
   ngOnInit(): void {
     this.posteId = this.route.snapshot.paramMap.get('id') ?? '';
     if (!this.posteId) {
@@ -307,10 +340,26 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
   // Actions sur une candidature
   // ============================================================
 
+  /**
+   * Options affichées dans le <select> "Changer le statut...". On retire les
+   * statuts réservés au workflow entretien : ils sont gérés exclusivement par
+   * le bouton dédié "Gérer l'entretien" (gererEtapeEntretien), jamais par un
+   * PATCH direct de statut (le backend le refuserait de toute façon).
+   */
   prochainStatutsPossibles(candidature: ApplicationDto): StatutOption[] {
     if (!candidature.statut) return [];
-    const suivants = TRANSITIONS_POSSIBLES[candidature.statut] ?? [];
+    const suivants = (TRANSITIONS_POSSIBLES[candidature.statut] ?? []).filter(
+      (v) => !STATUTS_RESERVES_WORKFLOW_ENTRETIEN.includes(v),
+    );
     return suivants.map((v) => ({ valeur: v, label: LABELS_STATUT[v] }));
+  }
+
+  /** Un candidat est-il actuellement dans une étape d'entretien (RH/technique/final) ? */
+  estEnEtapeEntretien(candidature: ApplicationDto): boolean {
+    return (
+      !!candidature.statut &&
+      !!typeEntretienPourStatutCourant(candidature.statut)
+    );
   }
 
   private async selectionnerEtPlanifier(
@@ -423,54 +472,169 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     }
   }
 
- 
+  private ouvrirCalendrierPourPlanification(
+    candidature: ApplicationDto,
+    typeEntretien: RecrutementInterviewType,
+  ): void {
+    if (!candidature.idApplication) return;
+    this.router.navigate(['/rh/calendrierRH'], {
+      state: {
+        planifierEntretien: {
+          applicationId: candidature.idApplication,
+          candidateName: candidature.nomComplet ?? 'Candidat',
+          candidateEmail: candidature.email ?? '',
+          posteRecrutement: this.poste?.titre ?? '',
+          typeEntretien,
+        } as PlanificationCandidatureContext,
+      },
+    });
+  }
 
   /**
-   * - REJETE : inchangé — RH saisit un commentaire, la candidature passe à
-   *   REJETE directement (le back envoie déjà l'email de refus).
-   * - Tout le reste : si le statut ACTUEL correspond à une étape où un entretien
-   *   peut être planifié, on envoie RH vers le calendrier avec le contexte du
-   *   candidat plutôt que de changer le statut nous-mêmes. C'est la création de
-   *   l'entretien (date + type + mode) côté calendrier qui met à jour le statut
-   *   et envoie la convocation par email — plus de changement de statut "à l'aveugle".
-   * - Cas restants sans entretien associé (ex: EN_ATTENTE -> SELECTIONNE) :
-   *   on garde l'ancien comportement (commentaire + changement de statut simple).
+   * Point d'entrée pour EN_ENTRETIEN_RH / EN_ENTRETIEN_TECHNIQUE / EN_ENTRETIEN_FINAL.
+   * On regarde s'il existe déjà un entretien PLANIFIE/REPORTE pour ce type sur
+   * cette candidature :
+   *  - oui  -> on demande le résultat (Réussi/Échoué), ce qui fait avancer
+   *            automatiquement le statut côté backend (enregistrerResultat).
+   *  - non  -> on ouvre le calendrier pour planifier cet entretien (avec date).
    */
-  private ouvrirCalendrierPourPlanification(
-  candidature: ApplicationDto,
-  typeEntretien: RecrutementInterviewType,
-): void {
-  if (!candidature.idApplication) return;
-  this.router.navigate(['/rh/calendrierRH'], {
-    state: {
-      planifierEntretien: {
-        applicationId: candidature.idApplication,
-        candidateName: candidature.nomComplet ?? 'Candidat',
-        candidateEmail: candidature.email ?? '',
-        posteRecrutement: this.poste?.titre ?? '',
-        typeEntretien,
-      } as PlanificationCandidatureContext,
-    },
-  });
-}
+  async gererEtapeEntretien(candidature: ApplicationDto): Promise<void> {
+    if (!candidature.idApplication || !candidature.statut) return;
 
-async changerStatut(candidature: ApplicationDto, nouveauStatut: ApplicationStatus): Promise<void> {
-  if (!candidature.idApplication) return;
-  if (nouveauStatut === ApplicationStatus.REJETE) {
-    await this.rejeterCandidature(candidature);
-    return;
+    const typeUi = typeEntretienPourStatutCourant(candidature.statut);
+    if (!typeUi) return;
+
+    const typeBackend = typeBackendPourTypeUi(typeUi);
+
+    let entretiens;
+    try {
+      entretiens = await firstValueFrom(
+        this.interviewService.getEntretiensPourCandidature(
+          candidature.idApplication,
+        ),
+      );
+    } catch {
+      await Swal.fire(
+        'Erreur',
+        'Impossible de charger les entretiens de ce candidat.',
+        'error',
+      );
+      return;
+    }
+
+    const entretienEnAttente = entretiens
+      .filter(
+        (e: any) =>
+          e.type === typeBackend &&
+          (e.status === 'PLANIFIE' || e.status === 'REPORTE'),
+      )
+      .sort((a: any, b: any) =>
+        (b.interviewDate ?? '').localeCompare(a.interviewDate ?? ''),
+      )[0];
+
+    if (entretienEnAttente?.id) {
+      await this.enregistrerResultatEntretien(
+        candidature,
+        entretienEnAttente.id,
+      );
+    } else {
+      this.ouvrirCalendrierPourPlanification(candidature, typeUi);
+    }
   }
-  if (nouveauStatut === ApplicationStatus.SELECTIONNE) {
-    await this.selectionnerEtPlanifier(candidature);
-    return;
+
+  private async enregistrerResultatEntretien(
+    candidature: ApplicationDto,
+    interviewId: string,
+  ): Promise<void> {
+    const { value: formValues } = await Swal.fire({
+      title: `Résultat de l'entretien — ${candidature.nomComplet}`,
+      html:
+        '<select id="swal-resultat" class="swal2-select">' +
+        '<option value="REUSSI">Réussi</option>' +
+        '<option value="ECHOUE">Échoué</option>' +
+        '</select>' +
+        '<textarea id="swal-notes" class="swal2-textarea" placeholder="Notes (obligatoire si échoué)"></textarea>',
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Enregistrer',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#7c3aed',
+      preConfirm: () => {
+        const resultat = (
+          document.getElementById('swal-resultat') as HTMLSelectElement
+        ).value as InterviewResult;
+        const notes = (
+          document.getElementById('swal-notes') as HTMLTextAreaElement
+        ).value;
+        if (resultat === ('ECHOUE' as InterviewResult) && !notes.trim()) {
+          Swal.showValidationMessage(
+            "Une note est obligatoire lorsque l'entretien est échoué",
+          );
+          return;
+        }
+        return { resultat, notes };
+      },
+    });
+
+    if (!formValues) return;
+
+    this.candidatureEnCoursDeMaj = candidature.idApplication ?? null;
+
+    try {
+      await firstValueFrom(
+        this.interviewService.enregistrerResultat(interviewId, {
+          resultat: formValues.resultat,
+          notes: formValues.notes || undefined,
+        }),
+      );
+      this.chargerCandidatures();
+      await Swal.fire({
+        icon: 'success',
+        title: 'Résultat enregistré',
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch {
+      await Swal.fire(
+        'Erreur',
+        "Impossible d'enregistrer le résultat de l'entretien.",
+        'error',
+      );
+    } finally {
+      this.candidatureEnCoursDeMaj = null;
+    }
   }
-  const typeEntretien = candidature.statut ? INTERVIEW_TYPE_PAR_STATUT_COURANT[candidature.statut] : undefined;
-  if (typeEntretien) {
-    this.ouvrirCalendrierPourPlanification(candidature, typeEntretien);
-    return;
+
+  /**
+   * - REJETE : commentaire obligatoire, passage direct via PATCH (le back
+   *   envoie l'email de refus).
+   * - SELECTIONNE : ouvre la confirmation puis redirige vers la planification
+   *   de l'entretien RH initial.
+   * - Statuts réservés au workflow entretien (EN_ENTRETIEN_RH/TECHNIQUE/FINAL) :
+   *   ne passent JAMAIS par le PATCH générique -> délégué à gererEtapeEntretien.
+   * - Reste (ex: RETIRE...) : PATCH simple avec commentaire optionnel.
+   */
+  async changerStatut(
+    candidature: ApplicationDto,
+    nouveauStatut: ApplicationStatus,
+  ): Promise<void> {
+    if (!candidature.idApplication) return;
+
+    if (nouveauStatut === ApplicationStatus.REJETE) {
+      await this.rejeterCandidature(candidature);
+      return;
+    }
+    if (nouveauStatut === ApplicationStatus.SELECTIONNE) {
+      await this.selectionnerEtPlanifier(candidature);
+      return;
+    }
+    if (STATUTS_RESERVES_WORKFLOW_ENTRETIEN.includes(nouveauStatut)) {
+      await this.gererEtapeEntretien(candidature);
+      return;
+    }
+
+    await this.demanderCommentaireEtChangerStatut(candidature, nouveauStatut);
   }
-  await this.demanderCommentaireEtChangerStatut(candidature, nouveauStatut);
-}
 
   private async demanderCommentaireEtChangerStatut(
     candidature: ApplicationDto,
@@ -622,17 +786,17 @@ async changerStatut(candidature: ApplicationDto, nouveauStatut: ApplicationStatu
 
   classeScore(score?: number): string {
     if (score === undefined || score === null) return 'score-non-evalue';
-    if (score >= 70) return 'score-excellent'; // était 80
-    if (score >= 50) return 'score-bon'; // était 60, décalé en cohérence
-    if (score >= 30) return 'score-moyen'; // était 40
+    if (score >= 70) return 'score-excellent';
+    if (score >= 50) return 'score-bon';
+    if (score >= 30) return 'score-moyen';
     return 'score-faible';
   }
 
   labelScore(score?: number): string {
     if (score === undefined || score === null) return 'Non évalué';
-    if (score >= 70) return 'Excellent match'; // était 80
-    if (score >= 50) return 'Bon match'; // était 60
-    if (score >= 30) return 'Match moyen'; // était 40
+    if (score >= 70) return 'Excellent match';
+    if (score >= 50) return 'Bon match';
+    if (score >= 30) return 'Match moyen';
     return 'Match faible';
   }
 

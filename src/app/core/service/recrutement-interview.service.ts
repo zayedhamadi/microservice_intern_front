@@ -4,19 +4,15 @@ import { Observable } from 'rxjs';
 import { environment } from '../environement/environment';
 import { Interview } from '../models/interview';
 
-/** Correspond aux 3 endpoints exposés par InterviewController côté recrutement. */
 export type RecrutementInterviewType = 'rh-initial' | 'technique' | 'rh-final';
 
-/** Doit correspondre à PlanifierEntretienDto côté back (mode, dateEntretien, lieu, lienVisio). */
 export interface PlanifierEntretienPayload {
-  mode: 'TELEPHONIQUE' | 'MEET' | 'PRESENTIEL';
-  /** ISO local date-time, ex: '2026-08-20T10:00:00' */
+  mode: 'TELEPHONIQUE' | 'DISTANCIEL' | 'PRESENTIEL';
   dateEntretien: string;
   lieu?: string;
   lienVisio?: string;
 }
 
-/** Contexte transmis depuis la liste des candidats vers le calendrier (via router state). */
 export interface PlanificationCandidatureContext {
   applicationId: string;
   candidateName: string;

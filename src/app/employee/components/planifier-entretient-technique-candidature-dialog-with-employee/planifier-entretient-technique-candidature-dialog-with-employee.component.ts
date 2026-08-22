@@ -24,12 +24,14 @@ export interface PlanifierEntretienDialogResult {
   type: RecrutementInterviewType;
   payload: PlanifierEntretienPayload;
 }
-
 @Component({
-  selector: 'app-planifier-entretien-candidature-dialog',
-  templateUrl: './planifier-entretien-candidature-dialog.component.html',
+  selector:
+    'app-planifier-entretient-technique-candidature-dialog-with-employee',
+  templateUrl:
+    './planifier-entretient-technique-candidature-dialog-with-employee.component.html',
+  // styleUrl: './planifier-entretient-technique-candidature-dialog-with-employee.component.css'
 })
-export class PlanifierEntretienCandidatureDialogComponent implements OnInit {
+export class PlanifierEntretientTechniqueCandidatureDialogWithEmployeeComponent implements OnInit {
   readonly typeLabels: Record<RecrutementInterviewType, string> = {
     'rh-initial': 'Entretien RH initial',
     technique: 'Entretien technique',
@@ -42,7 +44,7 @@ export class PlanifierEntretienCandidatureDialogComponent implements OnInit {
   constructor(
     private readonly fb: FormBuilder,
     private readonly dialogRef: MatDialogRef<
-      PlanifierEntretienCandidatureDialogComponent,
+      PlanifierEntretientTechniqueCandidatureDialogWithEmployeeComponent,
       PlanifierEntretienDialogResult
     >,
     @Inject(MAT_DIALOG_DATA) public readonly data: PlanifierEntretienDialogData,
@@ -145,3 +147,4 @@ export class PlanifierEntretienCandidatureDialogComponent implements OnInit {
     return this.toLocalDateTimeInput(d);
   }
 }
+

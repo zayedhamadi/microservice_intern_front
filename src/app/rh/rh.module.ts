@@ -19,7 +19,6 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { QuillModule } from 'ngx-quill';
 import { BaseChartDirective } from 'ng2-charts';
-
 import { RHRoutingModule } from './rh-routing.module';
 
 import { DashboardRHComponent } from './components/dashboard-rh/dashboard-rh.component';
@@ -60,7 +59,6 @@ import { PlanifierEntretienCandidatureDialogComponent } from './components/plani
     ReactiveFormsModule,
     RHRoutingModule,
     NgxPaginationModule,
-
     MatDialogModule,
     MatTabsModule,
     MatButtonModule,
@@ -73,10 +71,8 @@ import { PlanifierEntretienCandidatureDialogComponent } from './components/plani
     MatProgressSpinnerModule,
     MatDatepickerModule,
     MatNativeDateModule,
-
     FullCalendarModule,
     QuillModule.forRoot(),
-
     BaseChartDirective,
   ],
 })
