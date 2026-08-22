@@ -1,0 +1,124 @@
+<div class="detail-page">
+
+    <button class="back-btn" (click)="retour()">
+        <i class="fa-solid fa-arrow-left"></i> Retour à mes candidatures
+    </button>
+
+    <div *ngIf="isLoading" class="state-box">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <p>Chargement du détail de la candidature…</p>
+    </div>
+
+    <div *ngIf="!isLoading && errorMessage" class="state-box error">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>{{ errorMessage }}</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading && !errorMessage && candidature">
+
+        <div class="detail-header">
+            <div class="dept-avatar-lg">{{ (poste?.departementNom || poste?.titre || '?').charAt(0) | uppercase }}</div>
+            <div class="header-info">
+                <h1 class="detail-title">{{ poste?.titre || 'Poste indisponible' }}</h1>
+                <p class="detail-subtitle" *ngIf="poste?.departementNom">
+                    <i class="fa-solid fa-building-user"></i> {{ poste?.departementNom }}
+                </p>
+                <div class="header-meta">
+                    <span *ngIf="poste?.lieu"><i class="fa-solid fa-location-dot"></i> {{ poste?.lieu }}</span>
+                    <span *ngIf="poste?.typeContrat"><i class="fa-solid fa-file-signature"></i> {{ poste?.typeContrat
+                        }}</span>
+                    <span *ngIf="candidature.dateCandidature">
+                        <i class="fa-regular fa-calendar"></i> Postulé le {{ candidature.dateCandidature | date:
+                        'dd/MM/yyyy' }}
+                    </span>
+                </div>
+            </div>
+            <span [ngClass]="getStatusClass(candidature.statut)">
+                <i class="fa-solid fa-circle status-dot"></i>
+                {{ getStatusLabel(candidature.statut) }}
+            </span>
+        </div>
+
+        <p class="latest-comment" *ngIf="candidature.commentaireRH">
+            <i class="fa-solid fa-comment-dots"></i>
+            <span><strong>Dernier commentaire RH :</strong> {{ candidature.commentaireRH }}</span>
+        </p>
+
+        <section class="section-block">
+            <h2 class="section-title"><i class="fa-solid fa-timeline"></i> Historique de la candidature</h2>
+
+            <div class="timeline" *ngIf="timeline.length > 0; else noTimeline">
+                <div class="timeline-item" *ngFor="let entry of timeline">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-top">
+                            <span class="timeline-status">{{ getStatusLabel(entry.statut) }}</span>
+                            <span class="timeline-date" *ngIf="entry.date">{{ entry.date | date: 'dd/MM/yyyy à HH:mm'
+                                }}</span>
+                        </div>
+                        <p class="timeline-comment" *ngIf="entry.commentaire">
+                            <i class="fa-solid fa-quote-left"></i> {{ entry.commentaire }}
+                        </p>
+                        <p class="timeline-author" *ngIf="entry.auteurKeycloakId">
+                            <i class="fa-solid fa-user-shield"></i> Traité par le service RH
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <ng-template #noTimeline>
+                <p class="empty-text">Aucun changement de statut enregistré pour le moment.</p>
+            </ng-template>
+        </section>
+
+        <section class="section-block">
+            <h2 class="section-title"><i class="fa-solid fa-people-arrows"></i> Entretiens</h2>
+
+            <div class="interview-grid" *ngIf="entretiens.length > 0; else noInterview">
+                <div class="interview-card" *ngFor="let entretien of entretiens">
+                    <div class="interview-top">
+                        <span class="interview-type">{{ getInterviewTypeLabel(entretien.type) }}</span>
+                        <span [ngClass]="getResultClass(entretien.resultat)">{{ getResultLabel(entretien.resultat)
+                            }}</span>
+                    </div>
+
+                    <div class="interview-meta">
+                        <span *ngIf="entretien.interviewDate">
+                            <i class="fa-regular fa-calendar"></i> {{ entretien.interviewDate | date: 'dd/MM/yyyy' }}
+                        </span>
+                        <span *ngIf="entretien.startTime">
+                            <i class="fa-regular fa-clock"></i> {{ entretien.startTime }} - {{ entretien.endTime }}
+                        </span>
+                        <span *ngIf="entretien.mode">
+                            <i class="fa-solid" [ngClass]="getModeIcon(entretien.mode)"></i> {{
+                            getModeLabel(entretien.mode) }}
+                        </span>
+                        <span *ngIf="entretien.location">
+                            <i class="fa-solid fa-location-dot"></i> {{ entretien.location }}
+                        </span>
+                        <span *ngIf="entretien.interviewerName">
+                            <i class="fa-solid fa-user-tie"></i> {{ entretien.interviewerName }}
+                        </span>
+                    </div>
+
+                    <div class="interview-status-row">
+                        <span class="interview-status-badge">{{ getInterviewStatusLabel(entretien.status) }}</span>
+                        <a *ngIf="entretien.meetingLink" [href]="entretien.meetingLink" target="_blank"
+                            class="visio-link">
+                            <i class="fa-solid fa-video"></i> Rejoindre la visio
+                        </a>
+                    </div>
+
+                    <p class="interview-notes" *ngIf="entretien.notes">
+                        <i class="fa-solid fa-comment-dots"></i> {{ entretien.notes }}
+                    </p>
+                </div>
+            </div>
+
+            <ng-template #noInterview>
+                <p class="empty-text">Aucun entretien planifié pour cette candidature.</p>
+            </ng-template>
+        </section>
+
+    </ng-container>
+</div>

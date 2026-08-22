@@ -13,8 +13,10 @@ export class PosteRecutementService {
   private readonly recrutementUrl = `${environment.apiUrl}/rh/api/postesRecrutement`;
   private readonly departementUrl = `${environment.apiUrl}/api/departements`;
 
-  constructor(private http: HttpClient) { }
-
+  constructor(private http: HttpClient) {}
+  getPosteRecrutementById(id: string): Observable<PosteRecrutment> {
+    return this.http.get<PosteRecrutment>(`${this.recrutementUrl}/${id}`);
+  }
   getAllPostes(): Observable<any[]> {
     return this.http.get<any[]>(this.recrutementUrl);
   }
@@ -48,7 +50,7 @@ export class PosteRecutementService {
     filtre: FiltrePostesAvecCandidatures,
   ): Observable<PosteAvecCandidatures[]> {
     let params = new HttpParams();
- 
+
     if (filtre.departementNom) {
       params = params.set('departementNom', filtre.departementNom);
     }
@@ -76,7 +78,7 @@ export class PosteRecutementService {
     if (filtre.sortDir) {
       params = params.set('sortDir', filtre.sortDir);
     }
- 
+
     return this.http.get<PosteAvecCandidatures[]>(
       `${this.recrutementUrl}/avec-candidatures`,
       { params },

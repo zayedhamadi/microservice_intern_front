@@ -1,1 +1,74 @@
-<p>calendrier-candidat works!</p>
+<div class="candidat-calendrier-wrapper">
+    <header class="calendrier-toolbar">
+        <div class="toolbar-left">
+            <button mat-stroked-button class="btn-today" (click)="today()">
+                <i class="fa-solid fa-calendar-day"></i> Aujourd'hui
+            </button>
+            <button mat-icon-button (click)="prev()" aria-label="Précédent">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button mat-icon-button (click)="next()" aria-label="Suivant">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <h2 class="toolbar-title">{{ currentViewTitle }}</h2>
+        </div>
+
+        <div class="toolbar-right">
+            <button mat-button [class.active]="isActiveView('timeGridDay')"
+                (click)="changeView('timeGridDay')">Jour</button>
+            <button mat-button [class.active]="isActiveView('timeGridWeek')"
+                (click)="changeView('timeGridWeek')">Semaine</button>
+            <button mat-button [class.active]="isActiveView('dayGridMonth')"
+                (click)="changeView('dayGridMonth')">Mois</button>
+            <button mat-button [class.active]="isActiveView('listMonth')"
+                (click)="changeView('listMonth')">Agenda</button>
+        </div>
+    </header>
+
+    <div class="calendrier-body">
+        <aside class="calendrier-sidebar">
+            <h3 class="sidebar-heading">Navigation</h3>
+            <mat-calendar [selected]="selectedDate" (selectedChange)="onMiniCalendarSelect($event)"></mat-calendar>
+
+            <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Rechercher un entretien</mat-label>
+                <input matInput [(ngModel)]="filterText" (ngModelChange)="onFilterChange()"
+                    placeholder="Poste, recruteur...">
+                <i matSuffix class="fa-solid fa-magnifying-glass"></i>
+            </mat-form-field>
+
+            <div class="legend">
+                <h4>Types d'entretien</h4>
+                <div class="legend-item" *ngFor="let type of types" (click)="toggleType(type)">
+                    <span class="legend-checkbox" [class.checked]="type.visible" [style.borderColor]="type.color"
+                        [style.backgroundColor]="type.visible ? type.color : 'transparent'">
+                        <i class="fa-solid fa-check" *ngIf="type.visible"></i>
+                    </span>
+                    <span class="legend-label" [class.dimmed]="!type.visible">{{ type.label }}</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="calendrier-main">
+            <!-- Bandeau d'erreur -->
+            <div class="state-banner error-banner" *ngIf="errorMessage && !isLoading">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>{{ errorMessage }}</span>
+            </div>
+
+            <!-- Overlay de chargement -->
+            <div class="loading-overlay" *ngIf="isLoading">
+                <mat-spinner diameter="40" strokeWidth="4"></mat-spinner>
+                <p>Chargement de vos entretiens...</p>
+            </div>
+
+            <!-- État vide (après filtrage, pas de chargement en cours) -->
+            <div class="state-banner empty-banner" *ngIf="!isLoading && !errorMessage && visibleEventsCount === 0">
+                <i class="fa-solid fa-calendar-xmark"></i>
+                <span>Aucun entretien à afficher pour ces critères.</span>
+            </div>
+
+            <full-calendar #calendar [options]="calendarOptions" [class.hidden]="isLoading"></full-calendar>
+        </main>
+    </div>
+</div>

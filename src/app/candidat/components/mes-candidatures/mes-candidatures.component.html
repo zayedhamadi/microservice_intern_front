@@ -177,13 +177,16 @@
                         <i class="fa-solid fa-file-pdf"></i> Lettre PDF
                     </button>
 
-                    <button class="action-btn danger" *ngIf="canRetirer(item.candidature)"
-                        [disabled]="isRetraitEnCoursId === item.candidature.idApplication"
-                        (click)="retirerCandidature(item)">
-                        <i class="fa-solid"
-                            [ngClass]="isRetraitEnCoursId === item.candidature.idApplication ? 'fa-spinner fa-spin' : 'fa-rotate-left'"></i>
-                        Retirer
-                    </button>
+                <button class="action-btn" (click)="voirEtatDetaille(item.candidature.posteRecrutementId)">
+                    <i class="fa-solid fa-timeline"></i> Consulter l'état
+                </button>
+                
+                <button class="action-btn danger" *ngIf="canRetirer(item.candidature)"
+                    [disabled]="isRetraitEnCoursId === item.candidature.idApplication" (click)="retirerCandidature(item)">
+                    <i class="fa-solid"
+                        [ngClass]="isRetraitEnCoursId === item.candidature.idApplication ? 'fa-spinner fa-spin' : 'fa-rotate-left'"></i>
+                    Retirer
+                </button>
                 </div>
             </div>
         </div>

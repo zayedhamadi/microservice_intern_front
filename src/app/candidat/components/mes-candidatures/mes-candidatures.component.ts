@@ -40,7 +40,13 @@ export class MesCandidaturesComponent implements OnInit {
 
   departementOptions: string[] = [];
 
-  // Filtres
+  voirEtatDetaille(posteId: string | undefined): void {
+    if (!posteId) return;
+    this.router.navigate([
+      '/candidat/consulterEtatEthistoriqueParDetailleDuneCandidatureSpecifique',
+      posteId,
+    ]);
+  }
   searchTerm = '';
   statutFilter: ApplicationStatus | 'TOUS' = 'TOUS';
   typeContratFilter: TypeContrat | 'TOUS' = 'TOUS';

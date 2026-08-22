@@ -22,6 +22,7 @@ import { EnregistrerPostePourPostulerApresComponent } from './components/enregis
 import { PostuleraCandidatSpecificComponent } from './components/postulera-candidat-specific/postulera-candidat-specific.component';
 
 import { EditMyCondidateForSpeceficPostComponent } from './components/edit-my-condidate-for-specefic-post/edit-my-condidate-for-specefic-post.component';
+import { ConsulterEtatEthistoriqueParDetailleDuneCandidatureSpecifiqueComponent } from './components/consulter-etat-ethistorique-par-detaille-dune-candidature-specifique/consulter-etat-ethistorique-par-detaille-dune-candidature-specifique.component';
 
 const routes: Routes = [
   {
@@ -46,6 +47,13 @@ const routes: Routes = [
       {
         path: 'dashboardcandidat',
         component: DashboardCandidatComponent,
+        canActivate: [profileCompleteGuard],
+      },
+
+      {
+        path: 'consulterEtatEthistoriqueParDetailleDuneCandidatureSpecifique/:id',
+        component:
+          ConsulterEtatEthistoriqueParDetailleDuneCandidatureSpecifiqueComponent,
         canActivate: [profileCompleteGuard],
       },
 
