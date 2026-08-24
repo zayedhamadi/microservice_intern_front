@@ -1,0 +1,104 @@
+<div class="detail-dialog">
+    <h2 mat-dialog-title class="detail-header">
+        <span class="type-badge">{{ typeLabels[interview.type || 'LIBRE'] }}</span>
+        <span class="status-badge" [attr.data-status]="interview.status">{{ statusLabels[interview.status] }}</span>
+    </h2>
+
+    <!-- ---- Mode vue ---- -->
+    <mat-dialog-content class="detail-content" *ngIf="mode === 'view'">
+        <div class="detail-row"><mat-icon>person</mat-icon> <strong>{{ interview.candidateName }}</strong></div>
+        <div class="detail-row" *ngIf="interview.candidateEmail">
+            <mat-icon>mail</mat-icon> {{ interview.candidateEmail }}
+        </div>
+        <div class="detail-row"><mat-icon>work</mat-icon> {{ interview.posteRecrutement }}</div>
+        <div class="detail-row"><mat-icon>badge</mat-icon> {{ interview.interviewerName }}</div>
+        <div class="detail-row">
+            <mat-icon>event</mat-icon> {{ interview.interviewDate }} — {{ interview.startTime }} à {{ interview.endTime
+            }}
+        </div>
+        <div class="detail-row">
+            <mat-icon>place</mat-icon> {{ interview.mode }}
+            <span *ngIf="interview.location">· {{ interview.location }}</span>
+        </div>
+        <div class="detail-row" *ngIf="interview.meetingLink">
+            <mat-icon>link</mat-icon> <a [href]="interview.meetingLink" target="_blank" rel="noopener">{{
+                interview.meetingLink }}</a>
+        </div>
+        <div class="detail-row" *ngIf="interview.resultat">
+            <mat-icon>{{ interview.resultat === 'REUSSI' ? 'check_circle' : 'cancel' }}</mat-icon>
+            Résultat : {{ interview.resultat === 'REUSSI' ? 'Réussi' : 'Échoué' }}
+        </div>
+        <div class="detail-row notes" *ngIf="interview.notes">
+            <mat-icon>notes</mat-icon> {{ interview.notes }}
+        </div>
+    </mat-dialog-content>
+
+    <!-- ---- Mode reprogrammer (item 5) ---- -->
+    <mat-dialog-content class="detail-content" *ngIf="mode === 'reporter'">
+        <p class="detail-hint">Choisissez une nouvelle date et heure pour cet entretien.</p>
+        <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Nouvelle date et heure</mat-label>
+            <input matInput type="datetime-local" [(ngModel)]="nouvelleDate" />
+        </mat-form-field>
+    </mat-dialog-content>
+
+    <!-- ---- Mode résultat ---- -->
+    <mat-dialog-content class="detail-content" *ngIf="mode === 'resultat'">
+        <div class="resultat-choice">
+            <button type="button" [class.actif]="resultat === 'REUSSI'" (click)="resultat = 'REUSSI'"
+                class="btn-reussi">
+                <mat-icon>check_circle</mat-icon> Réussi
+            </button>
+            <button type="button" [class.actif]="resultat === 'ECHOUE'" (click)="resultat = 'ECHOUE'"
+                class="btn-echoue">
+                <mat-icon>cancel</mat-icon> Échoué
+            </button>
+        </div>
+        <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Notes {{ resultat === 'ECHOUE' ? '(obligatoire)' : '(optionnel)' }}</mat-label>
+            <textarea matInput [(ngModel)]="notesResultat" rows="3"></textarea>
+        </mat-form-field>
+    </mat-dialog-content>
+
+    <!-- ---- Actions ---- -->
+    <mat-dialog-actions align="end" class="detail-actions">
+        <ng-container *ngIf="mode === 'view'">
+            <button mat-stroked-button (click)="close()">Fermer</button>
+
+            <button mat-stroked-button color="warn" *ngIf="interviewService.canMarquerAbsent(interview)"
+                [disabled]="saving" (click)="marquerAbsent()">
+                Marquer absent
+            </button>
+
+            <button mat-stroked-button *ngIf="isCandidature && interviewService.isActif(interview)" [disabled]="saving"
+                (click)="mode = 'resultat'">
+                Enregistrer résultat
+            </button>
+
+            <button mat-stroked-button *ngIf="interviewService.canReporter(interview)" [disabled]="saving"
+                (click)="mode = 'reporter'">
+                Reprogrammer
+            </button>
+
+            <button mat-raised-button color="warn"
+                *ngIf="interviewService.canAnnuler(interview) || interview.source === 'LIBRE'" [disabled]="saving"
+                (click)="annuler()">
+                Annuler l'entretien
+            </button>
+        </ng-container>
+
+        <ng-container *ngIf="mode === 'reporter'">
+            <button mat-stroked-button [disabled]="saving" (click)="mode = 'view'">Retour</button>
+            <button mat-raised-button color="primary" [disabled]="saving || !nouvelleDate" (click)="confirmerReport()">
+                Confirmer
+            </button>
+        </ng-container>
+
+        <ng-container *ngIf="mode === 'resultat'">
+            <button mat-stroked-button [disabled]="saving" (click)="mode = 'view'">Retour</button>
+            <button mat-raised-button color="primary" [disabled]="saving || !resultat" (click)="enregistrerResultat()">
+                Valider le résultat
+            </button>
+        </ng-container>
+    </mat-dialog-actions>
+</div>

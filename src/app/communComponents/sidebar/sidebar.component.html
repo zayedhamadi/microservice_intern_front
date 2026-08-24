@@ -6,7 +6,7 @@
 
     <aside class="sidebar" [class.collapsed]="isCollapsed">
 
-        <!-- ================= HEADER ================= -->
+        <!-- ================= EN-TÊTE ================= -->
 
         <div class="sb-header">
 
@@ -20,9 +20,8 @@
 
             </div>
 
-
-            <i class="fa-solid fa-shield-halved sb-logo-mini" *ngIf="isCollapsed"></i>
-
+            <i class="fa-solid fa-shield-halved sb-logo-mini" *ngIf="isCollapsed">
+            </i>
 
             <button type="button" class="collapse-btn" (click)="toggleSidebar()" [attr.aria-label]="
                     isCollapsed
@@ -30,14 +29,15 @@
                         : 'Réduire le menu'
                 ">
 
-                <i class="fa-solid" [class.fa-angles-left]="!isCollapsed" [class.fa-angles-right]="isCollapsed"></i>
+                <i class="fa-solid" [class.fa-angles-left]="!isCollapsed" [class.fa-angles-right]="isCollapsed">
+                </i>
 
             </button>
 
         </div>
 
 
-        <!-- ================= USER ================= -->
+        <!-- ================= UTILISATEUR ================= -->
 
         <div class="sb-admin-card" *ngIf="!isCollapsed">
 
@@ -46,12 +46,11 @@
                 <img *ngIf="getAvatarSrc()" [src]="getAvatarSrc()!" alt="Photo de profil">
 
                 <span *ngIf="!getAvatarSrc() && user">
-                    {{ user.prenom}}
-                    {{ user.nom}}
+                    {{ user.prenom }}
+                    {{ user.nom }}
                 </span>
 
             </div>
-
 
             <div class="sb-admin-info">
 
@@ -60,16 +59,13 @@
                     {{ user?.prenom }}
                     {{ user?.nom }}
 
-
-                    <span class="ws-indicator" [ngClass]="wsStatusClass" [title]="wsStatusLabel"></span>
+                    <span class="ws-indicator" [ngClass]="wsStatusClass" [title]="wsStatusLabel">
+                    </span>
 
                 </div>
 
-
                 <span class="sb-admin-badge">
-
                     {{ user?.role | uppercase }}
-
                 </span>
 
             </div>
@@ -77,7 +73,7 @@
         </div>
 
 
-        <!-- ================= COLLAPSED AVATAR ================= -->
+        <!-- ================= AVATAR RÉDUIT ================= -->
 
         <div class="sb-avatar-mini" *ngIf="isCollapsed">
 
@@ -99,15 +95,16 @@
 
         <nav class="sb-nav">
 
-
-            <!-- ================= GENERAL ================= -->
+            <!-- ================= GÉNÉRAL ================= -->
 
             <div class="sb-section-label" *ngIf="!isCollapsed">
+
                 GÉNÉRAL
+
             </div>
 
 
-            <!-- DASHBOARD -->
+            <!-- ================= ACCUEIL ================= -->
 
             <a class="sb-item" [routerLink]="getDashboardRoute()" routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }">
@@ -119,7 +116,9 @@
                 </span>
 
                 <div class="sb-tooltip" *ngIf="isCollapsed">
+
                     Accueil
+
                 </div>
 
             </a>
@@ -128,9 +127,10 @@
             <!-- ================= CALENDRIER ================= -->
 
             <div class="sb-section-label" *ngIf="!isCollapsed">
-                CALENDRIER
-            </div>
 
+                CALENDRIER
+
+            </div>
 
             <a class="sb-item sb-calendar-item" [routerLink]="getCalendarRoute()" routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }">
@@ -142,27 +142,30 @@
                 </span>
 
                 <div class="sb-tooltip" *ngIf="isCollapsed">
+
                     Mon calendrier
+
                 </div>
 
             </a>
 
 
             <!-- =================================================
-                 RH
+                 RESSOURCES HUMAINES
             ================================================== -->
 
             <ng-container *ngIf="user?.role === 'RH'">
 
                 <div class="sb-divider"></div>
 
-
                 <div class="sb-section-label" *ngIf="!isCollapsed">
+
                     RESSOURCES HUMAINES
+
                 </div>
 
 
-                <!-- EMPLOYÉS -->
+                <!-- ================= EMPLOYÉS ================= -->
 
                 <a class="sb-item" routerLink="/rh/listUsers" routerLinkActive="active" (click)="clearNotifCount()">
 
@@ -173,25 +176,29 @@
                         Employés
 
                         <span class="sb-badge" *ngIf="notifCount > 0">
-                            {{ notifCount }}
+
+                            {{ getNotificationLabel() }}
+
                         </span>
 
                     </span>
 
-
                     <div class="sb-tooltip" *ngIf="isCollapsed">
+
                         Employés
+
                     </div>
 
                 </a>
 
 
-                <!-- POSTES -->
+                <!-- ================= POSTES ================= -->
 
                 <div class="sb-submenu-wrapper">
 
-                    <a href="#" class="sb-item sb-submenu-toggle" (click)="toggleSubmenu('postes', $event)"
-                        [class.open]="isSubmenuOpen('postes')">
+                    <button type="button" class="sb-item sb-submenu-toggle" (click)="toggleSubmenu('postes', $event)"
+                        [class.open]="isSubmenuOpen('postes')" [attr.aria-expanded]="isSubmenuOpen('postes')"
+                        aria-controls="rh-postes-submenu">
 
                         <i class="fa-solid fa-briefcase fa-fw"></i>
 
@@ -200,28 +207,35 @@
                         </span>
 
                         <i *ngIf="!isCollapsed" class="fa-solid fa-chevron-down sb-arrow"
-                            [class.rotated]="isSubmenuOpen('postes')"></i>
-
+                            [class.rotated]="isSubmenuOpen('postes')">
+                        </i>
 
                         <div class="sb-tooltip" *ngIf="isCollapsed">
+
                             Postes
+
                         </div>
 
-                    </a>
+                    </button>
 
 
-                    <div class="sb-submenu" [class.open]="isSubmenuOpen('postes')">
+                    <div id="rh-postes-submenu" class="sb-submenu" [class.open]="isSubmenuOpen('postes')">
+
+
+                        <!-- CRÉER UN POSTE -->
 
                         <a class="sb-sub-item" routerLink="/rh/NewPosteRecrutement" routerLinkActive="active">
 
                             <i class="fa-solid fa-plus fa-fw"></i>
 
                             <span *ngIf="!isCollapsed">
-                                Créer un nouveau poste
+                                Créer un poste
                             </span>
 
                         </a>
 
+
+                        <!-- LISTE DES POSTES -->
 
                         <a class="sb-sub-item" routerLink="/rh/ListePosteRecrutement" routerLinkActive="active">
 
@@ -234,13 +248,108 @@
                         </a>
 
 
+                        <!-- CANDIDATURES -->
+
                         <a class="sb-sub-item" routerLink="/rh/ConsulteLesPosteQuiLesCandidatsPostulent"
                             routerLinkActive="active">
 
                             <i class="fa-solid fa-file-signature fa-fw"></i>
 
                             <span *ngIf="!isCollapsed">
-                                Candidatures aux postes
+                                Candidatures
+                            </span>
+
+                        </a>
+
+
+                        <!-- DEMANDES DE REPROGRAMMATION -->
+
+                        <a class="sb-sub-item" [routerLink]="getReprogrammationRoute()" routerLinkActive="active"
+                            [routerLinkActiveOptions]="{ exact: true }" (click)="clearNotifCount()">
+
+                            <i class="fa-solid fa-calendar-check fa-fw"></i>
+
+                            <span *ngIf="!isCollapsed">
+                                Demandes de reprogrammation
+                            </span>
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </ng-container>
+
+
+            <!-- =================================================
+                 EMPLOYÉ
+            ================================================== -->
+
+            <ng-container *ngIf="user?.role === 'EMPLOYEE'">
+
+                <div class="sb-divider"></div>
+
+                <div class="sb-section-label" *ngIf="!isCollapsed">
+
+                    GESTION
+
+                </div>
+
+
+                <!-- ================= EMPLOYÉS ================= -->
+
+                <div class="sb-submenu-wrapper">
+
+                    <button type="button" class="sb-item sb-submenu-toggle" (click)="toggleSubmenu('employees', $event)"
+                        [class.open]="isSubmenuOpen('employees')" [attr.aria-expanded]="isSubmenuOpen('employees')"
+                        aria-controls="employee-submenu">
+
+                        <i class="fa-solid fa-users fa-fw"></i>
+
+                        <span *ngIf="!isCollapsed">
+                            Employés
+                        </span>
+
+                        <i *ngIf="!isCollapsed" class="fa-solid fa-chevron-down sb-arrow"
+                            [class.rotated]="isSubmenuOpen('employees')">
+                        </i>
+
+                        <span class="sb-tooltip" *ngIf="isCollapsed">
+
+                            Employés
+
+                        </span>
+
+                    </button>
+
+
+                    <div id="employee-submenu" class="sb-submenu" [class.open]="isSubmenuOpen('employees')">
+
+
+                        <!-- LISTE DES EMPLOYÉS -->
+
+                        <a class="sb-sub-item" routerLink="/manager/listUsersManager" routerLinkActive="active"
+                            [routerLinkActiveOptions]="{ exact: true }">
+
+                            <i class="fa-solid fa-list fa-fw"></i>
+
+                            <span *ngIf="!isCollapsed">
+                                Liste des employés
+                            </span>
+
+                        </a>
+
+
+                        <!-- AJOUTER UN EMPLOYÉ -->
+
+                        <a class="sb-sub-item" routerLink="/manager/createEmployee" routerLinkActive="active"
+                            [routerLinkActiveOptions]="{ exact: true }">
+
+                            <i class="fa-solid fa-user-plus fa-fw"></i>
+
+                            <span *ngIf="!isCollapsed">
+                                Ajouter un employé
                             </span>
 
                         </a>
@@ -250,9 +359,94 @@
                 </div>
 
 
-                <!-- DÉPARTEMENTS -->
+                <!-- ================= RECRUTEMENT ================= -->
 
-                <a class="sb-item" routerLink="/rh/ListeDepartement" routerLinkActive="active">
+                <div class="sb-submenu-wrapper">
+
+                    <button type="button" class="sb-item sb-submenu-toggle"
+                        (click)="toggleSubmenu('recrutement', $event)" [class.open]="isSubmenuOpen('recrutement')"
+                        [attr.aria-expanded]="isSubmenuOpen('recrutement')"
+                        aria-controls="employee-recrutement-submenu">
+
+                        <i class="fa-solid fa-user-tie fa-fw"></i>
+
+                        <span *ngIf="!isCollapsed">
+                            Recrutement
+                        </span>
+
+                        <i *ngIf="!isCollapsed" class="fa-solid fa-chevron-down sb-arrow"
+                            [class.rotated]="isSubmenuOpen('recrutement')">
+                        </i>
+
+                        <span class="sb-tooltip" *ngIf="isCollapsed">
+
+                            Recrutement
+
+                        </span>
+
+                    </button>
+
+
+                    <div id="employee-recrutement-submenu" class="sb-submenu"
+                        [class.open]="isSubmenuOpen('recrutement')">
+
+
+                        <!-- POSTES DISPONIBLES -->
+
+                        <a class="sb-sub-item" routerLink="/manager/consulterlesPosteDisponibles"
+                            routerLinkActive="active">
+
+                            <i class="fa-solid fa-briefcase fa-fw"></i>
+
+                            <span *ngIf="!isCollapsed">
+                                Postes disponibles
+                            </span>
+
+                        </a>
+
+
+                        <!-- ENTRETIEN TECHNIQUE -->
+
+                        <a class="sb-sub-item" routerLink="/manager/consulterlistUSersPourFaireDesEntretientTechniques"
+                            routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+
+                            <i class="fa-solid fa-user-check fa-fw"></i>
+
+                            <span *ngIf="!isCollapsed">
+                                Candidats pour le deuxième entretien technique
+                            </span>
+
+                        </a>
+
+
+                        <!-- DEMANDES DE REPROGRAMMATION -->
+
+                        <a class="sb-sub-item" [routerLink]="getReprogrammationRoute()" routerLinkActive="active"
+                            [routerLinkActiveOptions]="{ exact: true }" (click)="clearNotifCount()">
+
+                            <i class="fa-solid fa-calendar-check fa-fw"></i>
+
+                            <span *ngIf="!isCollapsed">
+                                Demandes de reprogrammation
+                            </span>
+
+                            <div class="sb-tooltip" *ngIf="isCollapsed">
+
+                                Demandes de reprogrammation
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================= DÉPARTEMENTS ================= -->
+
+                <a class="sb-item" routerLink="/manager/departement" routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: true }">
 
                     <i class="fa-solid fa-building fa-fw"></i>
 
@@ -260,217 +454,16 @@
                         Départements
                     </span>
 
-                    <div class="sb-tooltip" *ngIf="isCollapsed">
+                    <span class="sb-tooltip" *ngIf="isCollapsed">
+
                         Départements
-                    </div>
 
-                </a>
-
-
-                <!-- PARAMÈTRES -->
-
-                <a class="sb-item" routerLink="/rh/addParametreByAdmin" routerLinkActive="active">
-
-                    <i class="fa-solid fa-sliders fa-fw"></i>
-
-                    <span *ngIf="!isCollapsed">
-                        Paramètres des congés
                     </span>
-
-                    <div class="sb-tooltip" *ngIf="isCollapsed">
-                        Paramètres des congés
-                    </div>
 
                 </a>
 
             </ng-container>
 
-
-            <!-- =================================================
-                 EMPLOYEE
-            ================================================== -->
-
-    <ng-container *ngIf="user?.role === 'EMPLOYEE'">
-    
-        <!-- ========================================================= -->
-        <!-- MANAGEMENT -->
-        <!-- ========================================================= -->
-    
-        <div class="sb-divider"></div>
-    
-        <div class="sb-section-label" *ngIf="!isCollapsed">
-            MANAGEMENT
-        </div>
-    
-    
-        <!-- ========================================================= -->
-        <!-- EMPLOYÉS -->
-        <!-- ========================================================= -->
-    
-        <div class="sb-submenu-wrapper">
-    
-            <button type="button" class="sb-item sb-submenu-toggle" (click)="toggleSubmenu('employees', $event)"
-                [class.open]="isSubmenuOpen('employees')" [attr.aria-expanded]="isSubmenuOpen('employees')"
-                aria-controls="employees-submenu">
-    
-                <i class="fa-solid fa-users fa-fw"></i>
-    
-                <span *ngIf="!isCollapsed">
-                    Employés
-                </span>
-    
-                <i *ngIf="!isCollapsed" class="fa-solid fa-chevron-down sb-arrow"
-                    [class.rotated]="isSubmenuOpen('employees')">
-                </i>
-    
-                <span class="sb-tooltip" *ngIf="isCollapsed">
-                    Employés
-                </span>
-    
-            </button>
-    
-    
-            <!-- Sous-menu employés -->
-    
-            <div id="employees-submenu" class="sb-submenu" [class.open]="isSubmenuOpen('employees')">
-    
-                <!-- Liste -->
-    
-                <a class="sb-sub-item" routerLink="/manager/listUsersManager" routerLinkActive="active"
-                    [routerLinkActiveOptions]="{ exact: true }">
-    
-                    <i class="fa-solid fa-list fa-fw"></i>
-    
-                    <span *ngIf="!isCollapsed">
-                        Liste des employés
-                    </span>
-    
-                </a>
-    
-    
-                <!-- Ajouter -->
-    
-                <a class="sb-sub-item" routerLink="/manager/createEmployee" routerLinkActive="active"
-                    [routerLinkActiveOptions]="{ exact: true }">
-    
-                    <i class="fa-solid fa-user-plus fa-fw"></i>
-    
-                    <span *ngIf="!isCollapsed">
-                        Ajouter un employé
-                    </span>
-    
-                </a>
-    
-            </div>
-    
-        </div>
-    
-
-
-
-        <div class="sb-submenu-wrapper">
-        
-            <button type="button" class="sb-item sb-submenu-toggle" (click)="toggleSubmenu('recrutement', $event)"
-                [class.open]="isSubmenuOpen('employees')" [attr.aria-expanded]="isSubmenuOpen('employees')"
-                aria-controls="employees-submenu">
-        
-            <i class="fa-solid fa-user-tie fa-fw"></i>
-        
-                <span *ngIf="!isCollapsed">
-                    Recrutement
-                </span>
-        
-                <i *ngIf="!isCollapsed" class="fa-solid fa-chevron-down sb-arrow" [class.rotated]="isSubmenuOpen('employees')">
-                </i>
-        
-                <span class="sb-tooltip" *ngIf="isCollapsed">
-                    Recrutement
-                </span>
-        
-            </button>
-        
-        
-            <!-- Sous-menu employés -->
-        
-            <div id="employees-submenu" class="sb-submenu" [class.open]="isSubmenuOpen('recrutement')">
-        
-                <!-- Liste -->
-        
-                <a class="sb-item" routerLink="/manager/consulterlesPosteDisponibles" routerLinkActive="active">
-                
-                    <i class="fa-solid fa-briefcase fa-fw"></i>
-                
-                    <span *ngIf="!isCollapsed">
-                        Postes disponibles
-                    </span>
-                
-                    <span class="sb-tooltip" *ngIf="isCollapsed">
-                        Postes disponibles
-                    </span>
-                
-                </a>
-        
-        
-                <!-- Ajouter -->
-        
-                <a class="sb-sub-item" routerLink="/manager/consulterlistUSersPourFaireDesEntretientTechniques" routerLinkActive="active"
-                    [routerLinkActiveOptions]="{ exact: true }">
-        
-                    <i class="fa-solid fa-user-plus fa-fw"></i>
-        
-                    <span *ngIf="!isCollapsed">
-                   consulter liste pour faire deuxieme entretient tecdhnique 
-                    </span>
-        
-                </a>
-        
-            </div>
-        
-        </div>
-    
-        <!-- ========================================================= -->
-        <!-- DÉPARTEMENTS -->
-        <!-- ========================================================= -->
-    
-        <a class="sb-item" routerLink="/manager/departement" routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }">
-    
-            <i class="fa-solid fa-building fa-fw"></i>
-    
-            <span *ngIf="!isCollapsed">
-                Départements
-            </span>
-    
-            <span class="sb-tooltip" *ngIf="isCollapsed">
-                Départements
-            </span>
-    
-        </a>
-    
-    
-     
-        
-    
-    
-        <!-- ========================================================= -->
-        <!-- RECRUTEMENT -->
-        <!-- ========================================================= -->
-    
-        <a class="sb-item" routerLink="/manager/recrutement" routerLinkActive="active">
-    
-            <i class="fa-solid fa-user-tie fa-fw"></i>
-    
-            <span *ngIf="!isCollapsed">
-                Recrutement
-            </span>
-    
-            <span class="sb-tooltip" *ngIf="isCollapsed">
-                Recrutement
-            </span>
-    
-        </a>
-    
-    </ng-container>
 
             <!-- =================================================
                  CANDIDAT
@@ -480,18 +473,20 @@
 
                 <div class="sb-divider"></div>
 
-
                 <div class="sb-section-label" *ngIf="!isCollapsed">
+
                     CANDIDATURES
+
                 </div>
 
 
-                <!-- CANDIDATURES -->
+                <!-- ================= MES CANDIDATURES ================= -->
 
                 <div class="sb-submenu-wrapper">
 
-                    <a href="#" class="sb-item sb-submenu-toggle" (click)="toggleSubmenu('candidat', $event)"
-                        [class.open]="isSubmenuOpen('candidat')">
+                    <button type="button" class="sb-item sb-submenu-toggle" (click)="toggleSubmenu('candidat', $event)"
+                        [class.open]="isSubmenuOpen('candidat')" [attr.aria-expanded]="isSubmenuOpen('candidat')"
+                        aria-controls="candidat-submenu">
 
                         <i class="fa-solid fa-briefcase fa-fw"></i>
 
@@ -500,17 +495,22 @@
                         </span>
 
                         <i *ngIf="!isCollapsed" class="fa-solid fa-chevron-down sb-arrow"
-                            [class.rotated]="isSubmenuOpen('candidat')"></i>
-
+                            [class.rotated]="isSubmenuOpen('candidat')">
+                        </i>
 
                         <div class="sb-tooltip" *ngIf="isCollapsed">
-                            Candidatures
+
+                            Mes candidatures
+
                         </div>
 
-                    </a>
+                    </button>
 
 
-                    <div class="sb-submenu" [class.open]="isSubmenuOpen('candidat')">
+                    <div id="candidat-submenu" class="sb-submenu" [class.open]="isSubmenuOpen('candidat')">
+
+
+                        <!-- POSTES DISPONIBLES -->
 
                         <a class="sb-sub-item" routerLink="/candidat/consulterlesPosteDisponibles"
                             routerLinkActive="active">
@@ -523,6 +523,8 @@
 
                         </a>
 
+
+                        <!-- MES CANDIDATURES -->
 
                         <a class="sb-sub-item" routerLink="/candidat/MesCandidatures" routerLinkActive="active">
 
@@ -539,7 +541,7 @@
                 </div>
 
 
-                <!-- POSTULER -->
+                <!-- ================= POSTULER ================= -->
 
                 <a class="sb-item" routerLink="/candidat/postulerAunePosteSpecific" routerLinkActive="active">
 
@@ -550,7 +552,9 @@
                     </span>
 
                     <div class="sb-tooltip" *ngIf="isCollapsed">
-                        Postuler
+
+                        Postuler à une offre
+
                     </div>
 
                 </a>
@@ -564,13 +568,14 @@
 
             <div class="sb-divider"></div>
 
-
             <div class="sb-section-label" *ngIf="!isCollapsed">
+
                 COMPTE
+
             </div>
 
 
-            <!-- PROFIL -->
+            <!-- ================= PROFIL ================= -->
 
             <a class="sb-item" [routerLink]="profileRoute" routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }">
@@ -582,16 +587,17 @@
                 </span>
 
                 <div class="sb-tooltip" *ngIf="isCollapsed">
+
                     Mon profil
+
                 </div>
 
             </a>
 
 
-            <!-- LOGOUT -->
+            <!-- ================= DÉCONNEXION ================= -->
 
             <div class="sb-divider"></div>
-
 
             <a href="#" class="sb-item sb-logout" (click)="logout(); $event.preventDefault()">
 
@@ -602,7 +608,9 @@
                 </span>
 
                 <div class="sb-tooltip" *ngIf="isCollapsed">
+
                     Déconnexion
+
                 </div>
 
             </a>
@@ -613,7 +621,7 @@
 
 
     <!-- =====================================================
-         MAIN CONTENT
+         CONTENU PRINCIPAL
     ====================================================== -->
 
     <main class="content w-full">

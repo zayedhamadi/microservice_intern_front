@@ -65,7 +65,8 @@
                   class="fa-solid fa-chevron-left"></i></button>
               <button type="button" class="icon-btn" (click)="nextMonth()"><i
                   class="fa-solid fa-chevron-right"></i></button>
-              <span class="agenda-period">{{ periodLabel }} · {{ visibleInterviews.length }} Entretien(s)</span>
+              <!-- 🎯 Compteur mis à jour avec visibleTechInterviews -->
+              <span class="agenda-period">{{ periodLabel }} · {{ visibleTechInterviews.length }} Entretien(s)</span>
             </div>
             <div class="view-switch">
               <button type="button" [class.actif]="view === 'day'" (click)="setView('day')">Jour</button>
@@ -79,9 +80,9 @@
             <mat-spinner diameter="40"></mat-spinner>
           </div>
 
-          <!-- Agenda Group List -->
+          <!-- 🎯 AGENDA : Filtré sur techAgendaGroups (exclut les jours RH vides de techniques) -->
           <div class="agenda-list" *ngIf="view === 'agenda'">
-            <div class="agenda-day" *ngFor="let groupe of agendaGroups" [id]="'jour-' + groupe.iso">
+            <div class="agenda-day" *ngFor="let groupe of techAgendaGroups" [id]="'jour-' + groupe.iso">
               <div class="agenda-day-marker" [class.aujourdhui]="groupe.isToday">
                 <span class="agenda-day-number">{{ groupe.dayNumber }}</span>
                 <div class="agenda-day-label">
@@ -90,6 +91,7 @@
                 </div>
               </div>
               <div class="agenda-day-events">
+                <!-- Les items sont déjà filtrés par techAgendaGroups -->
                 <div class="agenda-event" *ngFor="let i of groupe.items" (click)="editInterview(i)">
                   <span class="agenda-event-time"><i class="fa-regular fa-clock" style="margin-right:6px;"></i>{{
                     i.startTime }} – {{ i.endTime }}</span>
@@ -99,16 +101,17 @@
                   <span class="agenda-event-mode">{{ i.mode }}</span>
                   <span class="agenda-event-status" [style.backgroundColor]="statusColors[i.status] + '1c'"
                     [style.color]="statusColors[i.status]">{{ statusLabels[i.status] || i.status }}</span>
-              <button type="button" class="agenda-event-delete" matTooltip="Supprimer"
-                (click)="$event.stopPropagation(); deleteInterview(i)">
-                <i class="fa-solid fa-trash"></i>
-              </button>
+                  <button type="button" class="agenda-event-delete" matTooltip="Supprimer"
+                    (click)="$event.stopPropagation(); deleteInterview(i)">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
                 </div>
               </div>
             </div>
-            <div class="agenda-empty" *ngIf="!loading && !agendaGroups.length">
+            <!-- 🎯 Vérifie aussi sur techAgendaGroups pour le message vide -->
+            <div class="agenda-empty" *ngIf="!loading && !techAgendaGroups.length">
               <i class="fa-solid fa-calendar-xmark" style="font-size: 32px;"></i>
-              <p>Aucun entretien planifié pour ces filtres.</p>
+              <p>Aucun entretien technique planifié pour ces filtres.</p>
             </div>
           </div>
 
@@ -163,16 +166,17 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let i of filteredInterviews | paginate: { itemsPerPage: pageSize, currentPage: page }">
+              <!-- 🎯 TABLEAU : Filtré sur employeeTableInterviews (uniquement Tech + Libres) -->
+              <tr *ngFor="let i of employeeTableInterviews | paginate: { itemsPerPage: pageSize, currentPage: page }">
                 <td>
                   <div class="candidate-cell">
                     <div class="avatar">{{ i.candidateName.charAt(0) }}</div>
-                  <div>
-                    <div>{{ i.candidateName }}</div>
-                    <small style="color: var(--text-muted); font-weight: 500;">
-                      {{ i.candidateEmail }}
-                    </small>
-                  </div>
+                    <div>
+                      <div>{{ i.candidateName }}</div>
+                      <small style="color: var(--text-muted); font-weight: 500;">
+                        {{ i.candidateEmail }}
+                      </small>
+                    </div>
                   </div>
                 </td>
                 <td>{{ i.posteRecrutement }}</td>
@@ -189,17 +193,19 @@
                     <button mat-icon-button type="button" matTooltip="Modifier l'entretien" (click)="editInterview(i)">
                       <mat-icon style="color: var(--text-muted)">edit</mat-icon>
                     </button>
-                    <button mat-icon-button type="button" matTooltip="Supprimer l'entretien" color="warn" (click)="deleteInterview(i)">
+                    <button mat-icon-button type="button" matTooltip="Supprimer l'entretien" color="warn"
+                      (click)="deleteInterview(i)">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
                 </td>
               </tr>
-              <tr *ngIf="!filteredInterviews.length">
+              <!-- 🎯 Message vide : vérifie employeeTableInterviews -->
+              <tr *ngIf="!employeeTableInterviews.length">
                 <td colspan="8" class="empty-row" style="text-align: center; padding: 48px; color: var(--text-muted)">
                   <i class="fa-solid fa-ban"
                     style="font-size:24px; margin-bottom: 8px; display:block; color:var(--text-light)"></i>
-                  Aucun entretien trouvé
+                  Aucun entretien technique trouvé
                 </td>
               </tr>
             </tbody>

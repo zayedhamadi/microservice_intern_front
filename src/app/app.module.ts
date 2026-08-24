@@ -32,6 +32,7 @@ import { ConsulterleslistePosteParEmployeeOuCandidatComponent } from './communCo
 import { ConsulterspecificposteseloncandidatandadminComponent } from './communComponents/consulterspecificposteseloncandidatandadmin/consulterspecificposteseloncandidatandadmin.component';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { ConsulterListeDesDeamnadeDeReprogrammerUnCandiatEtRepondreComponent } from './communComponents/consulter-liste-des-deamnade-de-reprogrammer-un-candiat-et-repondre/consulter-liste-des-deamnade-de-reprogrammer-un-candiat-et-repondre.component';
 
 @NgModule({
   declarations: [
@@ -51,6 +52,7 @@ import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
     NotificationComponent,
     ConsulterleslistePosteParEmployeeOuCandidatComponent,
     ConsulterspecificposteseloncandidatandadminComponent,
+    ConsulterListeDesDeamnadeDeReprogrammerUnCandiatEtRepondreComponent,
   ],
   imports: [
     NgxPaginationModule,

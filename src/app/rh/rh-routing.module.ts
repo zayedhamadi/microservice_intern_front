@@ -14,6 +14,8 @@ import { ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent } from '.
 import { CalendrierRHComponent } from './components/calendrier-rh/calendrier-rh.component';
 import { InterviewFormDialogComponent } from './components/interview-form-dialog/interview-form-dialog.component';
 import { profileCompleteGuard } from '../core/guards/profile-complete.guard';
+import { ConsulterUneProgrammeSpecifiqueDecalendrierDunVueTableComponent } from './components/consulter-une-programme-specifique-decalendrier-dun-vue-table/consulter-une-programme-specifique-decalendrier-dun-vue-table.component';
+import { ConsulterListeDesDeamnadeDeReprogrammerUnCandiatEtRepondreComponent } from '../communComponents/consulter-liste-des-deamnade-de-reprogrammer-un-candiat-et-repondre/consulter-liste-des-deamnade-de-reprogrammer-un-candiat-et-repondre.component';
 
 const routes: Routes = [
   {
@@ -21,22 +23,32 @@ const routes: Routes = [
     component: SideBarComponent,
 
     children: [
-    
-
       {
         path: '',
         redirectTo: 'dashboardRH',
         pathMatch: 'full',
       },
-
+      {
+        path: 'ConsulterUneProgrammeSpecifiqueDecalendrierDunVueTable/:id',
+        component:
+          ConsulterUneProgrammeSpecifiqueDecalendrierDunVueTableComponent,
+        canActivate: [profileCompleteGuard],
+      },
+      {
+        path: 'demandes-reprogrammation',
+        component:
+          ConsulterListeDesDeamnadeDeReprogrammerUnCandiatEtRepondreComponent,
+        canActivate: [profileCompleteGuard],
+        data: {
+          roles: ['RH'],
+        },
+      },
 
       {
         path: 'dashboardRH',
         component: DashboardRHComponent,
         canActivate: [profileCompleteGuard],
       },
-
-   
 
       {
         path: 'calendrierRH',
@@ -46,8 +58,6 @@ const routes: Routes = [
           roles: ['RH'],
         },
       },
-
-     
 
       {
         path: 'listUsers',
@@ -60,8 +70,6 @@ const routes: Routes = [
         component: ConsulterProfilUserDetailsPerRHComponent,
         canActivate: [profileCompleteGuard],
       },
-
-     
 
       {
         path: 'NewPosteRecrutement',
@@ -87,7 +95,6 @@ const routes: Routes = [
         canActivate: [profileCompleteGuard],
       },
 
-     
       {
         path: 'ConsulteLesPosteQuiLesCandidatsPostulent',
         component: ConsulteLesPosteQuiLesCandidatsPostulentComponent,
@@ -101,7 +108,6 @@ const routes: Routes = [
         canActivate: [profileCompleteGuard],
       },
 
- 
       {
         path: 'ListeDepartement',
         component: ListeDepartementComponent,

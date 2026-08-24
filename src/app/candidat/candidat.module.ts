@@ -27,6 +27,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { QuillModule } from 'ngx-quill';
 import { ConsulterEtatEthistoriqueParDetailleDuneCandidatureSpecifiqueComponent } from './components/consulter-etat-ethistorique-par-detaille-dune-candidature-specifique/consulter-etat-ethistorique-par-detaille-dune-candidature-specifique.component';
+import { ReprogrammerEntretienComponent } from './components/reprogrammer-entretien/reprogrammer-entretien.component';
 
 @NgModule({
   declarations: [
@@ -39,6 +40,7 @@ import { ConsulterEtatEthistoriqueParDetailleDuneCandidatureSpecifiqueComponent 
     PostesRecommandesComponent,
     CalendrierCandidatComponent,
     ConsulterEtatEthistoriqueParDetailleDuneCandidatureSpecifiqueComponent,
+    ReprogrammerEntretienComponent,
   ],
   imports: [
     CandidatRoutingModule,

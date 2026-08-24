@@ -7,6 +7,7 @@ import {
 } from './enums/enumPosteRecrutemnt';
 
 export interface Interview {
+  version?: number;
   id?: string;
   source?: InterviewSource;
   applicationId?: string;
@@ -30,7 +31,13 @@ export interface Interview {
   createdAt?: string;
   updatedAt?: string;
 }
+export interface AnnulerEntretienDto {
+  motif?: string;
+}
 
+export interface ReporterEntretienDto {
+  nouvelleDate: string;
+}
 export interface PlanificationCandidatureContext {
   applicationId: string;
   candidateName: string;

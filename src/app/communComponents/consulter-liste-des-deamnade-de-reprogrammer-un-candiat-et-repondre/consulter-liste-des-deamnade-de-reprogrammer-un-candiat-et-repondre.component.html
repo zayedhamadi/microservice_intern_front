@@ -1,0 +1,163 @@
+<div class="conteneur">
+    <header class="entete">
+        <h2>{{ titreEspace }}</h2>
+        <button class="btn btn-secondaire" (click)="rafraichir()" [disabled]="loading">
+            ↻ Rafraîchir
+        </button>
+    </header>
+
+    <div class="alerte alerte-erreur" *ngIf="errorMessage">{{ errorMessage }}</div>
+    <div class="alerte alerte-succes" *ngIf="successMessage">{{ successMessage }}</div>
+
+    <div class="barre-outils">
+        <input type="text" class="champ-recherche" placeholder="Rechercher par candidat, poste, motif, date..."
+            [(ngModel)]="recherche" (ngModelChange)="onRechercheChange()" />
+
+        <select class="select-filtre" [(ngModel)]="filtreType" (ngModelChange)="onFiltreTypeChange()">
+            <option value="TOUS">Tous les types</option>
+            <option [value]="TypeDemandeReport.DEMANDE_CANDIDAT">Demande du candidat</option>
+            <option [value]="TypeDemandeReport.PROPOSITION_INTERVENANT">Proposition de l'intervenant</option>
+            <option [value]="TypeDemandeReport.REACTIVATION_APRES_ABSENCE">Réactivation après absence</option>
+        </select>
+
+        <select class="select-filtre" [(ngModel)]="taillePage" (ngModelChange)="onTaillePageChange()">
+            <option *ngFor="let taille of taillesPageDisponibles" [value]="taille">
+                {{ taille }} / page
+            </option>
+        </select>
+    </div>
+
+    <div class="chargement" *ngIf="loading">Chargement des demandes...</div>
+
+    <div class="tableau-wrapper" *ngIf="!loading">
+        <table class="tableau" *ngIf="demandesPage.length > 0; else aucuneDonnee">
+            <thead>
+                <tr>
+                    <th>Candidat</th>
+                    <th>Poste</th>
+                    <th>Type</th>
+                    <th>Ancienne date</th>
+                    <th>Nouvelle date proposée</th>
+                    <th>Motif</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let demande of demandesPage; trackBy: trackByDemandeId">
+                    <td>{{ demande.candidateName || '—' }}</td>
+                    <td>{{ demande.posteRecrutement || '—' }}</td>
+                    <td>{{ libelleType(demande.type) }}</td>
+                    <td>{{ demande.ancienneDate ? (demande.ancienneDate | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
+                    <td>{{ demande.nouvelleDateProposee | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td class="cellule-motif" [title]="demande.motif">{{ demande.motif }}</td>
+                    <td>
+                        <span class="badge" [ngClass]="classeStatut(demande.statut)">
+                            {{ demande.statut }}
+                        </span>
+                    </td>
+                    <td class="cellule-actions">
+                        <ng-container *ngIf="demande.statut === DemandeReportStatus.EN_ATTENTE">
+                            <button class="btn btn-succes" (click)="accepter(demande)" [disabled]="envoiEnCours"
+                                title="Accepter">
+                                ✓ Oui
+                            </button>
+                            <button class="btn btn-danger" (click)="ouvrirModalRefus(demande)" [disabled]="envoiEnCours"
+                                title="Refuser">
+                                ✕ Non
+                            </button>
+                            <button class="btn btn-info" (click)="proposerAutreDate(demande)" [disabled]="envoiEnCours"
+                                title="Choisir une autre date sur le calendrier">
+                                📅 Autre date
+                            </button>
+                        </ng-container>
+
+                        <button class="btn btn-lien" *ngIf="demande.statut === DemandeReportStatus.REFUSEE"
+                            (click)="ouvrirModalMotif(demande)" title="Voir le motif du refus">
+                            🗎 Voir motif du refus
+                        </button>
+
+                        <span class="deja-traite" *ngIf="demande.statut === DemandeReportStatus.ACCEPTEE">
+                            Déjà acceptée
+                        </span>
+
+                        <button class="btn btn-secondaire" (click)="voirProfil(demande)"
+                            title="Voir le profil du candidat">
+                            👤 Profil
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <ng-template #aucuneDonnee>
+            <div class="vide">Aucune demande de reprogrammation à traiter.</div>
+        </ng-template>
+    </div>
+
+    <div class="pagination" *ngIf="!loading && demandesFiltrees.length > 0">
+        <span class="pagination-info">
+            {{ demandesFiltrees.length }} demande(s) — page {{ pageActuelle }} / {{ nombreTotalPages }}
+        </span>
+        <div class="pagination-boutons">
+            <button class="btn btn-secondaire" (click)="allerPage(1)" [disabled]="pageActuelle === 1">«</button>
+            <button class="btn btn-secondaire" (click)="pagePrecedente()" [disabled]="pageActuelle === 1">‹</button>
+            <button class="btn btn-page" *ngFor="let p of pagesAffichees" [class.actif]="p === pageActuelle"
+                (click)="allerPage(p)">
+                {{ p }}
+            </button>
+            <button class="btn btn-secondaire" (click)="pageSuivante()"
+                [disabled]="pageActuelle === nombreTotalPages">›</button>
+            <button class="btn btn-secondaire" (click)="allerPage(nombreTotalPages)"
+                [disabled]="pageActuelle === nombreTotalPages">»</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODALE REFUS ==================== -->
+<div class="modal-overlay" *ngIf="modeModal === 'refuser'" (click)="fermerModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+        <h3>Refuser la demande</h3>
+        <p class="modal-sous-titre">
+            Candidat : <strong>{{ demandeSelectionnee?.candidateName || '—' }}</strong>
+        </p>
+        <label>Commentaire (optionnel)</label>
+        <textarea [(ngModel)]="commentaireRefus" rows="4" placeholder="Expliquez la raison du refus..."></textarea>
+        <div class="alerte alerte-erreur" *ngIf="errorMessage">{{ errorMessage }}</div>
+        <div class="modal-actions">
+            <button class="btn btn-secondaire" (click)="fermerModal()" [disabled]="envoiEnCours">Annuler</button>
+            <button class="btn btn-danger" (click)="confirmerRefus()" [disabled]="envoiEnCours">
+                {{ envoiEnCours ? 'Envoi...' : 'Confirmer le refus' }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODALE VOIR MOTIF (LECTURE SEULE) ==================== -->
+<div class="modal-overlay" *ngIf="modeModal === 'voirMotif'" (click)="fermerModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+        <h3>Détail du refus</h3>
+        <p class="modal-sous-titre">
+            Candidat : <strong>{{ demandeSelectionnee?.candidateName || '—' }}</strong>
+        </p>
+
+        <div class="info-ligne">
+            <span class="info-label">Motif initial de la demande</span>
+            <p>{{ demandeSelectionnee?.motif || '—' }}</p>
+        </div>
+
+        <div class="info-ligne">
+            <span class="info-label">Commentaire de refus</span>
+            <p>{{ demandeSelectionnee?.commentaireTraitement || 'Aucun commentaire fourni.' }}</p>
+        </div>
+
+        <div class="info-ligne" *ngIf="demandeSelectionnee?.dateTraitement">
+            <span class="info-label">Refusée le</span>
+            <p>{{ demandeSelectionnee?.dateTraitement | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-secondaire" (click)="fermerModal()">Fermer</button>
+        </div>
+    </div>
+</div>

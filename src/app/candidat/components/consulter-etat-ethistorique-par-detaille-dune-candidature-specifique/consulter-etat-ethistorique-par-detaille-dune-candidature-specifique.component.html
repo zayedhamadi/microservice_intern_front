@@ -101,6 +101,19 @@
                         </span>
                     </div>
 
+                    <div class="reprog-action">
+                        <button *ngIf="canReprogrammer(entretien)" class="btn-reprog" (click)="reprogrammer(entretien)">
+                            <i class="fa-solid fa-calendar-days"></i> Demander un report
+                        </button>
+
+                        <div class="demande-en-attente" *ngIf="demandeEnAttentePour(entretien) as demande">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                            Demande de report envoyée le {{ demande.dateCreation | date: 'dd/MM/yyyy' }}
+                            (proposée pour le {{ demande.nouvelleDateProposee | date: 'dd/MM/yyyy à HH:mm' }}) — en
+                            attente de réponse
+                        </div>
+                    </div>
+
                     <div class="interview-status-row">
                         <span class="interview-status-badge">{{ getInterviewStatusLabel(entretien.status) }}</span>
                         <a *ngIf="entretien.meetingLink" [href]="entretien.meetingLink" target="_blank"

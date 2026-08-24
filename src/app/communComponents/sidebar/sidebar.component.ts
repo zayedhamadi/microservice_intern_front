@@ -15,7 +15,6 @@ import {
   eventColor,
   eventIcon,
   wsStatusClass,
-  wsStatusLabel,
 } from '../../core/helpers/websocket.helpers';
 
 import { ROLE_ROUTES, CALENDAR_ROUTES } from '../../core/constant/role-route';
@@ -70,6 +69,19 @@ export class SideBarComponent implements OnInit, OnDestroy {
   readonly dashboardRoute = ROLE_ROUTES;
 
   readonly calendarRoute = CALENDAR_ROUTES;
+
+  /**
+   * Route commune fonctionnelle selon le rôle.
+   *
+   * RH       -> /rh/demandes-reprogrammation
+   * EMPLOYEE -> /manager/demandes-reprogrammation
+   */
+  readonly reprogrammationRoutes = {
+    RH: '/rh/demandes-reprogrammation',
+    EMPLOYEE: '/manager/demandes-reprogrammation',
+    ADMIN: '',
+    CANDIDAT: '',
+  } as const;
 
   currentRole: keyof typeof ROLE_ROUTES = 'EMPLOYEE';
 
@@ -163,6 +175,22 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
   getCalendarRoute(): string {
     return this.calendarRoute[this.currentRole];
+  }
+
+  /**
+   * Retourne automatiquement la bonne route
+   * selon le rôle de l'utilisateur.
+   */
+  getReprogrammationRoute(): string {
+    if (this.user?.role === 'RH') {
+      return this.reprogrammationRoutes.RH;
+    }
+
+    if (this.user?.role === 'EMPLOYEE') {
+      return this.reprogrammationRoutes.EMPLOYEE;
+    }
+
+    return '';
   }
 
   // =========================================================

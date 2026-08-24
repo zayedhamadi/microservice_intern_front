@@ -1,6 +1,5 @@
 <div class="page-candidats">
 
-    <!-- ===== En-tête poste ===== -->
     <div class="carte-hero">
         <button class="btn-retour" (click)="retour()">
             <i class="bi bi-arrow-left"></i> Retour aux postes
@@ -22,7 +21,6 @@
         </ng-template>
     </div>
 
-    <!-- ===== Bandeau statistiques ===== -->
     <div class="stats-bandeau">
         <div class="stat-carte stat-neutre">
             <div class="stat-icone"><i class="bi bi-people-fill"></i></div>
@@ -75,7 +73,6 @@
         </div>
     </div>
 
-    <!-- ===== Barre d'outils : recherche, filtres, tri, export ===== -->
     <div class="toolbar">
         <div class="champ-recherche">
             <i class="bi bi-search"></i>
@@ -123,7 +120,6 @@
         </button>
     </div>
 
-    <!-- ===== États ===== -->
     <div class="etat-chargement" *ngIf="isLoading">
         <div class="spinner"></div>
         <p>Chargement des candidatures...</p>
@@ -140,7 +136,6 @@
         <p>Aucune candidature ne correspond à ces critères.</p>
     </div>
 
-    <!-- ===== Liste des candidats ===== -->
     <div class="grille-candidats" *ngIf="!isLoading && candidaturesAffichees.length">
         <div class="carte-candidat" *ngFor="let candidature of candidaturesAffichees; trackBy: trackByCandidature">
 
@@ -157,7 +152,6 @@
                 </span>
             </div>
 
-            <!-- Bloc score IA / matching : anneau de compatibilité -->
             <div class="bloc-score">
                 <div class="anneau-score" [ngClass]="classeScore(candidature.scoreMatching)"
                     [style.--pct]="candidature.scoreMatching ?? 0">
@@ -196,15 +190,12 @@
                     <i class="bi bi-file-earmark-pdf"></i> Lettre
                 </button>
 
-                <!-- Étape d'entretien en cours (EN_ENTRETIEN_RH / TECHNIQUE / FINAL) :
-                     planifie ou enregistre le résultat selon l'état de l'entretien.
-                     Remplace le <select> générique pour ces 3 statuts. -->
-                <button class="btn-action btn-entretien" *ngIf="estEnEtapeEntretien(candidature)"
+                <button class="btn-action btn-entretien" *ngIf="afficherBoutonEntretien(candidature)"
                     [disabled]="candidatureEnCoursDeMaj === candidature.idApplication"
                     (click)="gererEtapeEntretien(candidature)">
                     <i class="bi"
                         [ngClass]="candidatureEnCoursDeMaj === candidature.idApplication ? 'bi-hourglass-split' : 'bi-calendar-check'"></i>
-                    Gérer l'entretien
+                    {{ labelBoutonEntretien(candidature) }}
                 </button>
 
                 <div class="dropdown-statut" *ngIf="prochainStatutsPossibles(candidature).length">
@@ -220,7 +211,6 @@
         </div>
     </div>
 
-    <!-- ===== Pagination ===== -->
     <div class="pagination" *ngIf="totalPages > 1">
         <button (click)="allerPage(pageActuelle - 1)" [disabled]="pageActuelle === 1">
             <i class="bi bi-chevron-left"></i>

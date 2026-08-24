@@ -1,0 +1,63 @@
+<div class="reprog-page">
+
+    <button class="back-btn" (click)="retour()">
+        <i class="fa-solid fa-arrow-left"></i> Retour
+    </button>
+
+    <div class="reprog-header">
+        <h1><i class="fa-solid fa-calendar-days"></i> Demander un report d'entretien</h1>
+        <p class="subtitle" *ngIf="posteRecrutement">
+            Pour le poste <strong>{{ posteRecrutement }}</strong>
+            <span *ngIf="interviewerName"> — avec {{ interviewerName }}</span>
+        </p>
+        <p class="ancienne-date" *ngIf="ancienneDate">
+            <i class="fa-regular fa-clock"></i> Date actuelle : {{ ancienneDate | date: 'dd/MM/yyyy à HH:mm' }}
+        </p>
+    </div>
+
+    <div class="state-banner error-banner" *ngIf="errorMessage">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>{{ errorMessage }}</span>
+    </div>
+
+    <div class="state-banner success-banner" *ngIf="successMessage">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>{{ successMessage }}</span>
+    </div>
+
+    <div class="reprog-body">
+        <div class="calendar-panel">
+            <p class="hint"><i class="fa-solid fa-hand-pointer"></i> Cliquez sur un jour disponible</p>
+            <full-calendar #calendar [options]="calendarOptions"></full-calendar>
+        </div>
+
+        <div class="form-panel" *ngIf="selectedDateStr">
+            <h3>Nouvelle date proposée</h3>
+
+            <div class="chosen-date">
+                <i class="fa-solid fa-calendar-check"></i>
+                {{ selectedDateStr | date: 'EEEE dd MMMM yyyy' }}
+            </div>
+
+            <label class="field-label">Heure souhaitée</label>
+            <input type="time" class="field-input" [(ngModel)]="selectedTime" />
+
+            <label class="field-label">Motif du report <span class="required">*</span></label>
+            <textarea class="field-input" rows="4" [(ngModel)]="motif"
+                placeholder="Ex : conflit d'agenda, empêchement imprévu..."></textarea>
+
+            <div class="form-actions">
+                <button class="btn-secondary" (click)="annulerSelection()">Changer de date</button>
+                <button class="btn-primary" [disabled]="!peutConfirmer || isSubmitting" (click)="confirmer()">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    {{ isSubmitting ? 'Envoi...' : 'Envoyer la demande' }}
+                </button>
+            </div>
+        </div>
+
+        <div class="form-panel empty" *ngIf="!selectedDateStr">
+            <i class="fa-regular fa-calendar"></i>
+            <p>Sélectionnez d'abord une date dans le calendrier.</p>
+        </div>
+    </div>
+</div>

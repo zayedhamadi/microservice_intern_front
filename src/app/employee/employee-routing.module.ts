@@ -23,6 +23,7 @@ import { ConsulterleslistePosteParEmployeeOuCandidatComponent } from '../communC
 
 import { ConsulterspecificposteseloncandidatandadminComponent } from '../communComponents/consulterspecificposteseloncandidatandadmin/consulterspecificposteseloncandidatandadmin.component';
 import { ListeUsersPourFaireEntretientTechniqueComponent } from './components/liste-users-pour-faire-entretient-technique/liste-users-pour-faire-entretient-technique.component';
+import { ConsulterListeDesDeamnadeDeReprogrammerUnCandiatEtRepondreComponent } from '../communComponents/consulter-liste-des-deamnade-de-reprogrammer-un-candiat-et-repondre/consulter-liste-des-deamnade-de-reprogrammer-un-candiat-et-repondre.component';
 
 const routes: Routes = [
   {
@@ -113,7 +114,15 @@ const routes: Routes = [
           roles: ['EMPLOYEE', 'CANDIDAT'],
         },
       },
-
+      {
+        path: 'demandes-reprogrammation',
+        component:
+          ConsulterListeDesDeamnadeDeReprogrammerUnCandiatEtRepondreComponent,
+        canActivate: [profileCompleteGuard],
+        data: {
+          roles: ['EMPLOYEE'],
+        },
+      },
       {
         path: 'consulterspecifiPosteDisponibles/:id',
         component: ConsulterspecificposteseloncandidatandadminComponent,

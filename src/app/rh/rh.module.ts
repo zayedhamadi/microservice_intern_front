@@ -35,6 +35,8 @@ import { ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent } from '.
 import { CalendrierRHComponent } from './components/calendrier-rh/calendrier-rh.component';
 import { InterviewFormDialogComponent } from './components/interview-form-dialog/interview-form-dialog.component';
 import { PlanifierEntretienCandidatureDialogComponent } from './components/planifier-entretien-candidature-dialog/planifier-entretien-candidature-dialog.component';
+import { ConsulterUneProgrammeSpecifiqueDecalendrierDunVueTableComponent } from './components/consulter-une-programme-specifique-decalendrier-dun-vue-table/consulter-une-programme-specifique-decalendrier-dun-vue-table.component';
+import { InterviewDetailDialogComponent } from './components/interview-detail-dialog/interview-detail-dialog.component';
 
 @NgModule({
   declarations: [
@@ -52,7 +54,9 @@ import { PlanifierEntretienCandidatureDialogComponent } from './components/plani
     CalendrierRHComponent,
     InterviewFormDialogComponent,
     PlanifierEntretienCandidatureDialogComponent,
-  ],
+    ConsulterUneProgrammeSpecifiqueDecalendrierDunVueTableComponent,
+    InterviewDetailDialogComponent,
+    ],
   imports: [
     CommonModule,
     FormsModule,

@@ -1,0 +1,151 @@
+:host {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --danger: #ef4444;
+}
+
+.detail-header {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 24px 12px !important;
+    margin: 0 !important;
+}
+
+.type-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1.5px solid var(--primary);
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.status-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: #f1f5f9;
+    color: var(--text-muted);
+
+    &[data-status='CONFIRME'] {
+        background: rgba(16, 185, 129, 0.12);
+        color: #059669;
+    }
+
+    &[data-status='PLANIFIE'] {
+        background: rgba(245, 158, 11, 0.12);
+        color: #b45309;
+    }
+
+    &[data-status='ANNULE'] {
+        background: rgba(239, 68, 68, 0.12);
+        color: #dc2626;
+    }
+
+    &[data-status='REPORTE'] {
+        background: rgba(139, 92, 246, 0.12);
+        color: #7c3aed;
+    }
+
+    &[data-status='ABSENT'] {
+        background: rgba(244, 63, 94, 0.12);
+        color: #e11d48;
+    }
+
+    &[data-status='TERMINE'] {
+        background: rgba(100, 116, 139, 0.12);
+        color: #475569;
+    }
+}
+
+.detail-content {
+    padding: 8px 24px 16px !important;
+}
+
+.detail-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 14px;
+    color: var(--text-dark);
+    border-bottom: 1px solid #f1f5f9;
+
+    mat-icon {
+        color: var(--primary);
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+
+    &.notes {
+        align-items: flex-start;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.detail-hint {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+}
+
+.resultat-choice {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+
+    button {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px;
+        border-radius: 10px;
+        border: 1.5px solid var(--border);
+        background: #fff;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-reussi.actif {
+        border-color: var(--success);
+        background: rgba(16, 185, 129, 0.08);
+        color: var(--success);
+    }
+
+    .btn-echoue.actif {
+        border-color: var(--danger);
+        background: rgba(239, 68, 68, 0.08);
+        color: var(--danger);
+    }
+}
+
+.detail-actions {
+    padding: 12px 24px 20px !important;
+    border-top: 1px solid var(--border);
+    background: #fafafa;
+    gap: 8px !important;
+    flex-wrap: wrap;
+}

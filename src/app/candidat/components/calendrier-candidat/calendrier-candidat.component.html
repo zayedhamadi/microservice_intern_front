@@ -24,7 +24,15 @@
                 (click)="changeView('listMonth')">Agenda</button>
         </div>
     </header>
-
+<div class="reprog-banner" *ngIf="modeReprogrammation">
+    <i class="fa-solid fa-calendar-check"></i>
+    <span>
+        Mode reprogrammation — cliquez sur une date du calendrier pour proposer un nouveau créneau.
+    </span>
+    <button type="button" class="btn-annuler-reprog" (click)="annulerModeReprogrammation()">
+        Annuler
+    </button>
+</div>
     <div class="calendrier-body">
         <aside class="calendrier-sidebar">
             <h3 class="sidebar-heading">Navigation</h3>

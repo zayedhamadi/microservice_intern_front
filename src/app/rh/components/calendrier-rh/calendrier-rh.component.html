@@ -9,6 +9,41 @@
       <i class="fa-solid fa-plus"></i>&nbsp; Nouvel entretien
     </button>
   </div>
+<div class="reprog-banner" *ngIf="modeReprogrammation">
+  <i class="fa-solid fa-calendar-check"></i>
+  <span>
+    Mode reprogrammation — cliquez sur une date du calendrier pour proposer un nouveau créneau à
+    <strong>{{ contexteReprogrammation?.candidateName || 'ce candidat' }}</strong>.
+  </span>
+  <button type="button" class="btn-annuler-reprog" (click)="annulerModeReprogrammation()">
+    Annuler
+  </button>
+</div>
+  <!-- KPI bar — basée sur rhFilteredInterviews -->
+  <div class="kpi-bar">
+    <div class="kpi-card">
+      <span class="kpi-value">{{ kpiTotal }}</span>
+      <span class="kpi-label">Total</span>
+    </div>
+    <div class="kpi-card kpi-confirme">
+      <span class="kpi-value">{{ kpiConfirmes }}</span>
+      <span class="kpi-label">Confirmés</span>
+    </div>
+    <div class="kpi-card kpi-attente">
+      <span class="kpi-value">{{ kpiEnAttente }}</span>
+      <span class="kpi-label">En attente</span>
+    </div>
+    <!-- Vue Aujourd'hui -->
+    <div class="kpi-card kpi-today" [class.actif]="filtreAujourdhui" (click)="toggleFiltreAujourdhui()"
+      matTooltip="Filtrer sur les entretiens du jour">
+      <span class="kpi-value">{{ kpiAujourdhui }}</span>
+      <span class="kpi-label">Aujourd'hui</span>
+    </div>
+    <div class="kpi-card kpi-reprog">
+      <span class="kpi-value">{{ kpiAReprogrammer }}</span>
+      <span class="kpi-label">À reprogrammer</span>
+    </div>
+  </div>
 
   <mat-tab-group animationDuration="250ms" class="rh-tabs">
     <!-- Tab 1: Calendrier & Agenda -->
@@ -28,6 +63,7 @@
             <div class="mini-grid mini-grid-labels">
               <span *ngFor="let j of ['D','L','M','M','J','V','S']">{{ j }}</span>
             </div>
+            <!-- Points violets basés sur rhFilteredInterviews via buildMiniCalendar -->
             <div class="mini-grid" *ngFor="let semaine of miniWeeks">
               <button type="button" *ngFor="let jour of semaine" class="mini-cell" [class.hors-mois]="!jour.inMonth"
                 [class.aujourdhui]="jour.isToday" [class.selectionne]="jour.isSelected" (click)="selectMiniDay(jour)">
@@ -43,6 +79,7 @@
               (ngModelChange)="onSearchChange($event)" />
           </div>
 
+          <!-- Filtre Statut -->
           <div class="status-checklist">
             <span class="checklist-title">Filtrer par Statut</span>
             <label class="checklist-item" *ngFor="let s of statuses">
@@ -51,6 +88,29 @@
               {{ statusLabels[s] || s }}
               <span class="checklist-count">{{ statusCounts[s] || 0 }}</span>
             </label>
+          </div>
+
+          <!-- Filtre Type : RH Initial / RH Final / Technique / Libre -->
+          <div class="status-checklist">
+            <span class="checklist-title">Filtrer par Type</span>
+            <label class="checklist-item" *ngFor="let t of interviewTypes">
+              <input type="radio" name="typeFilter" [checked]="typeFilter === t.value"
+                (change)="setTypeFilter(t.value)" />
+              <span class="checklist-swatch" [style.backgroundColor]="typeColors[t.value]"></span>
+              {{ t.label }}
+            </label>
+            <button type="button" class="link-reset" *ngIf="typeFilter" (click)="setTypeFilter(null)">
+              Réinitialiser
+            </button>
+          </div>
+
+          <!-- Filtre Recruteur -->
+          <div class="status-checklist">
+            <span class="checklist-title">Filtrer par Recruteur</span>
+            <select class="recruteur-select" [ngModel]="recruteurFilter" (ngModelChange)="setRecruteurFilter($event)">
+              <option [ngValue]="null">Tous les recruteurs</option>
+              <option *ngFor="let r of recruteursDisponibles" [ngValue]="r">{{ r }}</option>
+            </select>
           </div>
         </aside>
 
@@ -65,7 +125,8 @@
                   class="fa-solid fa-chevron-left"></i></button>
               <button type="button" class="icon-btn" (click)="nextMonth()"><i
                   class="fa-solid fa-chevron-right"></i></button>
-              <span class="agenda-period">{{ periodLabel }} · {{ visibleInterviews.length }} Entretien(s)</span>
+              <!-- Compteur basé sur visibleRhInterviews -->
+              <span class="agenda-period">{{ periodLabel }} · {{ visibleRhInterviews.length }} Entretien(s)</span>
             </div>
             <div class="view-switch">
               <button type="button" [class.actif]="view === 'day'" (click)="setView('day')">Jour</button>
@@ -79,40 +140,106 @@
             <mat-spinner diameter="40"></mat-spinner>
           </div>
 
-          <!-- Agenda Group List -->
+          <!-- AGENDA : filtré sur rhAgendaGroups (exclut les techniques), paginé par jour -->
           <div class="agenda-list" *ngIf="view === 'agenda'">
-            <div class="agenda-day" *ngFor="let groupe of agendaGroups" [id]="'jour-' + groupe.iso">
-              <div class="agenda-day-marker" [class.aujourdhui]="groupe.isToday">
-                <span class="agenda-day-number">{{ groupe.dayNumber }}</span>
-                <div class="agenda-day-label">
-                  <strong>{{ groupe.weekday }}</strong>
-                  <span>{{ groupe.monthYear }}</span>
+            <div class="agenda-day-card" *ngFor="let groupe of pagedAgendaGroups" [id]="'jour-' + groupe.iso">
+              <div class="agenda-day-card-header" [class.aujourdhui]="groupe.isToday">
+                <div class="agenda-date-block">
+                  <span class="agenda-date-badge">{{ groupe.dayNumber }} {{ groupe.monthYear }}</span>
+                  <span class="agenda-weekday">{{ groupe.weekday }}</span>
                 </div>
+                <span class="agenda-day-count">{{ groupe.items.length }} entretien(s)</span>
               </div>
-              <div class="agenda-day-events">
-                <div class="agenda-event" *ngFor="let i of groupe.items" (click)="editInterview(i)">
-                  <span class="agenda-event-time"><i class="fa-regular fa-clock" style="margin-right:6px;"></i>{{
-                    i.startTime }} – {{ i.endTime }}</span>
-                  <span class="agenda-event-tag" [style.backgroundColor]="statusColors[i.status] + '15'"
-                    [style.color]="statusColors[i.status]">{{ i.posteRecrutement }}</span>
-                  <span class="agenda-event-name">{{ i.candidateName }}</span>
-                  <span class="agenda-event-mode">{{ i.mode }}</span>
-                  <span class="agenda-event-status" [style.backgroundColor]="statusColors[i.status] + '1c'"
-                    [style.color]="statusColors[i.status]">{{ statusLabels[i.status] || i.status }}</span>
-              <button type="button" class="agenda-event-delete" matTooltip="Supprimer"
-                (click)="$event.stopPropagation(); deleteInterview(i)">
-                <i class="fa-solid fa-trash"></i>
-              </button>
+
+              <div class="agenda-timeline">
+                <div class="agenda-timeline-item" *ngFor="let i of groupe.items; last as isLast" [class.last]="isLast">
+                  <div class="agenda-time-col">
+                    <!-- 🎯 Plage horaire "10:00 → 11:00" -->
+                    <span class="agenda-time-range">{{ timeRange(i) }}</span>
+                    <div class="agenda-timeline-line" *ngIf="!isLast"></div>
+                  </div>
+
+                  <div class="agenda-event-card" (click)="openDetail(i)">
+                    <div class="agenda-event-header">
+                      <h4 class="agenda-candidate-name">{{ i.candidateName }}</h4>
+                      <span class="agenda-poste">{{ i.posteRecrutement }}</span>
+                    </div>
+
+                    <div class="agenda-badges">
+                      <!-- Badge TYPE : couleur cohérente par type (RH Initial bleu / RH Final violet / Technique orange) -->
+                      <span class="agenda-badge badge-type" [style.color]="typeColors[i.type || 'LIBRE']">
+                        <span class="badge-dot" [style.backgroundColor]="typeColors[i.type || 'LIBRE']"></span>
+                        {{ typeLabels[i.type || 'LIBRE'] }}
+                      </span>
+                      <!-- Badge STATUT : système de couleurs propre au statut -->
+                      <span class="agenda-badge badge-status" [style.color]="statusColors[i.status]">
+                        <i class="fa-solid" [ngClass]="statusIcon(i.status)"></i>
+                        {{ statusLabels[i.status] || i.status }}
+                      </span>
+                      <span class="agenda-badge badge-muted">
+                        <i class="fa-regular fa-user"></i>
+                        {{ i.interviewerName }}
+                      </span>
+                      <span class="agenda-badge badge-muted">
+                        <i class="fa-solid" [ngClass]="modeIcon(i.mode)"></i>
+                        {{ modeLabel(i) }}
+                      </span>
+                    </div>
+
+                    <div class="agenda-event-actions" (click)="$event.stopPropagation()">
+                      <button type="button" class="agenda-action-btn" matTooltip="Aperçu rapide"
+                        (click)="openDetail(i)">
+                        <i class="fa-regular fa-eye"></i> Voir
+                      </button>
+                      <!-- 🎯 Redirige vers ConsulterUneProgrammeSpecifiqueDecalendrierDunVueTable/:id -->
+                      <button type="button" class="agenda-action-btn primary" matTooltip="Ouvrir la fiche complète"
+                        (click)="voirDetailComplet(i)">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Voir les détails
+                      </button>
+                      <!-- 🎯 Reprogrammer : ouvre le détail directement en mode "reporter" -->
+                      <button type="button" class="agenda-action-btn" matTooltip="Reprogrammer l'entretien"
+                        *ngIf="interviewService.canReporter(i)" (click)="openDetail(i, 'reporter')">
+                        <i class="fa-solid fa-rotate"></i> Reprogrammer
+                      </button>
+                      <!-- 🎯 Planifier la suite : uniquement quand l'entretien est Terminé -->
+                      <button type="button" class="agenda-action-btn" matTooltip="Planifier l'entretien suivant"
+                        *ngIf="i.status === 'TERMINE'" (click)="planifierSuite(i)">
+                        <i class="fa-solid fa-calendar-plus"></i> Planifier
+                      </button>
+                      <button type="button" class="agenda-action-btn danger" matTooltip="Annuler l'entretien"
+                        *ngIf="interviewService.canAnnuler(i) || i.source === 'LIBRE'" (click)="annulerRapide(i)">
+                        <i class="fa-solid fa-ban"></i> Annuler
+                      </button>
+                      <button type="button" class="agenda-action-btn danger" matTooltip="Supprimer"
+                        *ngIf="interviewService.canDelete(i)" (click)="deleteInterview(i)">
+                        <i class="fa-solid fa-trash"></i> Supprimer
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="agenda-empty" *ngIf="!loading && !agendaGroups.length">
+
+            <!-- Message vide : vérifie rhAgendaGroups (avant pagination) -->
+            <div class="agenda-empty" *ngIf="!loading && !rhAgendaGroups.length">
               <i class="fa-solid fa-calendar-xmark" style="font-size: 32px;"></i>
-              <p>Aucun entretien planifié pour ces filtres.</p>
+              <p>Aucun entretien RH planifié pour ces filtres.</p>
+            </div>
+
+            <!-- 🎯 Pagination de la vue Agenda (par jour) -->
+            <div class="agenda-pagination" *ngIf="rhAgendaGroups.length > agendaPageSize">
+              <button type="button" class="agenda-page-btn" [disabled]="agendaPage === 1" (click)="prevAgendaPage()">
+                <i class="fa-solid fa-chevron-left"></i> Précédent
+              </button>
+              <span class="agenda-page-info">Page {{ agendaPage }} / {{ agendaTotalPages }}</span>
+              <button type="button" class="agenda-page-btn" [disabled]="agendaPage === agendaTotalPages"
+                (click)="nextAgendaPage()">
+                Suivant <i class="fa-solid fa-chevron-right"></i>
+              </button>
             </div>
           </div>
 
-          <!-- FullCalendar Wrapper -->
+          <!-- FullCalendar Wrapper : alimenté par visibleRhInterviews -->
           <div class="fc-wrapper" [hidden]="view === 'agenda'">
             <full-calendar #calendar [options]="calendarOptions"></full-calendar>
             <div class="calendar-legend">
@@ -141,7 +268,7 @@
           </mat-form-field>
           <mat-form-field appearance="outline" class="filter-field">
             <mat-label>Filtrer par statut</mat-label>
-            <mat-select [(ngModel)]="statusFilter" (selectionChange)="applyFilters()">
+            <mat-select [(ngModel)]="statusFilter" (selectionChange)="applyFiltersFromTableSelect()">
               <mat-option value="">Tous les statuts</mat-option>
               <mat-option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] || s }}</mat-option>
             </mat-select>
@@ -154,6 +281,7 @@
               <tr>
                 <th>Candidat</th>
                 <th>Poste</th>
+                <th>Type</th>
                 <th>Recruteur</th>
                 <th>Date d'entretien</th>
                 <th>Heure d'entretien</th>
@@ -163,43 +291,64 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let i of filteredInterviews | paginate: { itemsPerPage: pageSize, currentPage: page }">
+              <!-- TABLEAU : filtré sur rhTableInterviews (uniquement RH/Libres) -->
+              <tr *ngFor="let i of rhTableInterviews | paginate: { itemsPerPage: pageSize, currentPage: page }"
+                (click)="openDetail(i)" style="cursor:pointer;">
                 <td>
                   <div class="candidate-cell">
                     <div class="avatar">{{ i.candidateName.charAt(0) }}</div>
-                  <div>
-                    <div>{{ i.candidateName }}</div>
-                    <small style="color: var(--text-muted); font-weight: 500;">
-                      {{ i.candidateEmail }}
-                    </small>
-                  </div>
+                    <div>
+                      <div>{{ i.candidateName }}</div>
+                      <small style="color: var(--text-muted); font-weight: 500;">
+                        {{ i.candidateEmail }}
+                      </small>
+                    </div>
                   </div>
                 </td>
                 <td>{{ i.posteRecrutement }}</td>
+                <td>
+                  <span class="type-badge" [style.borderColor]="typeColors[i.type || 'LIBRE']"
+                    [style.color]="typeColors[i.type || 'LIBRE']">{{ typeLabels[i.type || 'LIBRE'] }}</span>
+                </td>
                 <td>{{ i.interviewerName }}</td>
                 <td><strong>{{ i.interviewDate | date:'dd MMM yyyy' }}</strong></td>
-                <td>{{ i.startTime }} - {{ i.endTime }}</td>
+                <td>{{ timeRange(i) }}</td>
                 <td><span class="mode-badge">{{ i.mode }}</span></td>
                 <td>
                   <span class="status-badge" [style.backgroundColor]="statusColors[i.status] + '18'"
                     [style.color]="statusColors[i.status]">{{ statusLabels[i.status] || i.status }}</span>
                 </td>
-                <td>
+                <td (click)="$event.stopPropagation()">
                   <div class="actions-cell">
-                    <button mat-icon-button type="button" matTooltip="Modifier l'entretien" (click)="editInterview(i)">
+                    <button mat-icon-button type="button" matTooltip="Voir le détail" (click)="openDetail(i)">
+                      <mat-icon style="color: var(--text-muted)">visibility</mat-icon>
+                    </button>
+                    <button mat-icon-button type="button" matTooltip="Modifier l'entretien" *ngIf="i.source === 'LIBRE'"
+                      (click)="editInterview(i)">
                       <mat-icon style="color: var(--text-muted)">edit</mat-icon>
                     </button>
-                    <button mat-icon-button type="button" matTooltip="Supprimer l'entretien" color="warn" (click)="deleteInterview(i)">
+                    <button mat-icon-button type="button" matTooltip="Reprogrammer"
+                      *ngIf="interviewService.canReporter(i)" (click)="openDetail(i, 'reporter')">
+                      <mat-icon>event_repeat</mat-icon>
+                    </button>
+                    <!-- "Annuler" remplace "Supprimer" pour les entretiens issus d'une candidature -->
+                    <button mat-icon-button type="button" matTooltip="Annuler l'entretien" color="warn"
+                      *ngIf="interviewService.canAnnuler(i)" (click)="annulerRapide(i)">
+                      <mat-icon>event_busy</mat-icon>
+                    </button>
+                    <button mat-icon-button type="button" matTooltip="Supprimer l'entretien" color="warn"
+                      *ngIf="interviewService.canDelete(i)" (click)="deleteInterview(i)">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
                 </td>
               </tr>
-              <tr *ngIf="!filteredInterviews.length">
-                <td colspan="8" class="empty-row" style="text-align: center; padding: 48px; color: var(--text-muted)">
+              <!-- Message vide : vérifie rhTableInterviews -->
+              <tr *ngIf="!rhTableInterviews.length">
+                <td colspan="9" class="empty-row" style="text-align: center; padding: 48px; color: var(--text-muted)">
                   <i class="fa-solid fa-ban"
                     style="font-size:24px; margin-bottom: 8px; display:block; color:var(--text-light)"></i>
-                  Aucun entretien trouvé
+                  Aucun entretien RH trouvé
                 </td>
               </tr>
             </tbody>
@@ -212,19 +361,6 @@
       </div>
     </mat-tab>
 
-    <!-- Tab 3: Statistiques -->
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <i class="fa-solid fa-chart-pie" style="margin-right: 8px;"></i> Statistiques
-      </ng-template>
-      <div class="tab-panel stats-panel" style="display:flex; justify-content:center; padding: 24px 0;">
-        <mat-card class="chart-card">
-          <h3>Répartition des entretiens par statut</h3>
-          <div class="chart-holder">
-            <canvas baseChart [data]="barChartData" [options]="chartOptions" type="doughnut"></canvas>
-          </div>
-        </mat-card>
-      </div>
-    </mat-tab>
+
   </mat-tab-group>
 </div>

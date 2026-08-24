@@ -2,23 +2,16 @@
   display: block;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   --primary-rgb: 79, 70, 229;
-  /* Indigo */
   --primary: rgb(var(--primary-rgb));
   --primary-hover: #4338ca;
   --primary-light: #eef2ff;
   --accent: #8b5cf6;
-  /* Purple */
   --text-main: #0f172a;
-  /* Slate 900 */
   --text-muted: #64748b;
-  /* Slate 500 */
   --text-light: #94a3b8;
-  /* Slate 400 */
   --bg-main: #f8fafc;
-  /* Slate 50 */
   --bg-card: #ffffff;
   --border: #e2e8f0;
-  /* Slate 200 */
   --border-focus: #a5b4fc;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
@@ -89,6 +82,70 @@
   background-color: var(--primary-hover) !important;
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25) !important;
+}
+
+/* ---- KPI bar ---- */
+.kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kpi-today {
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.kpi-today:hover {
+  border-color: var(--border-focus);
+}
+
+.kpi-today.actif {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.kpi-today.actif .kpi-value {
+  color: var(--primary);
+}
+
+.kpi-confirme .kpi-value {
+  color: #10b981;
+}
+
+.kpi-attente .kpi-value {
+  color: #f59e0b;
+}
+
+.kpi-reprog .kpi-value {
+  color: #8b5cf6;
 }
 
 /* ---- Material Tabs Restyling ---- */
@@ -350,6 +407,40 @@
   border-radius: 10px;
 }
 
+/* ---- Filtre Recruteur ---- */
+.recruteur-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--bg-main);
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.recruteur-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.link-reset {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.link-reset:hover {
+  text-decoration: underline;
+}
+
 /* ---- Agenda Main Panel ---- */
 .agenda-main {
   background: var(--bg-card);
@@ -451,156 +542,326 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* ---- Agenda List (Cards styled) ---- */
+/* =====================================================================
+   Vue Agenda — Timeline claire (remplace l'ancien thème sombre)
+   Réutilise la palette générale de la page (--bg-card, --border, --text-*)
+   pour rester cohérente avec le reste de l'interface.
+   ===================================================================== */
+
 .agenda-list {
-  max-height: 680px;
+  max-height: 720px;
   overflow-y: auto;
   padding-right: 4px;
-}
-
-.agenda-day {
-  display: flex;
-  gap: 24px;
-  padding: 20px 4px;
-  border-bottom: 1px solid var(--border);
-}
-
-.agenda-day:last-child {
-  border-bottom: none;
-}
-
-.agenda-day-marker {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  width: 140px;
-  flex-shrink: 0;
-}
-
-.agenda-day-number {
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--text-main);
-  line-height: 1;
-  letter-spacing: -0.03em;
-}
-
-.agenda-day-marker.aujourdhui .agenda-day-number {
-  color: var(--primary);
-}
-
-.agenda-day-label {
   display: flex;
   flex-direction: column;
-  font-size: 11px;
-  color: var(--text-light);
-  padding-top: 2px;
+  gap: 20px;
 }
 
-.agenda-day-label strong {
-  color: var(--text-main);
-  font-size: 13px;
-  text-transform: capitalize;
-  margin-bottom: 1px;
-}
-
-.agenda-day-events {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-
-.agenda-event {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 18px;
-  border-radius: var(--radius-md);
+/* ---- Carte "jour" ---- */
+.agenda-day-card {
   background: var(--bg-main);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.agenda-event:hover {
-  background: var(--bg-card);
-  border-color: var(--border);
-  transform: translateY(-1px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px 24px 24px;
   box-shadow: var(--shadow-sm);
 }
 
-.agenda-event-time {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-muted);
-  width: 110px;
-  flex-shrink: 0;
+.agenda-day-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
 }
 
-.agenda-event-tag {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
+.agenda-date-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agenda-date-badge {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+  text-transform: uppercase;
+}
+
+.agenda-day-card-header.aujourdhui .agenda-date-badge {
+  color: var(--primary);
+}
+
+.agenda-weekday {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.agenda-day-count {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 5px 12px;
   border-radius: 20px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
 }
 
-.agenda-event-name {
-  font-size: 14px;
-  font-weight: 600;
+/* ---- Timeline verticale ---- */
+.agenda-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.agenda-timeline-item {
+  display: flex;
+  gap: 20px;
+  padding-bottom: 22px;
+}
+
+.agenda-timeline-item.last {
+  padding-bottom: 0;
+}
+
+.agenda-time-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 92px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+/* 🎯 Plage horaire "10:00 → 11:00" sur une seule ligne */
+.agenda-time-range {
+  font-size: 12.5px;
+  font-weight: 800;
   color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+.agenda-timeline-line {
+  width: 2px;
+  flex: 1;
+  min-height: 20px;
+  background: linear-gradient(to bottom, var(--border), transparent);
+  margin-top: 10px;
+}
+
+/* ---- Carte "événement" ---- */
+.agenda-event-card {
   flex: 1;
   min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.agenda-event-mode {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
-  background: #f1f5f9;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-}
-
-.agenda-event-status {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.agenda-event-delete {
-  border: none;
-  background: transparent;
-  color: var(--text-light);
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: var(--transition);
 }
 
-.agenda-event-delete:hover {
-  background: #fee2e2;
+.agenda-event-card:hover {
+  border-color: var(--border-focus);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.agenda-event-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 14px;
+}
+
+.agenda-candidate-name {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.agenda-poste {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* ---- Badges ---- */
+.agenda-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.agenda-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 8px;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.agenda-badge i {
+  font-size: 11px;
+}
+
+.badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.badge-muted i {
+  color: var(--text-light);
+}
+
+/* ---- Actions ---- */
+.agenda-event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.agenda-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.agenda-action-btn:hover {
+  background: var(--bg-main);
+  color: var(--text-main);
+  border-color: var(--text-light);
+}
+
+.agenda-action-btn.primary {
+  border-color: rgba(79, 70, 229, 0.35);
+  color: var(--primary);
+}
+
+.agenda-action-btn.primary:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.agenda-action-btn.danger {
+  border-color: rgba(239, 68, 68, 0.3);
   color: #ef4444;
 }
 
-/* ---- FullCalendar Customization (Premium look) ---- */
+.agenda-action-btn.danger:hover {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+
+/* ---- État vide ---- */
+.agenda-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  color: var(--text-light);
+  text-align: center;
+}
+
+.agenda-empty p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ---- Pagination de la vue Agenda (par jour) ---- */
+.agenda-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.agenda-page-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.agenda-page-btn:hover:not(:disabled) {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--border-focus);
+}
+
+.agenda-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.agenda-page-info {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ---- Distinction Type vs Statut (badges vue Table) ---- */
+.type-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1.5px solid;
+  background: transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* ---- FullCalendar Customization ---- */
 ::ng-deep .fc {
   --fc-border-color: var(--border) !important;
   --fc-today-bg-color: rgba(79, 70, 229, 0.04) !important;
@@ -739,6 +1000,49 @@
   letter-spacing: 0.03em;
 }
 
+/* ---- Actions (table) ---- */
+.actions-cell {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.actions-cell button[mat-icon-button] {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.actions-cell button[mat-icon-button]:first-child {
+  color: var(--primary);
+  background: rgba(79, 70, 229, 0.06);
+}
+
+.actions-cell button[mat-icon-button]:first-child:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+}
+
+.actions-cell button[mat-icon-button][color="warn"] {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.actions-cell button[mat-icon-button][color="warn"]:hover {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+.actions-cell mat-icon {
+  font-size: 18px;
+}
+
 /* ---- Legend Section ---- */
 .calendar-legend {
   display: flex;
@@ -797,10 +1101,18 @@
 
 .chart-card h3 {
   text-align: center;
-  margin: 0 0 24px;
+  margin: 0 0 4px;
   color: var(--text-main);
   font-size: 16px;
   font-weight: 700;
+}
+
+.chart-subtitle {
+  text-align: center;
+  margin: 0 0 20px;
+  color: var(--text-light);
+  font-size: 11.5px;
+  font-style: italic;
 }
 
 /* ---- Custom Scrollbar ---- */
@@ -819,44 +1131,25 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-light);
-}.actions-cell {
+}.reprog-banner {
   display: flex;
-  gap: 6px;
   align-items: center;
+  gap: 10px;
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #c4b5fd;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
 }
 
-.actions-cell button[mat-icon-button] {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
-}
-
-.actions-cell button[mat-icon-button]:first-child {
-  color: var(--primary);
-  background: rgba(79, 70, 229, 0.06);
-}
-
-.actions-cell button[mat-icon-button]:first-child:hover {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
-}
-
-.actions-cell button[mat-icon-button][color="warn"] {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.06);
-}
-
-.actions-cell button[mat-icon-button][color="warn"]:hover {
-  background: #ef4444;
-  color: #fff;
-  border-color: #ef4444;
-  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
-}
-
-.actions-cell mat-icon {
-  font-size: 18px;
+.btn-annuler-reprog {
+  margin-left: auto;
+  background: #fff;
+  border: 1px solid #c4b5fd;
+  color: #5b21b6;
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
 }

@@ -1,599 +1,976 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import {  Location } from '@angular/common';
-
-import { Router } from '@angular/router';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-
-import {
-  FullCalendarModule,
-  FullCalendarComponent,
-} from '@fullcalendar/angular';
-import { Chart, registerables } from 'chart.js';
-Chart.register(...registerables);
-import { forkJoin } from 'rxjs';
-import {
-  CalendarOptions,
-  EventClickArg,
-  DateSelectArg,
-  DayCellContentArg,
-  DayCellMountArg,
-} from '@fullcalendar/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { FullCalendarComponent } from '@fullcalendar/angular';
+import { CalendarOptions, EventClickArg } from '@fullcalendar/core';
+import { DateClickArg } from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import listPlugin from '@fullcalendar/list';
-import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import frLocale from '@fullcalendar/core/locales/fr';
-import { NgxPaginationModule } from 'ngx-pagination';
-import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration, ChartData } from 'chart.js';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subject, takeUntil } from 'rxjs';
 import Swal from 'sweetalert2';
-import { debounceTime, Subject } from 'rxjs';
-import {
-  Interview,
-  InterviewDialogData,
-} from '../../../core/models/interview';
+import { Interview } from '../../../core/models/interview';
 import { InterviewService } from '../../../core/service/interview.service';
+import { InterviewDetailDialogComponent } from '../interview-detail-dialog/interview-detail-dialog.component';
 import { InterviewFormDialogComponent } from '../interview-form-dialog/interview-form-dialog.component';
-
-
-import {
-  STATUS_COLORS,
-  AgendaGroup,
-  MiniDay,
-  STATUS_LABELS,
-  HolidayInfo,
-  TUNISIA_HOLIDAYS_2026,
-  RAMADAN_2026,
-} from '../../../core/constant/selectPoste';
+import { PlanifierEntretienCandidatureDialogComponent } from '../planifier-entretien-candidature-dialog/planifier-entretien-candidature-dialog.component';
+import type { PlanifierEntretienDialogResult } from '../planifier-entretien-candidature-dialog/planifier-entretien-candidature-dialog.component';
 import {
   PlanificationCandidatureContext,
   RecrutementInterviewService,
 } from '../../../core/service/recrutement-interview.service';
-import {
-  PlanifierEntretienCandidatureDialogComponent,
-  PlanifierEntretienDialogResult,
-} from '../planifier-entretien-candidature-dialog/planifier-entretien-candidature-dialog.component';
-import { InterviewStatus } from '../../../core/models/enums/enumPosteRecrutemnt';
+import { ReprogrammerService } from '../../../core/service/reporte-entretient.service'; // ajuste le chemin
 
-const BUSY_DAY_THRESHOLD = 3;
+interface ContexteReprogrammation {
+  demandeId?: string;
+  interviewId: string;
+  candidateName?: string;
+  returnUrl?: string;
+}
+
+type ViewMode = 'day' | 'week' | 'month' | 'agenda';
+
+interface MiniDay {
+  date: Date;
+  day: number;
+  inMonth: boolean;
+  isToday: boolean;
+  isSelected: boolean;
+  hasEvents: boolean;
+}
+
+interface AgendaGroup {
+  iso: string;
+  dayNumber: number;
+  weekday: string;
+  monthYear: string;
+  isToday: boolean;
+  items: Interview[];
+}
 
 @Component({
   selector: 'app-calendrier-rh',
   templateUrl: './calendrier-rh.component.html',
   styleUrl: './calendrier-rh.component.css',
 })
-  
-export class CalendrierRHComponent implements OnInit {
-  @ViewChild('calendar') calendarComponent!: FullCalendarComponent;
+export class CalendrierRHComponent implements OnInit, OnDestroy {
+  @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
+
+  private readonly destroy$ = new Subject<void>();
+
+  private static readonly ROUTE_DETAIL_COMPLET =
+    '/rh/ConsulterUneProgrammeSpecifiqueDecalendrierDunVueTable';
+
+  // ==================== Données ====================
   interviews: Interview[] = [];
   filteredInterviews: Interview[] = [];
   loading = false;
+
+  // ==================== Vue / navigation ====================
+  view: ViewMode = 'month';
+  currentDate = new Date();
+  periodLabel = '';
+  miniWeeks: MiniDay[][] = [];
+
+  // ==================== Filtres ====================
   searchTerm = '';
   statusFilter = '';
+  typeFilter: string | null = null;
+  recruteurFilter: string | null = null;
+  filtreAujourdhui = false;
+  private visibleStatuses = new Set<string>();
+
+  // ==================== Pagination (onglet Table) ====================
   page = 1;
   pageSize = 8;
-  statuses = Object.values(InterviewStatus);
-  statusColors = STATUS_COLORS;
-  statusLabels = STATUS_LABELS;
-  statusCounts: Record<string, number> = {};
-  view: 'agenda' | 'day' | 'week' | 'month' = 'agenda';
-  miniCalendarDate = new Date();
-  miniWeeks: MiniDay[][] = [];
-  selectedIso = this.toLocalIso(new Date());
-  selectedStatuses = new Set<string>(this.statuses);
-  private searchSubject = new Subject<string>();
-  private holidayMap = new Map<string, HolidayInfo>();
-  eventCountByDate: Record<string, number> = {};
 
-  pendingPlanification: PlanificationCandidatureContext | null = null;
+  // ==================== Pagination (onglet Calendrier -> vue Agenda) ====================
+  agendaPage = 1;
+  agendaPageSize = 5;
 
+  // ==================== Contexte "planifier depuis une candidature" ====================
+  pendingCandidatureContext: PlanificationCandidatureContext | null = null;
+
+  // ==================== Contexte "reprogrammation" (nouveau) ====================
+  modeReprogrammation = false;
+  contexteReprogrammation: ContexteReprogrammation | null = null;
+
+  // ==================== Référentiels d'affichage ====================
+  readonly statuses = [
+    'PLANIFIE',
+    'CONFIRME',
+    'EN_COURS',
+    'TERMINE',
+    'ANNULE',
+    'REPORTE',
+    'ABSENT',
+  ];
+
+  readonly statusLabels: Record<string, string> = {
+    PLANIFIE: 'Planifié',
+    CONFIRME: 'Confirmé',
+    EN_COURS: 'En cours',
+    TERMINE: 'Terminé',
+    ANNULE: 'Annulé',
+    REPORTE: 'Reporté',
+    ABSENT: 'Absent',
+  };
+
+  readonly statusColors: Record<string, string> = {
+    PLANIFIE: '#f59e0b',
+    CONFIRME: '#10b981',
+    EN_COURS: '#3b82f6',
+    TERMINE: '#334155',
+    ANNULE: '#ef4444',
+    REPORTE: '#8b5cf6',
+    ABSENT: '#f43f5e',
+  };
+
+  private readonly statusIcons: Record<string, string> = {
+    PLANIFIE: 'fa-hourglass-half',
+    CONFIRME: 'fa-check',
+    EN_COURS: 'fa-spinner',
+    TERMINE: 'fa-flag-checkered',
+    ANNULE: 'fa-ban',
+    REPORTE: 'fa-rotate',
+    ABSENT: 'fa-user-slash',
+  };
+
+  readonly interviewTypes = [
+    { value: 'RH_INITIAL', label: 'RH Initial' },
+    { value: 'RH_FINAL', label: 'RH Final' },
+    { value: 'TECHNIQUE', label: 'Technique' },
+    { value: 'LIBRE', label: 'Entretien libre' },
+  ];
+
+  readonly typeLabels: Record<string, string> = {
+    RH_INITIAL: 'RH Initial',
+    RH_FINAL: 'RH Final',
+    TECHNIQUE: 'Technique',
+    LIBRE: 'Entretien libre',
+  };
+
+  readonly typeColors: Record<string, string> = {
+    RH_INITIAL: '#3b82f6',
+    RH_FINAL: '#8b5cf6',
+    TECHNIQUE: '#f97316',
+    LIBRE: '#64748b',
+  };
+
+  // ==================== FullCalendar ====================
   calendarOptions: CalendarOptions = {
-    plugins: [
-      dayGridPlugin,
-      timeGridPlugin,
-      listPlugin,
-      multiMonthPlugin,
-      interactionPlugin,
-    ],
+    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
     initialView: 'dayGridMonth',
     locale: frLocale,
     headerToolbar: false,
     height: 'auto',
     selectable: true,
-    editable: false,
     dayMaxEvents: 3,
     events: [],
-    select: (arg: DateSelectArg) => this.onDateSelect(arg),
     eventClick: (arg: EventClickArg) => this.onEventClick(arg),
-    dayCellClassNames: (arg: DayCellContentArg) =>
-      this.getDayCellClasses(arg.date),
-    dayCellDidMount: (arg: DayCellMountArg) => this.onDayCellMount(arg),
-    buttonText: {
-      today: "Aujourd'hui",
-      month: 'Mois',
-      week: 'Semaine',
-      day: 'Jour',
-      list: 'Liste',
-    },
+    dateClick: (arg: DateClickArg) => this.onDateClick(arg.dateStr),
+    dayCellClassNames: (arg) =>
+      arg.date.getDay() === 0 || arg.date.getDay() === 6
+        ? ['fc-day-weekend-tn']
+        : [],
   };
 
-  barChartData: ChartData<'doughnut'> = {
-    labels: [],
-    datasets: [{ data: [], backgroundColor: [] }],
-  };
-
-  chartOptions: ChartConfiguration['options'] = {
+  chartOptions = {
     responsive: true,
-    plugins: { legend: { position: 'bottom' } },
+    plugins: { legend: { position: 'bottom' as const } },
   };
 
   constructor(
-    private readonly interviewService: InterviewService,
-    private readonly recrutementInterviewService: RecrutementInterviewService,
-    private readonly dialog: MatDialog,
-    private readonly router: Router,
-    private readonly location: Location,
+    private reprogrammerService: ReprogrammerService,
+    private route: ActivatedRoute,
+    public interviewService: InterviewService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar,
+    private router: Router,
+    private recrutementInterviewService: RecrutementInterviewService,
   ) {
-    this.searchSubject.pipe(debounceTime(350)).subscribe({
-      next: () => {
-        this.applyFilters();
-        this.refreshCalendarEvents();
-      },
-      error: (error: any) => console.log(error),
-    });
-    TUNISIA_HOLIDAYS_2026.forEach((h) => this.holidayMap.set(h.date, h));
-    const navigationState =
-      this.router.getCurrentNavigation()?.extras.state ?? window.history.state;
-    this.pendingPlanification = navigationState?.['planifierEntretien'] ?? null;
+    this.statuses.forEach((s) => this.visibleStatuses.add(s));
   }
 
   ngOnInit(): void {
-    this.buildMiniCalendar();
-    this.loadInterviews();
+    this.recupererContexteReprogrammation();
+    this.recupererContexteCandidature();
+    this.recomputeCalendarView();
+    this.refresh();
+  }
 
-    if (this.pendingPlanification) {
-      this.location.replaceState(this.router.url, '', {});
-      this.setView('month');
-      Swal.fire({
-        icon: 'info',
-        title: 'Choisissez une date',
-        text: `Cliquez sur une date dans le calendrier pour planifier l'entretien de ${this.pendingPlanification.candidateName}.`,
-        timer: 3500,
-        showConfirmButton: false,
-      });
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ==================== Contexte candidature ====================
+
+  private recupererContexteCandidature(): void {
+    const navigationState = this.router.getCurrentNavigation()?.extras?.state;
+    const state = navigationState ?? history.state;
+    const ctx = state?.['planifierEntretien'] as
+      | PlanificationCandidatureContext
+      | undefined;
+
+    if (ctx) {
+      this.pendingCandidatureContext = ctx;
     }
   }
 
-  private ouvrirPlanificationCandidature(
-    context: PlanificationCandidatureContext,
-    selectedDate?: string,
-  ): void {
-    const ref = this.dialog.open(PlanifierEntretienCandidatureDialogComponent, {
-      width: '620px',
-      maxWidth: '95vw',
-      autoFocus: false,
-      disableClose: true,
-      data: { context, selectedDate },
-    });
-    ref
-      .afterClosed()
-      .subscribe((resultat: PlanifierEntretienDialogResult | undefined) => {
-        if (!resultat) return;
-        this.recrutementInterviewService
-          .planifier(context.applicationId, resultat.type, resultat.payload)
-          .subscribe({
-            next: () => {
-              Swal.fire({
-                icon: 'success',
-                title: 'Entretien planifié',
-                text: `Convocation envoyée à ${context.candidateEmail}.`,
-                timer: 2200,
-                showConfirmButton: false,
-              });
-              this.loadInterviews();
-            },
-            error: (err: any) => {
-              console.log(err);
-              Swal.fire(
-                'Erreur',
-                err?.error?.message ?? "Impossible de planifier l'entretien.",
-                'error',
-              );
-            },
-          });
-      });
+  annulerPlanificationCandidature(): void {
+    this.pendingCandidatureContext = null;
   }
 
-  loadInterviews(): void {
+  // ==================== Contexte reprogrammation ====================
+
+  private recupererContexteReprogrammation(): void {
+    const params = this.route.snapshot.queryParams;
+    if (params['modeReprogrammation'] !== '1') return;
+
+    const brut = sessionStorage.getItem('reprogrammation_contexte');
+    const stocke: ContexteReprogrammation | null = brut
+      ? JSON.parse(brut)
+      : null;
+
+    this.modeReprogrammation = true;
+    this.contexteReprogrammation = {
+      demandeId: params['demandeId'] ?? stocke?.demandeId,
+      interviewId: params['interviewId'] ?? stocke?.interviewId,
+      candidateName: stocke?.candidateName,
+      returnUrl: stocke?.returnUrl,
+    };
+  }
+
+  annulerModeReprogrammation(): void {
+    sessionStorage.removeItem('reprogrammation_contexte');
+    this.modeReprogrammation = false;
+    this.contexteReprogrammation = null;
+  }
+
+  private terminerModeReprogrammation(): void {
+    const returnUrl =
+      this.contexteReprogrammation?.returnUrl ?? '/rh/demandes-reprogrammation';
+    sessionStorage.removeItem('reprogrammation_contexte');
+    this.modeReprogrammation = false;
+    this.contexteReprogrammation = null;
+    this.router.navigate([returnUrl], {
+      queryParams: { propositionEnvoyee: 1 },
+    });
+  }
+
+  private ouvrirPropositionReprogrammation(dateStr: string): void {
+    const interviewId = this.contexteReprogrammation?.interviewId;
+    if (!interviewId) return;
+
+    const dateAffichee = new Date(dateStr + 'T00:00:00').toLocaleDateString(
+      'fr-FR',
+      { day: 'numeric', month: 'long', year: 'numeric' },
+    );
+
+    Swal.fire({
+      title: 'Proposer un nouveau créneau',
+      html: `
+        <p style="margin-bottom:12px;color:#64748b;text-align:left;">
+          Date sélectionnée : <strong>${dateAffichee}</strong><br>
+          Candidat : <strong>${this.contexteReprogrammation?.candidateName ?? '—'}</strong>
+        </p>
+        <input id="swal-heure" type="time" class="swal2-input" placeholder="Heure">
+        <textarea id="swal-motif" class="swal2-textarea" placeholder="Motif de la nouvelle proposition"></textarea>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Envoyer la proposition',
+      cancelButtonText: 'Annuler',
+      preConfirm: () => {
+        const heure = (
+          document.getElementById('swal-heure') as HTMLInputElement
+        )?.value;
+        const motif = (
+          document.getElementById('swal-motif') as HTMLTextAreaElement
+        )?.value?.trim();
+        if (!heure) {
+          Swal.showValidationMessage('Veuillez choisir une heure');
+          return;
+        }
+        if (!motif) {
+          Swal.showValidationMessage('Veuillez indiquer un motif');
+          return;
+        }
+        return { heure, motif };
+      },
+    }).then((res) => {
+      if (!res.isConfirmed || !res.value) return;
+
+      const nouvelleDateProposee = `${dateStr}T${res.value.heure}:00`;
+
+      this.reprogrammerService
+        .proposerParIntervenant(interviewId, {
+          nouvelleDateProposee,
+          motif: res.value.motif,
+        })
+        .subscribe({
+          next: () => {
+            this.snackBar.open('Nouvelle date proposée avec succès', 'Fermer', {
+              duration: 3000,
+            });
+            this.terminerModeReprogrammation();
+          },
+          error: (err) =>
+            Swal.fire(
+              'Erreur',
+              err?.message ?? "Impossible d'envoyer la proposition",
+              'error',
+            ),
+        });
+    });
+  }
+
+  // ==================== FILTRAGE RH SPÉCIFIQUE ====================
+
+  private isRhOrLibre(interview: Interview): boolean {
+    const t = interview.type;
+    return !t || t === 'RH_INITIAL' || t === 'RH_FINAL';
+  }
+
+  get rhFilteredInterviews(): Interview[] {
+    return this.filteredInterviews.filter((i) => this.isRhOrLibre(i));
+  }
+
+  get visibleRhInterviews(): Interview[] {
+    return this.visibleInterviews.filter((i) => this.isRhOrLibre(i));
+  }
+
+  get rhAgendaGroups(): AgendaGroup[] {
+    return this.agendaGroups
+      .map((groupe) => ({
+        ...groupe,
+        items: groupe.items.filter((i) => this.isRhOrLibre(i)),
+      }))
+      .filter((groupe) => groupe.items.length > 0);
+  }
+
+  get rhTableInterviews(): Interview[] {
+    return this.rhFilteredInterviews;
+  }
+
+  // ==================== Chargement ====================
+
+  refresh(): void {
     this.loading = true;
-
-    forkJoin({
-      libres: this.interviewService.getAll(),
-      recrutement: this.recrutementInterviewService.getAll(),
-    }).subscribe({
-      next: ({ libres, recrutement }) => {
-        const toutesLesInterviews: Interview[] = [
-          ...(libres ?? []),
-          ...(recrutement ?? []),
-        ];
-
-        // Suppression des doublons
-        this.interviews = this.deduplicateInterviews(toutesLesInterviews);
-
-        this.applyFilters();
-        this.computeEventCountByDate();
-        this.refreshCalendarEvents();
-        this.computeStats();
-        this.buildMiniCalendar();
-
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-        Swal.fire('Erreur', 'Impossible de charger les entretiens.', 'error');
-      },
-    });
+    this.interviewService
+      .getAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.interviews = data;
+          this.loading = false;
+          this.applyFilters();
+          this.buildMiniCalendar();
+        },
+        error: (err) => {
+          this.loading = false;
+          Swal.fire(
+            'Erreur',
+            err?.message ?? 'Impossible de charger les entretiens',
+            'error',
+          );
+        },
+      });
   }
-  private deduplicateInterviews(items: Interview[]): Interview[] {
-    const uniqueInterviews: Interview[] = [];
-    const indexes = new Map<string, number>();
 
-    for (const interview of items) {
-      const idKey =
-        interview.id !== null && interview.id !== undefined
-          ? `id:${String(interview.id)}`
-          : null;
+  // ==================== Filtres ====================
 
-      // Clé de secours si les deux services renvoient des IDs différents
-      const dataKey = [
-        this.normalizeValue(interview.candidateName),
-        this.normalizeValue(interview.posteRecrutement),
-        this.normalizeValue(interview.interviewDate),
-        this.normalizeValue(interview.startTime),
-        this.normalizeValue(interview.endTime),
-      ].join('|');
-
-      let existingIndex: number | undefined;
-
-      if (idKey) {
-        existingIndex = indexes.get(idKey);
-      }
-
-      if (existingIndex === undefined) {
-        existingIndex = indexes.get(`data:${dataKey}`);
-      }
-
-      if (existingIndex === undefined) {
-        existingIndex = uniqueInterviews.push(interview) - 1;
-      }
-
-      if (idKey) {
-        indexes.set(idKey, existingIndex);
-      }
-
-      indexes.set(`data:${dataKey}`, existingIndex);
+  private matchesEverythingExceptStatus(i: Interview): boolean {
+    if (this.filtreAujourdhui && !this.isToday(i.interviewDate)) return false;
+    if (this.typeFilter && (i.type || 'LIBRE') !== this.typeFilter)
+      return false;
+    if (this.recruteurFilter && i.interviewerName !== this.recruteurFilter)
+      return false;
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      const haystack =
+        `${i.candidateName ?? ''} ${i.posteRecrutement ?? ''}`.toLowerCase();
+      if (!haystack.includes(term)) return false;
     }
-
-    return uniqueInterviews;
-  }
-
-  private normalizeValue(value: unknown): string {
-    return String(value ?? '')
-      .trim()
-      .toLowerCase();
-  }
-
-  get visibleInterviews(): Interview[] {
-    const term = this.searchTerm.trim().toLowerCase();
-    return this.interviews.filter((i) => {
-      const cn = (i.candidateName || '').toLowerCase();
-      const pr = (i.posteRecrutement || '').toLowerCase();
-      const ir = (i.interviewerName || '').toLowerCase();
-      const matches =
-        !term || cn.includes(term) || pr.includes(term) || ir.includes(term);
-      return matches && this.selectedStatuses.has(i.status);
-    });
+    return true;
   }
 
   applyFilters(): void {
-    const term = this.searchTerm.trim().toLowerCase();
-    this.filteredInterviews = this.interviews.filter((i) => {
-      const matchesSearch =
-        !term ||
-        i.candidateName.toLowerCase().includes(term) ||
-        i.posteRecrutement.toLowerCase().includes(term) ||
-        i.interviewerName.toLowerCase().includes(term);
-      const matchesStatus =
-        !this.statusFilter || i.status === this.statusFilter;
-      return matchesSearch && matchesStatus;
-    });
+    this.filteredInterviews = this.interviews.filter(
+      (i) =>
+        this.matchesEverythingExceptStatus(i) && this.isStatusVisible(i.status),
+    );
     this.page = 1;
+    this.agendaPage = 1;
+    this.syncCalendarEvents();
   }
 
-  onSearchChange(term: string): void {
-    this.searchTerm = term;
-    this.searchSubject.next(term);
-  }
-
-  toggleStatus(status: string): void {
-    if (this.selectedStatuses.has(status)) this.selectedStatuses.delete(status);
-    else this.selectedStatuses.add(status);
-    this.refreshCalendarEvents();
+  onSearchChange(value: string): void {
+    this.searchTerm = value;
+    this.applyFilters();
   }
 
   isStatusVisible(status: string): boolean {
-    return this.selectedStatuses.has(status);
+    return this.visibleStatuses.has(status);
   }
 
-  get agendaGroups(): AgendaGroup[] {
-    const map = new Map<string, Interview[]>();
-    this.visibleInterviews.forEach((i) => {
-      const list = map.get(i.interviewDate) || [];
-      list.push(i);
-      map.set(i.interviewDate, list);
+  toggleStatus(status: string): void {
+    if (this.visibleStatuses.has(status)) this.visibleStatuses.delete(status);
+    else this.visibleStatuses.add(status);
+    this.applyFilters();
+  }
+
+  setTypeFilter(value: string | null): void {
+    this.typeFilter = value;
+    this.applyFilters();
+  }
+
+  setRecruteurFilter(value: string | null): void {
+    this.recruteurFilter = value;
+    this.applyFilters();
+  }
+
+  toggleFiltreAujourdhui(): void {
+    this.filtreAujourdhui = !this.filtreAujourdhui;
+    this.applyFilters();
+  }
+
+  applyFiltersFromTableSelect(): void {
+    if (this.statusFilter) {
+      this.statuses.forEach((s) =>
+        s === this.statusFilter
+          ? this.visibleStatuses.add(s)
+          : this.visibleStatuses.delete(s),
+      );
+    } else {
+      this.statuses.forEach((s) => this.visibleStatuses.add(s));
+    }
+    this.applyFilters();
+  }
+
+  get statusCounts(): Record<string, number> {
+    const counts: Record<string, number> = {};
+    for (const s of this.statuses) counts[s] = 0;
+    for (const i of this.interviews) {
+      if (this.matchesEverythingExceptStatus(i))
+        counts[i.status] = (counts[i.status] || 0) + 1;
+    }
+    return counts;
+  }
+
+  get recruteursDisponibles(): string[] {
+    return [
+      ...new Set(this.interviews.map((i) => i.interviewerName).filter(Boolean)),
+    ].sort();
+  }
+
+  // ==================== KPI & Statistiques ====================
+
+  get kpiTotal(): number {
+    return this.rhFilteredInterviews.length;
+  }
+
+  get kpiConfirmes(): number {
+    return this.rhFilteredInterviews.filter((i) => i.status === 'CONFIRME')
+      .length;
+  }
+
+  get kpiEnAttente(): number {
+    return this.rhFilteredInterviews.filter((i) => i.status === 'PLANIFIE')
+      .length;
+  }
+
+  get kpiAujourdhui(): number {
+    return this.rhFilteredInterviews.filter(
+      (i) =>
+        this.isToday(i.interviewDate) &&
+        i.status !== 'ANNULE' &&
+        i.status !== 'TERMINE',
+    ).length;
+  }
+
+  get kpiAReprogrammer(): number {
+    return this.rhFilteredInterviews.filter((i) => i.status === 'REPORTE')
+      .length;
+  }
+
+  get statsFiltrees(): { status: string; count: number }[] {
+    const counts = new Map<string, number>();
+    this.statuses.forEach((s) => counts.set(s, 0));
+    this.rhFilteredInterviews.forEach((i) =>
+      counts.set(i.status, (counts.get(i.status) || 0) + 1),
+    );
+    return [...counts.entries()].map(([status, count]) => ({ status, count }));
+  }
+
+  get barChartData() {
+    const data = this.statsFiltrees;
+    return {
+      labels: data.map((d) => this.statusLabels[d.status] || d.status),
+      datasets: [
+        {
+          data: data.map((d) => d.count),
+          backgroundColor: data.map(
+            (d) => this.statusColors[d.status] || '#94a3b8',
+          ),
+        },
+      ],
+    };
+  }
+
+  private isToday(dateIso?: string): boolean {
+    if (!dateIso) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const d = new Date(dateIso + 'T00:00:00');
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() === today.getTime();
+  }
+
+  // ==================== Navigation calendrier ====================
+
+  get visibleInterviews(): Interview[] {
+    const { start, end } = this.currentPeriodRange();
+    return this.filteredInterviews.filter((i) => {
+      if (!i.interviewDate) return false;
+      const d = new Date(i.interviewDate + 'T00:00:00');
+      return d >= start && d < end;
     });
-    const todayIso = this.toLocalIso(new Date());
-    return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([iso, items]) => {
-        const d = new Date(iso + 'T00:00:00');
-        return {
-          iso,
-          dayNumber: String(d.getDate()).padStart(2, '0'),
-          weekday: this.capitalize(
-            d.toLocaleDateString('fr-FR', { weekday: 'long' }),
-          ),
-          monthYear: this.capitalize(
-            d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
-          ),
-          isToday: iso === todayIso,
-          items: [...items].sort((a, b) =>
-            a.startTime.localeCompare(b.startTime),
-          ),
-        };
-      });
   }
 
-  get periodLabel(): string {
-    return this.capitalize(
-      this.miniCalendarDate.toLocaleDateString('fr-FR', {
+  private currentPeriodRange(): { start: Date; end: Date } {
+    const d = new Date(this.currentDate);
+    if (this.view === 'day') {
+      const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      return { start, end };
+    }
+    if (this.view === 'week') {
+      const start = new Date(d);
+      start.setDate(d.getDate() - d.getDay());
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      return { start, end };
+    }
+    const start = new Date(d.getFullYear(), d.getMonth(), 1);
+    const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    return { start, end };
+  }
+
+  private updatePeriodLabel(): void {
+    const { start, end } = this.currentPeriodRange();
+    if (this.view === 'day') {
+      this.periodLabel = this.currentDate.toLocaleDateString('fr-FR', {
+        day: 'numeric',
         month: 'long',
         year: 'numeric',
-      }),
+      });
+    } else if (this.view === 'week') {
+      const last = new Date(end);
+      last.setDate(last.getDate() - 1);
+      this.periodLabel = `${start.getDate()} - ${last.getDate()} ${last.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+    } else {
+      this.periodLabel = this.currentDate.toLocaleDateString('fr-FR', {
+        month: 'long',
+        year: 'numeric',
+      });
+    }
+  }
+
+  prevMonth(): void {
+    this.step(-1);
+  }
+
+  nextMonth(): void {
+    this.step(1);
+  }
+
+  private step(direction: 1 | -1): void {
+    const d = new Date(this.currentDate);
+    if (this.view === 'day') d.setDate(d.getDate() + direction);
+    else if (this.view === 'week') d.setDate(d.getDate() + 7 * direction);
+    else d.setMonth(d.getMonth() + direction);
+    this.currentDate = d;
+    this.calendarComponent?.getApi()?.gotoDate(this.currentDate);
+    this.recomputeCalendarView();
+  }
+
+  goToday(): void {
+    this.currentDate = new Date();
+    this.calendarComponent?.getApi()?.today();
+    this.recomputeCalendarView();
+  }
+
+  setView(v: ViewMode): void {
+    this.view = v;
+    const fcView: Record<ViewMode, string> = {
+      day: 'timeGridDay',
+      week: 'timeGridWeek',
+      month: 'dayGridMonth',
+      agenda: 'dayGridMonth',
+    };
+    this.calendarComponent?.getApi()?.changeView(fcView[v]);
+    if (v !== 'agenda')
+      this.calendarComponent?.getApi()?.gotoDate(this.currentDate);
+    this.recomputeCalendarView();
+  }
+
+  private recomputeCalendarView(): void {
+    this.updatePeriodLabel();
+    this.buildMiniCalendar();
+  }
+
+  selectMiniDay(jour: MiniDay): void {
+    this.currentDate = jour.date;
+    this.recomputeCalendarView();
+    if (this.view === 'agenda') {
+      const iso = this.toIso(jour.date);
+      const index = this.rhAgendaGroups.findIndex((g) => g.iso === iso);
+      if (index >= 0) {
+        this.agendaPage = Math.floor(index / this.agendaPageSize) + 1;
+      }
+      setTimeout(
+        () =>
+          document
+            .getElementById(`jour-${iso}`)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+        0,
+      );
+    } else {
+      this.calendarComponent?.getApi()?.gotoDate(jour.date);
+    }
+  }
+
+  private toIso(d: Date): string {
+    const p = (v: number) => String(v).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+
+  private buildMiniCalendar(): void {
+    const ref = new Date(
+      this.currentDate.getFullYear(),
+      this.currentDate.getMonth(),
+      1,
     );
-  }
+    const firstWeekday = ref.getDay();
+    const gridStart = new Date(ref);
+    gridStart.setDate(gridStart.getDate() - firstWeekday);
 
-  private capitalize(s: string) {
-    return s.charAt(0).toUpperCase() + s.slice(1);
-  }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  buildMiniCalendar(): void {
-    const year = this.miniCalendarDate.getFullYear();
-    const month = this.miniCalendarDate.getMonth();
-    const firstOfMonth = new Date(year, month, 1);
-    const startDow = firstOfMonth.getDay();
-    const gridStart = new Date(year, month, 1 - startDow);
-    const todayIso = this.toLocalIso(new Date());
+    const eventDates = new Set(
+      this.rhFilteredInterviews
+        .map((i) => i.interviewDate)
+        .filter(Boolean) as string[],
+    );
+
     const weeks: MiniDay[][] = [];
+    const cursor = new Date(gridStart);
     for (let w = 0; w < 6; w++) {
       const week: MiniDay[] = [];
       for (let d = 0; d < 7; d++) {
-        const date = new Date(gridStart);
-        date.setDate(gridStart.getDate() + w * 7 + d);
-        const iso = this.toLocalIso(date);
+        const date = new Date(cursor);
         week.push({
           date,
-          iso,
           day: date.getDate(),
-          inMonth: date.getMonth() === month,
-          isToday: iso === todayIso,
-          isSelected: iso === this.selectedIso,
-          hasEvents: !!this.eventCountByDate[iso],
+          inMonth: date.getMonth() === this.currentDate.getMonth(),
+          isToday: date.getTime() === today.getTime(),
+          isSelected: this.toIso(date) === this.toIso(this.currentDate),
+          hasEvents: eventDates.has(this.toIso(date)),
         });
+        cursor.setDate(cursor.getDate() + 1);
       }
       weeks.push(week);
     }
     this.miniWeeks = weeks;
   }
 
-  prevMonth(): void {
-    this.miniCalendarDate = new Date(
-      this.miniCalendarDate.getFullYear(),
-      this.miniCalendarDate.getMonth() - 1,
-      1,
-    );
-    this.buildMiniCalendar();
-  }
+  // ==================== Vue Agenda ====================
 
-  nextMonth(): void {
-    this.miniCalendarDate = new Date(
-      this.miniCalendarDate.getFullYear(),
-      this.miniCalendarDate.getMonth() + 1,
-      1,
-    );
-    this.buildMiniCalendar();
-  }
+  get agendaGroups(): AgendaGroup[] {
+    const byDay = new Map<string, Interview[]>();
+    const sorted = [...this.filteredInterviews]
+      .filter((i) => !!i.interviewDate)
+      .sort((a, b) =>
+        `${a.interviewDate}${a.startTime}`.localeCompare(
+          `${b.interviewDate}${b.startTime}`,
+        ),
+      );
 
-  goToday(): void {
-    const now = new Date();
-    this.miniCalendarDate = now;
-    this.selectedIso = this.toLocalIso(now);
-    this.buildMiniCalendar();
-    this.calendarComponent?.getApi()?.today();
-    this.scrollToDate(this.selectedIso);
-  }
+    for (const i of sorted) {
+      const key = i.interviewDate!;
+      if (!byDay.has(key)) byDay.set(key, []);
+      byDay.get(key)!.push(i);
+    }
 
-  selectMiniDay(day: MiniDay): void {
-    this.selectedIso = day.iso;
-    if (!day.inMonth) this.miniCalendarDate = day.date;
-    this.buildMiniCalendar();
-    this.calendarComponent?.getApi()?.gotoDate(day.date);
-    this.scrollToDate(day.iso);
-  }
-
-  private scrollToDate(iso: string): void {
-    if (this.view !== 'agenda') return;
-    setTimeout(() => {
-      document
-        .getElementById('jour-' + iso)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const today = this.toIso(new Date());
+    return [...byDay.entries()].map(([iso, items]) => {
+      const d = new Date(iso + 'T00:00:00');
+      return {
+        iso,
+        dayNumber: d.getDate(),
+        weekday: d.toLocaleDateString('fr-FR', { weekday: 'long' }),
+        monthYear: d.toLocaleDateString('fr-FR', {
+          month: 'long',
+          year: 'numeric',
+        }),
+        isToday: iso === today,
+        items,
+      };
     });
   }
 
-  setView(v: 'agenda' | 'day' | 'week' | 'month'): void {
-    this.view = v;
-    if (v === 'agenda') return;
-    const map: Record<string, string> = {
-      day: 'timeGridDay',
-      week: 'timeGridWeek',
-      month: 'dayGridMonth',
-    };
-    setTimeout(() => this.calendarComponent?.getApi()?.changeView(map[v]));
+  get pagedAgendaGroups(): AgendaGroup[] {
+    const start = (this.agendaPage - 1) * this.agendaPageSize;
+    return this.rhAgendaGroups.slice(start, start + this.agendaPageSize);
   }
 
-  refreshCalendarEvents(): void {
+  get agendaTotalPages(): number {
+    return Math.max(
+      1,
+      Math.ceil(this.rhAgendaGroups.length / this.agendaPageSize),
+    );
+  }
+
+  goToAgendaPage(p: number): void {
+    this.agendaPage = Math.min(Math.max(1, p), this.agendaTotalPages);
+  }
+
+  prevAgendaPage(): void {
+    this.goToAgendaPage(this.agendaPage - 1);
+  }
+
+  nextAgendaPage(): void {
+    this.goToAgendaPage(this.agendaPage + 1);
+  }
+
+  // ==================== Helpers d'affichage — Vue Agenda ====================
+
+  statusIcon(status: string): string {
+    return this.statusIcons[status] || 'fa-circle';
+  }
+
+  modeIcon(mode?: string): string {
+    switch (mode) {
+      case 'DISTANCIEL':
+        return 'fa-laptop';
+      case 'TELEPHONIQUE':
+        return 'fa-phone';
+      case 'PRESENTIEL':
+        return 'fa-building';
+      default:
+        return 'fa-circle-question';
+    }
+  }
+
+  modeLabel(interview: Interview): string {
+    switch (interview.mode) {
+      case 'DISTANCIEL':
+        return 'En ligne';
+      case 'TELEPHONIQUE':
+        return 'Téléphonique';
+      case 'PRESENTIEL':
+        return interview.location || 'Présentiel';
+      default:
+        return interview.mode || '—';
+    }
+  }
+
+  timeRange(interview: Interview): string {
+    if (!interview.startTime) return '—';
+    if (!interview.endTime) return interview.startTime;
+    return `${interview.startTime} → ${interview.endTime}`;
+  }
+
+  voirDetailComplet(interview: Interview): void {
+    if (!interview.id) return;
+    this.router.navigate([
+      CalendrierRHComponent.ROUTE_DETAIL_COMPLET,
+      interview.id,
+    ]);
+  }
+
+  planifierSuite(i: Interview): void {
+    const ref = this.dialog.open(InterviewFormDialogComponent, {
+      width: '800px',
+      data: {
+        interview: null,
+        allInterviews: this.interviews,
+        prefill: {
+          candidateName: i.candidateName,
+          candidateEmail: i.candidateEmail,
+          posteRecrutement: i.posteRecrutement,
+        },
+      },
+    });
+    ref.afterClosed().subscribe((result) => {
+      if (result) this.refresh();
+    });
+  }
+
+  // ==================== FullCalendar : synchronisation des events ====================
+
+  private syncCalendarEvents(): void {
     this.calendarOptions = {
       ...this.calendarOptions,
-      events: this.visibleInterviews.map((i) => ({
-        id: String(i.id),
-        title: `${i.candidateName} — ${i.posteRecrutement}`,
-        start: `${i.interviewDate}T${i.startTime}`,
-        end: `${i.interviewDate}T${i.endTime}`,
-        backgroundColor: STATUS_COLORS[i.status],
-        borderColor: STATUS_COLORS[i.status],
-        extendedProps: { interview: i },
-      })),
+      events: this.visibleRhInterviews
+        .filter((i) => i.interviewDate && i.startTime)
+        .map((i) => ({
+          id: i.id,
+          title: `${i.candidateName} · ${this.typeLabels[i.type || 'LIBRE']}`,
+          start: `${i.interviewDate}T${i.startTime}`,
+          end: `${i.interviewDate}T${i.endTime}`,
+          backgroundColor: this.statusColors[i.status] || '#94a3b8',
+          borderColor: this.statusColors[i.status] || '#94a3b8',
+          extendedProps: { interview: i },
+        })),
     };
   }
 
-  computeStats(): void {
-    const counts: Record<string, number> = {};
-    this.statuses.forEach((s) => (counts[s] = 0));
-    this.interviews.forEach(
-      (i) => (counts[i.status] = (counts[i.status] || 0) + 1),
-    );
-    this.statusCounts = counts;
-    this.barChartData = {
-      labels: Object.keys(counts).map((s) => STATUS_LABELS[s] || s),
-      datasets: [
-        {
-          data: Object.values(counts),
-          backgroundColor: Object.keys(counts).map((s) => STATUS_COLORS[s]),
-        },
-      ],
-    };
+  private onEventClick(arg: EventClickArg): void {
+    const interview = arg.event.extendedProps['interview'] as Interview;
+    this.openDetail(interview);
   }
 
-  private computeEventCountByDate(): void {
-    const counts: Record<string, number> = {};
-    this.interviews.forEach((i) => {
-      counts[i.interviewDate] = (counts[i.interviewDate] || 0) + 1;
-    });
-    this.eventCountByDate = counts;
-  }
-
-  private isRamadan(iso: string): boolean {
-    return iso >= RAMADAN_2026.start && iso <= RAMADAN_2026.end;
-  }
-
-  private toLocalIso(date: Date): string {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
-  private getDayCellClasses(date: Date): string[] {
-    const classes: string[] = [];
-    const iso = this.toLocalIso(date);
-    const dow = date.getDay();
-    if (dow === 0 || dow === 6) classes.push('fc-day-weekend-tn');
-    const holiday = this.holidayMap.get(iso);
-    if (holiday)
-      classes.push(
-        holiday.type === 'national'
-          ? 'fc-day-holiday-national'
-          : 'fc-day-holiday-religious',
-      );
-    else if (this.isRamadan(iso)) classes.push('fc-day-ramadan');
-    return classes;
-  }
-
-  private onDayCellMount(arg: DayCellMountArg): void {
-    const iso = this.toLocalIso(arg.date);
-    const holiday = this.holidayMap.get(iso);
-    if (holiday) arg.el.setAttribute('title', holiday.label);
-    else if (this.isRamadan(iso)) arg.el.setAttribute('title', 'Ramadan');
-    const count = this.eventCountByDate[iso] || 0;
-    if (count > BUSY_DAY_THRESHOLD) {
-      const badge = document.createElement('div');
-      badge.className = 'fc-day-busy-badge';
-      badge.textContent = String(count);
-      badge.title = `${count} entretiens`;
-      const frame = arg.el.querySelector('.fc-daygrid-day-frame') || arg.el;
-      frame.appendChild(badge);
-    }
-  }
-
-  onDateSelect(arg: DateSelectArg): void {
-    if (this.pendingPlanification) {
-      const context = this.pendingPlanification;
-      this.pendingPlanification = null;
-      this.ouvrirPlanificationCandidature(context, arg.startStr);
+  /** ✅ Version unique de onDateClick — priorité : reprogrammation > candidature > création libre. */
+  private onDateClick(dateStr: string): void {
+    if (this.modeReprogrammation) {
+      this.ouvrirPropositionReprogrammation(dateStr);
       return;
     }
-    this.openDialog({ selectedDate: arg.startStr });
+    if (this.pendingCandidatureContext) {
+      this.openPlanifierCandidatureDialog(dateStr);
+      return;
+    }
+    this.openCreateDialog(dateStr);
   }
 
-  onEventClick(arg: EventClickArg): void {
-    const interview: Interview = arg.event.extendedProps['interview'];
-    this.editInterview(interview);
+  // ==================== Actions CRUD / dialogs ====================
+
+  openCreateDialog(selectedDate?: string): void {
+    if (this.pendingCandidatureContext) {
+      this.openPlanifierCandidatureDialog(selectedDate);
+      return;
+    }
+
+    const ref = this.dialog.open(InterviewFormDialogComponent, {
+      width: '800px',
+      data: { interview: null, allInterviews: this.interviews, selectedDate },
+    });
+    ref.afterClosed().subscribe((result) => {
+      if (result) this.refresh();
+    });
   }
 
-  openCreateDialog(): void {
-    this.openDialog({});
+  private openPlanifierCandidatureDialog(selectedDate?: string): void {
+    const context = this.pendingCandidatureContext;
+    if (!context) return;
+
+    const ref = this.dialog.open(PlanifierEntretienCandidatureDialogComponent, {
+      width: '560px',
+      data: { context, selectedDate },
+    });
+
+    ref
+      .afterClosed()
+      .subscribe((result: PlanifierEntretienDialogResult | undefined) => {
+        if (!result) return;
+
+        this.recrutementInterviewService
+          .planifier(context.applicationId, result.type, result.payload)
+          .subscribe({
+            next: () => {
+              this.snackBar.open('Entretien planifié avec succès', 'Fermer', {
+                duration: 3000,
+              });
+              this.pendingCandidatureContext = null;
+              this.refresh();
+            },
+            error: (err) =>
+              Swal.fire(
+                'Erreur',
+                err?.message ?? "Impossible de planifier l'entretien",
+                'error',
+              ),
+          });
+      });
   }
 
-  editInterview(interview: Interview): void {
-    this.openDialog({ interview });
+  editInterview(i: Interview): void {
+    const ref = this.dialog.open(InterviewFormDialogComponent, {
+      width: '800px',
+      data: { interview: i, allInterviews: this.interviews },
+    });
+    ref.afterClosed().subscribe((result) => {
+      if (result) this.refresh();
+    });
   }
 
-  deleteInterview(interview: Interview): void {
+  openDetail(i: Interview, forceMode?: 'reporter'): void {
+    const ref = this.dialog.open(InterviewDetailDialogComponent, {
+      width: '520px',
+      data: {
+        interview: i,
+        allInterviews: this.interviews,
+        openReporterDirect: forceMode === 'reporter',
+      },
+    });
+    ref.afterClosed().subscribe((result) => {
+      if (result) this.refresh();
+    });
+  }
+
+  annulerRapide(i: Interview): void {
     Swal.fire({
-      title: 'Supprimer cet entretien ?',
-      text: `${interview.candidateName} — ${interview.posteRecrutement}`,
+      title: "Annuler l'entretien ?",
+      input: 'text',
+      inputLabel: 'Motif (optionnel)',
+      showCancelButton: true,
+      confirmButtonText: "Annuler l'entretien",
+      cancelButtonText: 'Retour',
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+      this.interviewService
+        .annulerEntretien(i.id!, res.value || undefined)
+        .subscribe({
+          next: () => {
+            this.snackBar.open('Entretien annulé', 'Fermer', {
+              duration: 3000,
+            });
+            this.refresh();
+          },
+          error: (err) => Swal.fire('Erreur', err.message, 'error'),
+        });
+    });
+  }
+
+  deleteInterview(i: Interview): void {
+    if (!this.interviewService.canDelete(i)) return;
+    Swal.fire({
+      title: 'Supprimer définitivement ?',
+      text: 'Cette action ne peut pas être annulée.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Supprimer',
-      cancelButtonText: 'Annuler',
       confirmButtonColor: '#ef4444',
     }).then((res) => {
-      if (res.isConfirmed && interview.id) {
-        this.interviewService.delete(interview.id).subscribe({
-          next: () => {
-            Swal.fire({
-              icon: 'success',
-              title: 'Supprimé',
-              timer: 1200,
-              showConfirmButton: false,
-            });
-            this.loadInterviews();
-          },
-          error: () => Swal.fire('Erreur', 'La suppression a échoué.', 'error'),
-        });
-      }
-    });
-  }
-  private openDialog(data: InterviewDialogData): void {
-    const ref = this.dialog.open(InterviewFormDialogComponent, {
-      width: '720px',
-      maxWidth: '95vw',
-      autoFocus: false,
-      data,
-    });
-    ref.afterClosed().subscribe((result) => {
-      if (result) this.loadInterviews();
+      if (!res.isConfirmed) return;
+      this.interviewService.delete(i.id!).subscribe({
+        next: () => {
+          this.snackBar.open('Entretien supprimé', 'Fermer', {
+            duration: 3000,
+          });
+          this.refresh();
+        },
+        error: (err) => Swal.fire('Erreur', err.message, 'error'),
+      });
     });
   }
 }

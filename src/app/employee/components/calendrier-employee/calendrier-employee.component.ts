@@ -88,7 +88,12 @@ export class CalendrierEmployeeComponent implements OnInit {
   selectedStatuses = new Set<string>(this.statuses);
   private searchSubject = new Subject<string>();
   private holidayMap = new Map<string, HolidayInfo>();
+
+  // Compte total (pour stats globales et badges FullCalendar)
   eventCountByDate: Record<string, number> = {};
+
+  // 🎯 Compte spécifique TECHNIQUE (pour mini-calendar sidebar)
+  private techEventCountByDate: Record<string, number> = {};
 
   // Contexte reçu depuis "consulter la liste des candidatures en entretien technique"
   pendingPlanification: PlanificationCandidatureContext | null = null;
@@ -190,6 +195,49 @@ export class CalendrierEmployeeComponent implements OnInit {
     }
   }
 
+  // ==================== MÉTHODES DE FILTRAGE EMPLOYEE (TECHNIQUE) ====================
+
+  /** Vérifie si un entretien est de type Technique ou Libre (non-RH) */
+  private isTechOrLibre(interview: Interview): boolean {
+    return !interview.type || interview.type === 'TECHNIQUE';
+  }
+
+  /** Calcule le nombre d'entretiens techniques par date pour le mini-calendar */
+  private computeTechEventCountByDate(): void {
+    const counts: Record<string, number> = {};
+    this.interviews.forEach((i) => {
+      if (this.isTechOrLibre(i)) {
+        counts[i.interviewDate] = (counts[i.interviewDate] || 0) + 1;
+      }
+    });
+    this.techEventCountByDate = counts;
+  }
+
+  /** Liste filtrée pour le tableau Employee : uniquement Techniques + Libres */
+  get employeeTableInterviews(): Interview[] {
+    return this.filteredInterviews.filter((i) => this.isTechOrLibre(i));
+  }
+
+  /** Liste filtrée pour le FullCalendar principal : uniquement Techniques + Libres */
+  get visibleTechInterviews(): Interview[] {
+    return this.visibleInterviews.filter((i) => this.isTechOrLibre(i));
+  }
+
+  /**
+   * Groupes Agenda filtrés : uniquement les jours contenant des techniques.
+   * Supprime les jours vides ou ne contenant que des RH.
+   */
+  get techAgendaGroups(): AgendaGroup[] {
+    return this.agendaGroups
+      .map((groupe) => ({
+        ...groupe,
+        items: groupe.items.filter((i) => this.isTechOrLibre(i)),
+      }))
+      .filter((groupe) => groupe.items.length > 0);
+  }
+
+  // ==================== FIN FILTRAGE TECHNIQUE ====================
+
   private ouvrirPlanificationCandidature(
     context: PlanificationCandidatureContext,
     selectedDate?: string,
@@ -246,14 +294,17 @@ export class CalendrierEmployeeComponent implements OnInit {
           ...(recrutement ?? []),
         ];
 
-        // Suppression des doublons
         this.interviews = this.deduplicateInterviews(toutesLesInterviews);
 
         this.applyFilters();
-        this.computeEventCountByDate();
-        this.refreshCalendarEvents();
+
+        // Calculs séparés
+        this.computeEventCountByDate(); // Pour stats globales & badges "busy"
+        this.computeTechEventCountByDate(); // 🎯 Pour mini-calendar points violets
+
+        this.refreshCalendarEvents(); // Utilise visibleTechInterviews
         this.computeStats();
-        this.buildMiniCalendar();
+        this.buildMiniCalendar(); // Utilise techEventCountByDate
 
         this.loading = false;
       },
@@ -404,6 +455,7 @@ export class CalendrierEmployeeComponent implements OnInit {
     const gridStart = new Date(year, month, 1 - startDow);
     const todayIso = this.toLocalIso(new Date());
     const weeks: MiniDay[][] = [];
+
     for (let w = 0; w < 6; w++) {
       const week: MiniDay[] = [];
       for (let d = 0; d < 7; d++) {
@@ -417,7 +469,8 @@ export class CalendrierEmployeeComponent implements OnInit {
           inMonth: date.getMonth() === month,
           isToday: iso === todayIso,
           isSelected: iso === this.selectedIso,
-          hasEvents: !!this.eventCountByDate[iso],
+          // 🎯 Utilise le compteur TECHNIQUE pour les points violets
+          hasEvents: !!this.techEventCountByDate[iso],
         });
       }
       weeks.push(week);
@@ -483,7 +536,8 @@ export class CalendrierEmployeeComponent implements OnInit {
   refreshCalendarEvents(): void {
     this.calendarOptions = {
       ...this.calendarOptions,
-      events: this.visibleInterviews.map((i) => ({
+      // 🎯 Affiche uniquement les techniques/libres dans le calendrier principal
+      events: this.visibleTechInterviews.map((i) => ({
         id: String(i.id),
         title: `${i.candidateName} — ${i.posteRecrutement}`,
         start: `${i.interviewDate}T${i.startTime}`,
@@ -553,6 +607,8 @@ export class CalendrierEmployeeComponent implements OnInit {
     const holiday = this.holidayMap.get(iso);
     if (holiday) arg.el.setAttribute('title', holiday.label);
     else if (this.isRamadan(iso)) arg.el.setAttribute('title', 'Ramadan');
+
+    // Badge "journée chargée" basé sur le compteur total (pas seulement tech)
     const count = this.eventCountByDate[iso] || 0;
     if (count > BUSY_DAY_THRESHOLD) {
       const badge = document.createElement('div');

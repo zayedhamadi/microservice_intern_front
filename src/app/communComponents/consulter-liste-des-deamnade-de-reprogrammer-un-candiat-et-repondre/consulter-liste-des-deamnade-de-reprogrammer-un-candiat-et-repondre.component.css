@@ -1,0 +1,271 @@
+.conteneur {
+    padding: 24px;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.entete {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.entete h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #1f2937;
+}
+
+.alerte {
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+
+.alerte-erreur {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.alerte-succes {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.barre-outils {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.champ-recherche {
+    flex: 1;
+    min-width: 240px;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+}
+
+.select-filtre {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.chargement,
+.vide {
+    text-align: center;
+    padding: 40px;
+    color: #6b7280;
+}
+
+.tableau-wrapper {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.tableau {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.tableau thead {
+    background: #f3f4f6;
+}
+
+.tableau th,
+.tableau td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.cellule-motif {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cellule-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.badge-attente {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-acceptee {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-refusee {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.deja-traite {
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+.btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: opacity 0.15s;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-succes {
+    background: #16a34a;
+    color: #fff;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: #fff;
+}
+
+.btn-info {
+    background: #2563eb;
+    color: #fff;
+}
+
+.btn-secondaire {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.btn-page {
+    background: #fff;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    min-width: 32px;
+}
+
+.btn-page.actif {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pagination-boutons {
+    display: flex;
+    gap: 4px;
+}
+
+.pagination-info {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+/* ==================== MODALES ==================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px;
+    width: 90%;
+    max-width: 460px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal h3 {
+    margin-top: 0;
+}
+
+.modal-sous-titre {
+    color: #6b7280;
+    margin-bottom: 16px;
+}
+
+.modal label {
+    display: block;
+    margin: 12px 0 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #374151;
+}
+
+.modal input,
+.modal textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}.btn-lien {
+    background: transparent;
+    color: #dc2626;
+    text-decoration: underline;
+    padding: 6px 4px;
+}
+
+.info-ligne {
+    margin-bottom: 14px;
+}
+
+.info-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.info-ligne p {
+    margin: 0;
+    color: #1f2937;
+}

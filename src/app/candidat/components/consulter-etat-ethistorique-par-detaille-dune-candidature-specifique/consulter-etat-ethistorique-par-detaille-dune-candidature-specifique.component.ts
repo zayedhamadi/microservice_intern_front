@@ -18,6 +18,8 @@ import {
 import { ApplyService } from '../../../core/service/apply.service';
 import { InterviewService } from '../../../core/service/interview.service';
 import { PosteRecutementService } from '../../../core/service/poste-recutement.service';
+import { ReprogrammerService } from '../../../core/service/reporte-entretient.service';
+import { DemandeReportStatus, Reprogrammer } from '../../../core/models/Reprogramme';
 
 @Component({
   selector:
@@ -39,8 +41,9 @@ export class ConsulterEtatEthistoriqueParDetailleDuneCandidatureSpecifiqueCompon
   errorMessage: string | null = null;
 
   readonly ApplicationStatus = ApplicationStatus;
-
+  demandesParEntretien: { [interviewId: string]: Reprogrammer[] } = {};
   constructor(
+    private reprogrammerService: ReprogrammerService,
     private route: ActivatedRoute,
     private router: Router,
     private applyService: ApplyService,
@@ -88,21 +91,6 @@ export class ConsulterEtatEthistoriqueParDetailleDuneCandidatureSpecifiqueCompon
         this.isLoading = false;
       },
     });
-  }
-
-  private loadEntretiens(applicationId: string): void {
-    this.interviewService
-      .getEntretiensPourCandidature(applicationId)
-      .pipe(finalize(() => (this.isLoading = false)))
-      .subscribe({
-        next: (entretiens) => {
-          this.entretiens = [...entretiens].sort(
-            (a, b) => this.toDate(a).getTime() - this.toDate(b).getTime(),
-          );
-        },
-        error: (err) => console.error('Erreur chargement entretiens', err),
-        // on n'affiche pas d'erreur bloquante : la candidature reste visible sans entretiens
-      });
   }
 
   private toDate(interview: Interview): Date {
@@ -206,5 +194,68 @@ export class ConsulterEtatEthistoriqueParDetailleDuneCandidatureSpecifiqueCompon
       default:
         return 'fa-circle-question';
     }
+  }
+
+  private loadEntretiens(applicationId: string): void {
+    this.interviewService
+      .getEntretiensPourCandidature(applicationId)
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (entretiens) => {
+          this.entretiens = [...entretiens].sort(
+            (a, b) => this.toDate(a).getTime() - this.toDate(b).getTime(),
+          );
+          this.entretiens.forEach((e) => e.id && this.loadDemandes(e.id));
+        },
+        error: (err) => console.error('Erreur chargement entretiens', err),
+      });
+  }
+
+  private loadDemandes(interviewId: string): void {
+    this.reprogrammerService.getPourEntretien(interviewId).subscribe({
+      next: (demandes) => (this.demandesParEntretien[interviewId] = demandes),
+      error: () => (this.demandesParEntretien[interviewId] = []),
+    });
+  }
+
+  isActif(interview: Interview): boolean {
+    return (
+      interview.status === InterviewStatus.PLANIFIE ||
+      interview.status === InterviewStatus.REPORTE
+    );
+  }
+
+  canReprogrammer(interview: Interview): boolean {
+    if (!interview.id || !this.isActif(interview)) return false;
+    const demandes = this.demandesParEntretien[interview.id] ?? [];
+    return !demandes.some(
+      (d: Reprogrammer) => d.statut === DemandeReportStatus.EN_ATTENTE,
+    );
+  }
+
+  demandeEnAttentePour(interview: Interview): Reprogrammer | null {
+    const demandes = interview.id
+      ? (this.demandesParEntretien[interview.id] ?? [])
+      : [];
+    return (
+      demandes.find(
+        (d: Reprogrammer) => d.statut === DemandeReportStatus.EN_ATTENTE,
+      ) ?? null
+    );
+  }
+
+  reprogrammer(interview: Interview): void {
+    if (!interview.id) return;
+    this.router.navigate(['reprogrammer', interview.id], {
+      relativeTo: this.route,
+      queryParams: {
+        poste: this.poste?.titre ?? '',
+        intervenant: interview.interviewerName ?? '',
+        ancienneDate:
+          interview.interviewDate && interview.startTime
+            ? `${interview.interviewDate}T${interview.startTime}:00`
+            : '',
+      },
+    });
   }
 }

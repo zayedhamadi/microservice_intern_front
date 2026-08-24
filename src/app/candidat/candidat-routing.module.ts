@@ -23,6 +23,7 @@ import { PostuleraCandidatSpecificComponent } from './components/postulera-candi
 
 import { EditMyCondidateForSpeceficPostComponent } from './components/edit-my-condidate-for-specefic-post/edit-my-condidate-for-specefic-post.component';
 import { ConsulterEtatEthistoriqueParDetailleDuneCandidatureSpecifiqueComponent } from './components/consulter-etat-ethistorique-par-detaille-dune-candidature-specifique/consulter-etat-ethistorique-par-detaille-dune-candidature-specifique.component';
+import { ReprogrammerEntretienComponent } from './components/reprogrammer-entretien/reprogrammer-entretien.component';
 
 const routes: Routes = [
   {
@@ -49,7 +50,12 @@ const routes: Routes = [
         component: DashboardCandidatComponent,
         canActivate: [profileCompleteGuard],
       },
-
+      {
+        path: 'consulterEtatEthistoriqueParDetailleDuneCandidatureSpecifique/:id/reprogrammer/:interviewId',
+        component: ReprogrammerEntretienComponent,
+        canActivate: [profileCompleteGuard],
+        data: { roles: ['CANDIDAT'] },
+      },
       {
         path: 'consulterEtatEthistoriqueParDetailleDuneCandidatureSpecifique/:id',
         component:

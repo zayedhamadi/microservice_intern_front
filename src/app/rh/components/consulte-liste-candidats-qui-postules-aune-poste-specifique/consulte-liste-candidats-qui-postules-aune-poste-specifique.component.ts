@@ -30,28 +30,17 @@ interface StatutOption {
   label: string;
 }
 
-/**
- * Statuts dont le passage NE DOIT JAMAIS se faire par le PATCH générique de
- * statut : ils sont réservés au workflow d'entretien (planification + résultat).
- * Le backend (ApplyService.STATUTS_RESERVES_AU_WORKFLOW_ENTRETIEN) rejette
- * de toute façon toute tentative de PATCH direct sur ces valeurs.
- */
 const STATUTS_RESERVES_WORKFLOW_ENTRETIEN: ApplicationStatus[] = [
   ApplicationStatus.EN_ENTRETIEN_RH,
   ApplicationStatus.EN_ENTRETIEN_TECHNIQUE,
   ApplicationStatus.EN_ENTRETIEN_FINAL,
 ];
 
-/**
- * Statut ACTUEL de la candidature -> type d'entretien concerné à cette étape.
- * EN_ENTRETIEN_RH est bien couvert : à ce stade l'entretien RH initial est
- * soit déjà planifié (résultat à enregistrer), soit reste à planifier —
- * gererEtapeEntretien() décide dynamiquement lequel des deux cas s'applique.
- */
 function typeEntretienPourStatutCourant(
   statut: ApplicationStatus,
 ): RecrutementInterviewType | undefined {
   switch (statut) {
+    case ApplicationStatus.SELECTIONNE:
     case ApplicationStatus.EN_ENTRETIEN_RH:
       return 'rh-initial';
     case ApplicationStatus.EN_ENTRETIEN_TECHNIQUE:
@@ -63,7 +52,6 @@ function typeEntretienPourStatutCourant(
   }
 }
 
-/** Type d'entretien côté UI -> valeur d'enum InterviewType côté backend/DTO */
 function typeBackendPourTypeUi(typeUi: RecrutementInterviewType): string {
   switch (typeUi) {
     case 'rh-initial':
@@ -96,26 +84,22 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
   posteId = '';
   poste: PosteRecrutment | null = null;
 
-  // --- données ---
   candidatures: ApplicationDto[] = [];
   candidaturesAffichees: ApplicationDto[] = [];
+  candidaturesFiltrees: ApplicationDto[] = [];
 
-  // --- état UI ---
   isLoading = false;
   isLoadingPoste = false;
   errorMessage = '';
   candidatureEnCoursDeMaj: string | null = null;
 
-  // --- filtres / recherche ---
   searchTerm = '';
   statutSelectionne = '';
   scoreMinimum = 0;
 
-  // --- tri ---
   sortBy: SortField = 'score';
   sortDir: SortDir = 'desc';
 
-  // --- pagination ---
   pageActuelle = 1;
   elementsParPage = 6;
 
@@ -140,7 +124,7 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
         this.appliquerFiltresEtTri();
         this.isLoading = false;
       },
-      error: (error: any) => {
+      error: (error: unknown) => {
         console.log('Erreur lors du chargement des candidatures :', error);
         this.errorMessage =
           'Impossible de charger les candidatures pour ce poste. Réessayez.';
@@ -172,10 +156,6 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     this.destroy$.complete();
   }
 
-  // ============================================================
-  // Chargement
-  // ============================================================
-
   chargerPoste(): void {
     this.isLoadingPoste = true;
     this.posteService.getPosteById(this.posteId).subscribe({
@@ -188,10 +168,6 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
       },
     });
   }
-
-  // ============================================================
-  // Filtres / tri
-  // ============================================================
 
   onSearchInput(value: string): void {
     this.searchTerm = value;
@@ -267,12 +243,6 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     this.appliquerPagination();
   }
 
-  candidaturesFiltrees: ApplicationDto[] = [];
-
-  // ============================================================
-  // Statistiques (bandeau du haut)
-  // ============================================================
-
   get totalCandidatures(): number {
     return this.candidatures.length;
   }
@@ -300,10 +270,6 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
       this.scoreMinimum > 0 ? 'oui' : '',
     ].filter((v) => !!v).length;
   }
-
-  // ============================================================
-  // Pagination
-  // ============================================================
 
   appliquerPagination(): void {
     const debut = (this.pageActuelle - 1) * this.elementsParPage;
@@ -336,16 +302,6 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     return pages;
   }
 
-  // ============================================================
-  // Actions sur une candidature
-  // ============================================================
-
-  /**
-   * Options affichées dans le <select> "Changer le statut...". On retire les
-   * statuts réservés au workflow entretien : ils sont gérés exclusivement par
-   * le bouton dédié "Gérer l'entretien" (gererEtapeEntretien), jamais par un
-   * PATCH direct de statut (le backend le refuserait de toute façon).
-   */
   prochainStatutsPossibles(candidature: ApplicationDto): StatutOption[] {
     if (!candidature.statut) return [];
     const suivants = (TRANSITIONS_POSSIBLES[candidature.statut] ?? []).filter(
@@ -354,12 +310,29 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     return suivants.map((v) => ({ valeur: v, label: LABELS_STATUT[v] }));
   }
 
-  /** Un candidat est-il actuellement dans une étape d'entretien (RH/technique/final) ? */
+  peutPlanifierEntretien(candidature: ApplicationDto): boolean {
+    return candidature.statut === ApplicationStatus.SELECTIONNE;
+  }
+
   estEnEtapeEntretien(candidature: ApplicationDto): boolean {
     return (
       !!candidature.statut &&
-      !!typeEntretienPourStatutCourant(candidature.statut)
+      STATUTS_RESERVES_WORKFLOW_ENTRETIEN.includes(candidature.statut)
     );
+  }
+
+  afficherBoutonEntretien(candidature: ApplicationDto): boolean {
+    return (
+      this.peutPlanifierEntretien(candidature) ||
+      this.estEnEtapeEntretien(candidature)
+    );
+  }
+
+  labelBoutonEntretien(candidature: ApplicationDto): string {
+    if (this.peutPlanifierEntretien(candidature)) {
+      return "Planifier l'entretien RH";
+    }
+    return "Gérer l'entretien";
   }
 
   private async selectionnerEtPlanifier(
@@ -368,14 +341,17 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     const confirmation = await Swal.fire({
       icon: 'question',
       title: 'Sélectionner ce candidat ?',
-      text: `${candidature.nomComplet} sera sélectionné(e) et vous pourrez ensuite planifier son entretien RH.`,
+      text: `${candidature.nomComplet} passera au statut « Sélectionné ». Vous pourrez planifier l'entretien RH maintenant ou plus tard.`,
+      showDenyButton: true,
       showCancelButton: true,
       confirmButtonText: 'Sélectionner et planifier',
+      denyButtonText: 'Sélectionner seulement',
       cancelButtonText: 'Annuler',
       confirmButtonColor: '#7c3aed',
+      denyButtonColor: '#6b7280',
     });
 
-    if (!confirmation.isConfirmed) return;
+    if (confirmation.isDismissed) return;
 
     const candidatureMaj = await this.mettreAJourStatut(
       candidature,
@@ -384,7 +360,18 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
 
     if (!candidatureMaj) return;
 
-    this.ouvrirCalendrierPourPlanification(candidatureMaj, 'rh-initial');
+    if (confirmation.isConfirmed) {
+      this.ouvrirCalendrierPourPlanification(candidatureMaj, 'rh-initial');
+      return;
+    }
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Candidat sélectionné',
+      text: "Utilisez le bouton « Planifier l'entretien RH » quand vous serez prêt.",
+      timer: 2200,
+      showConfirmButton: false,
+    });
   }
 
   private async rejeterCandidature(candidature: ApplicationDto): Promise<void> {
@@ -490,23 +477,25 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     });
   }
 
-  /**
-   * Point d'entrée pour EN_ENTRETIEN_RH / EN_ENTRETIEN_TECHNIQUE / EN_ENTRETIEN_FINAL.
-   * On regarde s'il existe déjà un entretien PLANIFIE/REPORTE pour ce type sur
-   * cette candidature :
-   *  - oui  -> on demande le résultat (Réussi/Échoué), ce qui fait avancer
-   *            automatiquement le statut côté backend (enregistrerResultat).
-   *  - non  -> on ouvre le calendrier pour planifier cet entretien (avec date).
-   */
   async gererEtapeEntretien(candidature: ApplicationDto): Promise<void> {
     if (!candidature.idApplication || !candidature.statut) return;
+
+    if (candidature.statut === ApplicationStatus.SELECTIONNE) {
+      this.ouvrirCalendrierPourPlanification(candidature, 'rh-initial');
+      return;
+    }
 
     const typeUi = typeEntretienPourStatutCourant(candidature.statut);
     if (!typeUi) return;
 
     const typeBackend = typeBackendPourTypeUi(typeUi);
 
-    let entretiens;
+    let entretiens: Array<{
+      id?: string;
+      type?: string;
+      status?: string;
+      interviewDate?: string;
+    }>;
     try {
       entretiens = await firstValueFrom(
         this.interviewService.getEntretiensPourCandidature(
@@ -524,11 +513,11 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
 
     const entretienEnAttente = entretiens
       .filter(
-        (e: any) =>
+        (e) =>
           e.type === typeBackend &&
           (e.status === 'PLANIFIE' || e.status === 'REPORTE'),
       )
-      .sort((a: any, b: any) =>
+      .sort((a, b) =>
         (b.interviewDate ?? '').localeCompare(a.interviewDate ?? ''),
       )[0];
 
@@ -605,15 +594,6 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     }
   }
 
-  /**
-   * - REJETE : commentaire obligatoire, passage direct via PATCH (le back
-   *   envoie l'email de refus).
-   * - SELECTIONNE : ouvre la confirmation puis redirige vers la planification
-   *   de l'entretien RH initial.
-   * - Statuts réservés au workflow entretien (EN_ENTRETIEN_RH/TECHNIQUE/FINAL) :
-   *   ne passent JAMAIS par le PATCH générique -> délégué à gererEtapeEntretien.
-   * - Reste (ex: RETIRE...) : PATCH simple avec commentaire optionnel.
-   */
   async changerStatut(
     candidature: ApplicationDto,
     nouveauStatut: ApplicationStatus,
@@ -722,10 +702,6 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     this.router.navigate(['/rh/ConsulteLesPosteQuiLesCandidatsPostulent']);
   }
 
-  // ============================================================
-  // Export CSV
-  // ============================================================
-
   exporterCsv(): void {
     const entetes = [
       'Nom',
@@ -761,10 +737,6 @@ export class ConsulteListeCandidatsQuiPostulesAUnePosteSpecifiqueComponent
     lien.click();
     window.URL.revokeObjectURL(url);
   }
-
-  // ============================================================
-  // Helpers d'affichage
-  // ============================================================
 
   labelStatut(statut?: ApplicationStatus): string {
     return statut ? LABELS_STATUT[statut] : 'Inconnu';
