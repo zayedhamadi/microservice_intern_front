@@ -9,22 +9,23 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subject, Subscription, takeUntil } from 'rxjs';
+
 import { HIDDEN_NAVBAR_ROUTES } from '../../core/constant/layout-routes';
+import { ROLE_ROUTES, CALENDAR_ROUTES } from '../../core/constant/role-route';
+
 import { AuthService } from '../../core/service/auth.service';
 import { UserConnected } from '../../core/models/userConnected';
 import {
   eventColor,
   eventIcon,
   WebSocketService,
+  WsRole,
 } from '../../core/service/web-socket.service';
 import {
   NotificationItem,
   AdminRealtimeEvent,
   buildNotificationText,
 } from '../../core/models/websocket';
-import { ROLE_ROUTES } from '../../core/constant/role-route';
-
-import { WsRole } from '../../core/service/web-socket.service';
 
 @Component({
   selector: 'app-navbar',
@@ -41,11 +42,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
   hideNavbar = false;
 
   readonly profileRoute = '/getMyprofile';
-
-  getHomeRoute(): string {
-    const role = this.user?.role;
-    return role && ROLE_ROUTES[role] ? ROLE_ROUTES[role] : '/home';
-  }
 
   notifications: NotificationItem[] = [];
   private readonly MAX_NOTIFICATIONS = 30;
@@ -70,8 +66,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.updateVisibility(this.router.url);
 
     this.routerSub = this.router.events
-      .pipe(filter((e) => e instanceof NavigationEnd))
-      .subscribe((e: any) => {
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((e: NavigationEnd) => {
         const url = e.urlAfterRedirects ?? e.url;
         this.activeRoute = url;
         this.updateVisibility(url);
@@ -100,9 +96,62 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // =========================================================
+  // GESTION DU RÔLE ET DES ROUTES
+  // =========================================================
+
+  getHomeRoute(): string {
+    const role = this.user?.role;
+    return role && role in ROLE_ROUTES
+      ? ROLE_ROUTES[role as keyof typeof ROLE_ROUTES]
+      : '/home';
+  }
+
+  getCalendarRoute(): string {
+    const role = this.user?.role;
+    return role && role in CALENDAR_ROUTES
+      ? CALENDAR_ROUTES[role as keyof typeof CALENDAR_ROUTES]
+      : '/getMyprofile';
+  }
+
+  getUserRoleLabel(): string {
+    switch (this.user?.role) {
+      case 'RH':
+        return 'Ressources Humaines';
+      case 'EMPLOYEE':
+        return 'Manager / Collaborateur';
+      case 'CANDIDAT':
+        return 'Candidat';
+      case 'ADMIN':
+        return 'Administrateur';
+      default:
+        return this.user?.role ?? 'Utilisateur';
+    }
+  }
+
+  getUserInitials(): string {
+    const firstName = this.user?.prenom?.charAt(0) ?? '';
+    const lastName = this.user?.nom?.charAt(0) ?? '';
+    const initials = `${firstName}${lastName}`.trim();
+    return initials ? initials.toUpperCase() : 'U';
+  }
+
+  getAvatarSrc(): string | null {
+    if (!this.user?.image) return null;
+    if (this.user.image.startsWith('data:')) {
+      return this.user.image;
+    }
+    return `data:image/jpeg;base64,${this.user.image}`;
+  }
+
+  // =========================================================
+  // WEBSOCKET & NOTIFICATIONS
+  // =========================================================
+
   private connectRealtime(): void {
     const token = this.authService.getToken() ?? undefined;
     const role = this.user?.role as WsRole | undefined;
+
     this.wsService.connect(token, role);
     if (this.realtimeInitialized) return;
     this.realtimeInitialized = true;
@@ -197,6 +246,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.hideNavbar = HIDDEN_NAVBAR_ROUTES.some((r) => url.startsWith(r));
   }
 
+  // =========================================================
+  // AUTHENTIFICATION & UTILISATEUR
+  // =========================================================
+
   syncAuth(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
 
@@ -213,19 +266,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.authService.getMyProfile().subscribe({
       next: (profile: any) => {
         if (this.user) {
-          this.user = { ...this.user, image: profile.imageBase64 || undefined };
+          this.user = {
+            ...this.user,
+            image: profile.imageBase64 || undefined,
+          };
         }
       },
       error: () => {},
     });
-  }
-
-  getAvatarSrc(): string | null {
-    if (!this.user?.image) return null;
-    if (this.user.image.startsWith('data:')) {
-      return this.user.image;
-    }
-    return `data:image/jpeg;base64,${this.user.image}`;
   }
 
   toggleDropdown(): void {
@@ -257,9 +305,5 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.showDropdown = false;
     this.showNotifDropdown = false;
     this.wsService.disconnect();
-  }
-
-  isActive(route: string): boolean {
-    return this.activeRoute.startsWith(route);
   }
 }

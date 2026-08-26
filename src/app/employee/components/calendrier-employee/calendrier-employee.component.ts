@@ -218,15 +218,10 @@ export class CalendrierEmployeeComponent implements OnInit {
     return this.filteredInterviews.filter((i) => this.isTechOrLibre(i));
   }
 
-  /** Liste filtrée pour le FullCalendar principal : uniquement Techniques + Libres */
   get visibleTechInterviews(): Interview[] {
     return this.visibleInterviews.filter((i) => this.isTechOrLibre(i));
   }
 
-  /**
-   * Groupes Agenda filtrés : uniquement les jours contenant des techniques.
-   * Supprime les jours vides ou ne contenant que des RH.
-   */
   get techAgendaGroups(): AgendaGroup[] {
     return this.agendaGroups
       .map((groupe) => ({
@@ -235,8 +230,6 @@ export class CalendrierEmployeeComponent implements OnInit {
       }))
       .filter((groupe) => groupe.items.length > 0);
   }
-
-  // ==================== FIN FILTRAGE TECHNIQUE ====================
 
   private ouvrirPlanificationCandidature(
     context: PlanificationCandidatureContext,
@@ -249,7 +242,11 @@ export class CalendrierEmployeeComponent implements OnInit {
         maxWidth: '95vw',
         autoFocus: false,
         disableClose: true,
-        data: { context, selectedDate },
+        data: {
+          context,
+          selectedDate,
+          allInterviews: this.interviews, // ✅ Transmis ici pour le contrôle de conflit
+        },
       },
     );
     ref
@@ -279,6 +276,21 @@ export class CalendrierEmployeeComponent implements OnInit {
             },
           });
       });
+  }
+
+  private openDialog(data: InterviewDialogData): void {
+    const ref = this.dialog.open(InterviewEmployeeFormDialogComponent, {
+      width: '720px',
+      maxWidth: '95vw',
+      autoFocus: false,
+      data: {
+        ...data,
+        allInterviews: this.interviews, 
+      },
+    });
+    ref.afterClosed().subscribe((result) => {
+      if (result) this.loadInterviews();
+    });
   }
 
   loadInterviews(): void {
@@ -667,18 +679,6 @@ export class CalendrierEmployeeComponent implements OnInit {
           error: () => Swal.fire('Erreur', 'La suppression a échoué.', 'error'),
         });
       }
-    });
-  }
-
-  private openDialog(data: InterviewDialogData): void {
-    const ref = this.dialog.open(InterviewEmployeeFormDialogComponent, {
-      width: '720px',
-      maxWidth: '95vw',
-      autoFocus: false,
-      data,
-    });
-    ref.afterClosed().subscribe((result) => {
-      if (result) this.loadInterviews();
     });
   }
 }

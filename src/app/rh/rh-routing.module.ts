@@ -34,6 +34,7 @@ const routes: Routes = [
           ConsulterUneProgrammeSpecifiqueDecalendrierDunVueTableComponent,
         canActivate: [profileCompleteGuard],
       },
+     
       {
         path: 'demandes-reprogrammation',
         component:
@@ -69,7 +70,7 @@ const routes: Routes = [
         path: 'consulterprofilUser/:id',
         component: ConsulterProfilUserDetailsPerRHComponent,
         canActivate: [profileCompleteGuard],
-      },
+      },  
 
       {
         path: 'NewPosteRecrutement',

@@ -1,3 +1,5 @@
+import { HttpParams } from '@angular/common/http';
+import { PageResponse } from '../models/PageResponse';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
@@ -10,6 +12,43 @@ export class CertificationService {
   private readonly CERTIF_URL = `${environment.apiUrl}/certifications`;
 
   constructor(private http: HttpClient) {}
+  getCertificationsPaged(
+    keycloakId: string,
+    page = 0,
+    size = 6,
+    sortBy = 'dateCertif',
+    sortDir: 'asc' | 'desc' = 'desc',
+    titre?: string,
+  ): Observable<PageResponse<CertificationDTO>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('size', size)
+      .set('sortBy', sortBy)
+      .set('sortDir', sortDir);
+    if (titre) params = params.set('titre', titre);
+
+    return this.http.get<PageResponse<CertificationDTO>>(
+      `${this.CERTIF_URL}/admin/user/${keycloakId}/certifications/page`,
+      { params },
+    );
+  }
+  getCertificationssByUserId(
+    keycloakId: string,
+  ): Observable<CertificationDTO[]> {
+    return this.http
+      .get<
+        CertificationDTO[]
+      >(`${this.CERTIF_URL}/admin/user/${keycloakId}/certifications`)
+      .pipe(catchError(() => of([])));
+  }
+
+  getCertificationsssByUserId(userId: number): Observable<CertificationDTO[]> {
+    return this.http
+      .get<
+        CertificationDTO[]
+      >(`${this.CERTIF_URL}/admin/user-by-id/${userId}/certifications`)
+      .pipe(catchError(() => of([])));
+  }
 
   getMyCertifications(): Observable<CertificationDTO[]> {
     return this.http.get<CertificationDTO[]>(`${this.CERTIF_URL}/getMine`);

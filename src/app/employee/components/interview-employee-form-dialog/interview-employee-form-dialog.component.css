@@ -14,7 +14,54 @@
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
     --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.12);
 }
+.meet-link-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
 
+    mat-icon {
+        color: #16a34a;
+    }
+
+    a {
+        color: #16a34a;
+        font-weight: 600;
+        word-break: break-all;
+    }
+}.meet-auto-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: #3730a3;
+}
+
+.meet-auto-banner mat-icon {
+    color: #6366f1;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.meet-auto-banner a {
+    color: #4338ca;
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.meet-auto-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
 .dialog-container {
     background: var(--bg-white);
     border-radius: 16px;
@@ -176,8 +223,8 @@ MATERIAL FIELD STYLING CORRECTED:host ::ng-deep {
         Fix outline appearance &.mat-form-field-appearance-outline {
             .mdc-text-field--outlined {
                 --mdc-outlined-text-field-container-shape: 10px;
-                --mdc-outlined-text-field-focus-outline-color: #{var(--primary)};
-                --mdc-outlined-text-field-hover-outline-color: #{#94a3b8};
+        --mdc-outlined-text-field-focus-outline-color: var(--primary);
+            --mdc-outlined-text-field-hover-outline-color: #94a3b8;
                 background-color: transparent !important;
 
                 .mdc-text-field__input {

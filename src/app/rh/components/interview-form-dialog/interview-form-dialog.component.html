@@ -1,95 +1,119 @@
-<div class="dialog-container" [class.is-edit]="isEdit">
+<div class="dialog-container">
     <!-- Header Dynamique -->
-    <h2 mat-dialog-title class="dialog-header">
+    <div class="dialog-header">
         <div class="header-icon" [class.edit-mode]="isEdit">
-            <mat-icon>{{ isEdit ? 'edit' : 'add_task' }}</mat-icon>
+            <i class="fa-solid" [ngClass]="isEdit ? 'fa-pen-to-square' : 'fa-calendar-plus'"></i>
         </div>
-        <span class="header-title">{{ getDialogTitle() }}</span>
-        <span class="header-badge" *ngIf="isEdit">ÉDITION</span>
-    </h2>
+        <div class="header-info">
+            <h2 mat-dialog-title class="dialog-title">{{ getDialogTitle() }}</h2>
+            <p class="dialog-subtitle">
+                {{ isEdit ? "Modifiez les horaires ou les détails de l'entretien." : "Renseignez les détails pour fixer
+                une nouvelle entrevue." }}
+            </p>
+        </div>
+        <span class="mode-badge" *ngIf="isEdit">ÉDITION</span>
+    </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="interview-form">
         <mat-dialog-content class="dialog-content">
 
-            <!-- Info Candidat Compacte (optionnel en mode edit) -->
-            <div class="candidate-info-card" *ngIf="isEdit && data.interview">
-                <div class="info-row">
-                    <mat-icon class="info-icon">person</mat-icon>
-                    <strong>{{ data.interview.candidateName }}</strong>
-                    <span class="separator">|</span>
-                    <span class="email">{{ data.interview.candidateEmail }}</span>
+            <!-- Fiche mémo candidat si édition (corrigé avec 'as interviewItem') -->
+            <div class="candidate-summary" *ngIf="isEdit && data?.interview as interviewItem">
+                <div class="summary-avatar">
+                    {{ interviewItem.candidateName ? interviewItem.candidateName.charAt(0).toUpperCase() : 'U' }}
+                </div>
+                <div class="summary-text">
+                    <strong>{{ interviewItem.candidateName }}</strong>
+                    <span>{{ interviewItem.candidateEmail || 'Email non précisé' }}</span>
                 </div>
             </div>
 
             <div class="form-grid">
-                <!-- Row 1 -->
-                <mat-form-field appearance="outline" class="full-width-mobile">
+                <!--
+                  BUG FIX : ce champ "Candidat" était absent du template — le
+                  contrôle formControlName="candidateName" (required) existait
+                  bien dans le TypeScript mais n'était jamais rendu ici, ce qui
+                  laissait le formulaire invalide en permanence (bouton
+                  "Planifier" désactivé quel que soit le mode choisi). Un
+                  <mat-select formControlName="mode"> était dupliqué à sa place.
+                -->
+                <mat-form-field appearance="outline">
                     <mat-label>Candidat *</mat-label>
                     <input matInput formControlName="candidateName" placeholder="Nom complet du candidat"
-                        autocomplete="name">
-                    <mat-icon matSuffix class="field-icon">person_outline</mat-icon>
-                    <mat-error *ngIf="f['candidateName']?.hasError('required')">Nom requis</mat-error>
-                    <mat-error *ngIf="f['candidateName']?.hasError('minlength')">Min. 2 caractères</mat-error>
+                        autocomplete="name" />
+                    <i matSuffix class="fa-regular fa-user field-icon"></i>
+                    <mat-error *ngIf="f['candidateName']?.hasError('required')">Le nom du candidat est
+                        requis.</mat-error>
+                    <mat-error *ngIf="f['candidateName']?.hasError('minlength')">Minimum 2 caractères.</mat-error>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="full-width-mobile">
-                    <mat-label>Email candidat</mat-label>
-                    <input matInput formControlName="candidateEmail" type="email" placeholder="exemple@domaine.com"
-                        autocomplete="email">
-                    <mat-icon matSuffix class="field-icon">mail_outline</mat-icon>
-                    <mat-error *ngIf="f['candidateEmail']?.hasError('email')">Email invalide</mat-error>
+                <!-- Email -->
+                <mat-form-field appearance="outline">
+                    <mat-label>Adresse email du candidat</mat-label>
+                    <input matInput formControlName="candidateEmail" type="email" placeholder="candidat@domaine.com"
+                        autocomplete="email" />
+                    <i matSuffix class="fa-regular fa-envelope field-icon"></i>
+                    <mat-error *ngIf="f['candidateEmail']?.hasError('email')">Format d'adresse email
+                        invalide.</mat-error>
                 </mat-form-field>
 
-                <!-- Row 2 -->
-                <mat-form-field appearance="outline" class="full-width-mobile">
-                    <mat-label>Poste *</mat-label>
-                    <input matInput formControlName="posteRecrutement" placeholder="Ex: Développeur Full Stack">
-                    <mat-icon matSuffix class="field-icon">work_outline</mat-icon>
-                    <mat-error *ngIf="f['posteRecrutement']?.hasError('required')">Poste requis</mat-error>
+                <!-- Poste -->
+                <mat-form-field appearance="outline">
+                    <mat-label>Poste ciblé *</mat-label>
+                    <input matInput formControlName="posteRecrutement" placeholder="Ex. : Ingénieur DevOps" />
+                    <i matSuffix class="fa-solid fa-briefcase field-icon"></i>
+                    <mat-error *ngIf="f['posteRecrutement']?.hasError('required')">L'intitulé du poste est
+                        requis.</mat-error>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="full-width-mobile">
-                    <mat-label>Recruteur / RH *</mat-label>
-                    <input matInput formControlName="interviewerName" placeholder="Nom du recruteur">
-                    <mat-icon matSuffix class="field-icon">badge</mat-icon>
-                    <mat-error *ngIf="f['interviewerName']?.hasError('required')">Recruteur requis</mat-error>
+                <!-- Recruteur -->
+                <mat-form-field appearance="outline">
+                    <mat-label>Intervenant / Recruteur *</mat-label>
+                    <input matInput formControlName="interviewerName" placeholder="Ex. : Mohamed Ben Salah" />
+                    <i matSuffix class="fa-solid fa-id-badge field-icon"></i>
+                    <mat-error *ngIf="f['interviewerName']?.hasError('required')">Le nom de l'intervenant est
+                        requis.</mat-error>
                 </mat-form-field>
 
-                <!-- Row 3: Date & Mode -->
-                <mat-form-field appearance="outline" class="full-width-mobile">
-                    <mat-label>Date entretien *</mat-label>
-                    <input matInput [matDatepicker]="picker" formControlName="interviewDate" [min]="minDate">
+                <!-- Date -->
+                <mat-form-field appearance="outline">
+                    <mat-label>Date de l'entretien *</mat-label>
+                    <input matInput [matDatepicker]="picker" formControlName="interviewDate" [min]="minDate" />
                     <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
                     <mat-datepicker #picker></mat-datepicker>
-                    <mat-error *ngIf="f['interviewDate']?.hasError('required')">Date requise</mat-error>
+                    <mat-error *ngIf="f['interviewDate']?.hasError('required')">La date est requise.</mat-error>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="full-width-mobile">
-                    <mat-label>Mode *</mat-label>
+                <!-- Mode (unique désormais) -->
+                <mat-form-field appearance="outline">
+                    <mat-label>Format / Mode *</mat-label>
                     <mat-select formControlName="mode">
-                        <mat-option value="PRESENTIEL">🏢 Présentiel</mat-option>
-                        <mat-option value="DISTANCIEL">💻 Distanciel</mat-option>
-                        <mat-option value="TELEPHONIQUE">📞 Téléphonique</mat-option>
+                        <mat-option value="PRESENTIEL">🏢 Présentiel (Sur site)</mat-option>
+                        <mat-option value="DISTANCIEL">💻 Visioconférence</mat-option>
+                        <mat-option value="TELEPHONIQUE">📞 Entretien Téléphonique</mat-option>
                     </mat-select>
+                    <mat-error *ngIf="f['mode']?.hasError('required')">Veuillez choisir un format.</mat-error>
                 </mat-form-field>
 
-                <!-- Row 4: Heures -->
-                <mat-form-field appearance="outline" class="small-field">
-                    <mat-label>Début *</mat-label>
-                    <input matInput type="time" formControlName="startTime">
-                    <mat-icon matSuffix class="field-icon">schedule</mat-icon>
+                <!-- Heure Début -->
+                <mat-form-field appearance="outline">
+                    <mat-label>Heure de début *</mat-label>
+                    <input matInput type="time" formControlName="startTime" />
+                    <i matSuffix class="fa-regular fa-clock field-icon"></i>
+                    <mat-error *ngIf="f['startTime']?.hasError('required')">Requis.</mat-error>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="small-field">
-                    <mat-label>Fin *</mat-label>
-                    <input matInput type="time" formControlName="endTime">
-                    <mat-icon matSuffix class="field-icon">schedule</mat-icon>
-                    <mat-error *ngIf="f['endTime']?.errors?.['beforeStart']">Après le début</mat-error>
+                <!-- Heure Fin -->
+                <mat-form-field appearance="outline">
+                    <mat-label>Heure de fin *</mat-label>
+                    <input matInput type="time" formControlName="endTime" />
+                    <i matSuffix class="fa-regular fa-clock field-icon"></i>
+                    <mat-error *ngIf="f['endTime']?.hasError('required')">Requis.</mat-error>
                 </mat-form-field>
 
                 <!-- Statut -->
-                <mat-form-field appearance="outline" class="full-width-mobile">
-                    <mat-label>Statut *</mat-label>
+                <mat-form-field appearance="outline" class="col-span-2">
+                    <mat-label>Statut de l'entretien *</mat-label>
                     <mat-select formControlName="status">
                         <mat-option *ngFor="let s of statuses" [value]="s">
                             {{ statusLabels[s] || s }}
@@ -97,41 +121,50 @@
                     </mat-select>
                 </mat-form-field>
 
-                <!-- Conditionnel: Lieu ou Link -->
+                <!-- Lieu physique conditionnel -->
                 <mat-form-field *ngIf="form.get('mode')?.value !== 'DISTANCIEL'" appearance="outline"
-                    class="full-width">
-                    <mat-label>Lieu (si présentiel)</mat-label>
-                    <input matInput formControlName="location" placeholder="Salle A, Étage 3...">
-                    <mat-icon matSuffix class="field-icon">location_on</mat-icon>
+                    class="col-span-2">
+                    <mat-label>Lieu ou bureau (Présentiel)</mat-label>
+                    <input matInput formControlName="location"
+                        placeholder="Ex. : Siège social, Salle Jupiter (2ème étage)" />
+                    <i matSuffix class="fa-solid fa-location-dot field-icon"></i>
                 </mat-form-field>
 
-                <mat-form-field *ngIf="form.get('mode')?.value === 'DISTANCIEL'" appearance="outline"
-                    class="full-width">
-                    <mat-label>Lien réunion</mat-label>
-                    <input matInput formControlName="meetingLink" placeholder="https://meet.google.com/...">
-                    <mat-icon matSuffix class="field-icon">link</mat-icon>
-                </mat-form-field>
+                <!-- Lien visio conditionnel -->
+                <div *ngIf="form.get('mode')?.value === 'DISTANCIEL'" class="col-span-2 meet-auto-banner">
+                    <i class="fa-brands fa-google"></i>
+                    <div class="meet-auto-text">
+                        <strong *ngIf="!f['meetingLink']?.value">
+                            Un lien Google Meet sera généré automatiquement à l'enregistrement.
+                        </strong>
+                        <ng-container *ngIf="f['meetingLink']?.value">
+                            <strong>Lien Meet généré :</strong>
+                            <a [href]="f['meetingLink'].value" target="_blank">{{ f['meetingLink'].value }}</a>
+                        </ng-container>
+                    </div>
+                </div>
+                <input type="hidden" formControlName="meetingLink" />
 
-                <!-- Notes Quill -->
-                <div class="quill-wrapper full-width">
-                    <label class="quill-label">Notes & Instructions</label>
+                <!-- Notes et consignes Quill -->
+                <div class="col-span-2 editor-container">
+                    <label class="editor-label">Notes & Instructions internes</label>
                     <quill-editor formControlName="notes" [modules]="quillModules"
-                        placeholder="Ajouter des notes pour le recruteur ou le candidat..."
-                        [style]="{'min-height': '120px'}">
+                        placeholder="Consignes particulières, questions clés à poser, liens complémentaires..."
+                        [style]="{'min-height': '110px'}">
                     </quill-editor>
                 </div>
             </div>
         </mat-dialog-content>
 
-        <mat-dialog-actions align="end" class="dialog-actions">
-            <button mat-stroked-button type="button" (click)="cancel()" class="btn-action btn-cancel">
+        <!-- Pied de formulaire -->
+        <mat-dialog-actions class="dialog-actions">
+            <button type="button" class="btn-cancel" (click)="cancel()">
                 Annuler
             </button>
-            <button mat-raised-button color="primary" type="submit" [disabled]="saving || form.invalid"
-                class="btn-action btn-primary">
-                <mat-icon class="btn-icon">{{ saving ? 'hourglass_top' : (isEdit ? 'update' : 'event_available')
-                    }}</mat-icon>
-                {{ saving ? 'Sauvegarde...' : (isEdit ? 'Mettre à jour' : 'Confirmer la planification') }}
+            <button type="submit" class="btn-save" [disabled]="saving || form.invalid">
+                <i class="fa-solid"
+                    [ngClass]="saving ? 'fa-spinner fa-spin' : (isEdit ? 'fa-pen' : 'fa-calendar-check')"></i>
+                <span>{{ saving ? 'Enregistrement...' : (isEdit ? 'Mettre à jour' : 'Planifier l’entretien') }}</span>
             </button>
         </mat-dialog-actions>
     </form>

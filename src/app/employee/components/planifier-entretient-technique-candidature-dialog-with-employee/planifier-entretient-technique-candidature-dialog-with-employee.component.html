@@ -61,22 +61,18 @@
             <mat-error *ngIf="form.get('lieu')?.hasError('required')">L'adresse exacte est requise.</mat-error>
         </mat-form-field>
 
-        <mat-form-field *ngIf="form.get('mode')?.value === 'DISTANCIEL'" appearance="outline" style="width:100%">
-            <mat-label>Lien d'invitation Google Meet</mat-label>
-            <input matInput formControlName="lienVisio" placeholder="https://meet.google.com/abc-defg-hij" />
-            <mat-error *ngIf="form.get('lienVisio')?.hasError('required')">Le lien Meet est obligatoire pour la
-                visioconférence.</mat-error>
-            <mat-error *ngIf="form.get('lienVisio')?.hasError('pattern')">L'URL du lien doit débuter par
-                https://</mat-error>
-        </mat-form-field>
+    
+    <div *ngIf="form.get('mode')?.value === 'DISTANCIEL'" class="anim-slide meet-auto-banner">
+        <i class="fa-solid fa-video"></i>
+        <span>Un lien Google Meet sera généré automatiquement et envoyé au candidat avec la convocation.</span>
+    </div>
     </div>
 
-    <!-- Notification d'invitation automatique -->
     <div
         style="font-size: 12.5px; color: var(--text-muted); margin-top: 18px; display: flex; align-items: center; gap: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 14px; border-radius: 8px;">
         <i class="fa-solid fa-paper-plane" style="color: #16a34a;"></i>
-        <span>Une convocation par email incluant le planning sera envoyée à <strong>{{ data.context.candidateEmail
-                }}</strong>.</span>
+        <span>Une convocation par email incluant le planning{{ form.get('mode')?.value === 'DISTANCIEL' ? ' et le
+            lien Google Meet' : '' }} sera envoyée à <strong>{{ data.context.candidateEmail }}</strong>.</span>
     </div>
 </mat-dialog-content>
 

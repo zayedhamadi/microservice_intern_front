@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApplicationDto, ChangerStatutDto } from '../models/Application';
 import { environment } from '../environement/environment';
+import { HttpParams } from '@angular/common/http';
+import { PageResponse } from '../models/PageResponse';
 
 @Injectable({ providedIn: 'root' })
 export class ApplyService {
@@ -10,7 +12,26 @@ export class ApplyService {
 
   constructor(private http: HttpClient) {}
 
+  getCandidaturesParCandidat(
+    candidatKeycloakId: string,
+    page = 0,
+    size = 5,
+    sortBy = 'dateCandidature',
+    sortDir: 'asc' | 'desc' = 'desc',
+    statut?: string,
+  ): Observable<PageResponse<ApplicationDto>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('size', size)
+      .set('sortBy', sortBy)
+      .set('sortDir', sortDir);
+    if (statut) params = params.set('statut', statut);
 
+    return this.http.get<PageResponse<ApplicationDto>>(
+      `${this.baseUrl}/candidat/${candidatKeycloakId}`,
+      { params },
+    );
+  }
   getCandidaturesClasseesPourPoste(
     posteId: string,
   ): Observable<ApplicationDto[]> {

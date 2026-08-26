@@ -105,12 +105,19 @@
                     <mat-icon matSuffix class="field-icon">location_on</mat-icon>
                 </mat-form-field>
 
-                <mat-form-field *ngIf="form.get('mode')?.value === 'DISTANCIEL'" appearance="outline"
-                    class="full-width">
-                    <mat-label>Lien réunion</mat-label>
-                    <input matInput formControlName="meetingLink" placeholder="https://meet.google.com/...">
-                    <mat-icon matSuffix class="field-icon">link</mat-icon>
-                </mat-form-field>
+            <div *ngIf="form.get('mode')?.value === 'DISTANCIEL'" class="full-width meet-auto-banner">
+                <mat-icon>videocam</mat-icon>
+                <div class="meet-auto-text">
+                    <strong *ngIf="!f['meetingLink']?.value">
+                        Un lien Google Meet sera généré automatiquement à l'enregistrement.
+                    </strong>
+                    <ng-container *ngIf="f['meetingLink']?.value">
+                        <strong>Lien Meet généré :</strong>
+                        <a [href]="f['meetingLink'].value" target="_blank" rel="noopener">{{ f['meetingLink'].value }}</a>
+                    </ng-container>
+                </div>
+            </div>
+            <input type="hidden" formControlName="meetingLink">
 
                 <!-- Notes Quill -->
                 <div class="quill-wrapper full-width">

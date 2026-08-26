@@ -3,23 +3,20 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import Swal from 'sweetalert2';
+
 import { Interview } from '../../../core/models/interview';
-import { findConflicts } from '../../../core/models/utils/interview-conflict.util';
 import { InterviewService } from '../../../core/service/interview.service';
-
-
 
 export interface InterviewFormDialogData {
   interview?: Interview | null;
-  allInterviews?: Interview[]; // liste déjà chargée, utilisée pour le contrôle de conflits (item 7)
-  selectedDate?: string; // 'yyyy-MM-dd', pré-rempli si on vient d'un clic sur le calendrier
+  allInterviews?: Interview[];
+  selectedDate?: string;
 }
 
 @Component({
   selector: 'app-interview-form-dialog',
   standalone: false,
   templateUrl: './interview-form-dialog.component.html',
-  // ⚠️ BUG FIX : le .ts référençait un fichier .scss qui n'existe pas (le fichier réel est .css).
   styleUrls: ['./interview-form-dialog.component.css'],
 })
 export class InterviewFormDialogComponent {
@@ -27,12 +24,9 @@ export class InterviewFormDialogComponent {
   isEdit = false;
   saving = false;
 
-  // ⚠️ BUG FIX : 'VISIOCONFERENCE' n'existe pas dans l'enum backend InterviewMode
-  // (PRESENTIEL | DISTANCIEL | TELEPHONIQUE) — retiré.
-  modes = ['PRESENTIEL', 'DISTANCIEL', 'TELEPHONIQUE'];
+  readonly modes = ['PRESENTIEL', 'DISTANCIEL', 'TELEPHONIQUE'];
 
-  // ⚠️ BUG FIX : CONFIRME et ABSENT manquaient (présents dans l'enum backend InterviewStatus).
-  statuses = [
+  readonly statuses = [
     'PLANIFIE',
     'CONFIRME',
     'EN_COURS',
@@ -42,7 +36,7 @@ export class InterviewFormDialogComponent {
     'ABSENT',
   ];
 
-  statusLabels: Record<string, string> = {
+  readonly statusLabels: Record<string, string> = {
     PLANIFIE: 'Planifié',
     CONFIRME: 'Confirmé',
     EN_COURS: 'En cours',
@@ -64,11 +58,11 @@ export class InterviewFormDialogComponent {
   };
 
   constructor(
-    private interviewService: InterviewService,
-    private fb: FormBuilder,
-    private dialogRef: MatDialogRef<InterviewFormDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: InterviewFormDialogData,
-    private snackBar: MatSnackBar,
+    private readonly interviewService: InterviewService,
+    private readonly fb: FormBuilder,
+    private readonly dialogRef: MatDialogRef<InterviewFormDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public readonly data: InterviewFormDialogData,
+    private readonly snackBar: MatSnackBar,
   ) {
     this.isEdit = !!data?.interview?.id;
     const i = data?.interview || ({} as Partial<Interview>);
@@ -105,6 +99,23 @@ export class InterviewFormDialogComponent {
     return this.form.controls;
   }
 
+  /**
+   * Convertit une date (Date ou string) en format strict YYYY-MM-DD local
+   */
+  private formatIsoDate(d: any): string {
+    if (!d) return '';
+    if (typeof d === 'string') {
+      return d.includes('T') ? d.split('T')[0] : d;
+    }
+    if (d instanceof Date && !isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return '';
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -112,34 +123,51 @@ export class InterviewFormDialogComponent {
     }
 
     const raw = this.form.getRawValue();
-    const dateObj = new Date(raw.interviewDate);
-    const interviewDate = dateObj.toISOString().split('T')[0];
+    const interviewDate = this.formatIsoDate(raw.interviewDate);
+    const heureDebut = raw.startTime ? raw.startTime.substring(0, 5) : '';
+    const interviewIdActuelle = this.data.interview?.id;
 
-    // item 7 : détection de conflit avant envoi
-    const conflits = findConflicts(
-      this.data.allInterviews ?? [],
-      {
-        interviewerName: raw.interviewerName,
-        interviewDate,
-        startTime: raw.startTime,
-        endTime: raw.endTime,
-      },
-      this.data?.interview?.id,
-    );
+    // ⛔ CONTRÔLE DE CONFLIT HORAIRE (Même jour & même heure)
+    const conflit = (this.data.allInterviews || []).find((i: Interview) => {
+      // Ignorer l'entretien en cours d'édition et les entretiens annulés
+      if (i.id === interviewIdActuelle || i.status === 'ANNULE') {
+        return false;
+      }
 
-    if (conflits.length > 0) {
+      const dateExistante = this.formatIsoDate(i.interviewDate);
+      const heureExistante = i.startTime ? i.startTime.substring(0, 5) : '';
+
+      return dateExistante === interviewDate && heureExistante === heureDebut;
+    });
+
+    if (conflit) {
+      const dateAffichee = new Date(
+        interviewDate + 'T00:00:00',
+      ).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+
       Swal.fire({
         icon: 'warning',
-        title: "Conflit d'horaire détecté",
-        html: `<b>${raw.interviewerName}</b> a déjà un entretien avec
-               <b>${conflits[0].candidateName}</b> à ${conflits[0].startTime} ce jour-là.`,
-        showCancelButton: true,
-        confirmButtonText: 'Planifier quand même',
-        cancelButtonText: 'Corriger',
-      }).then((res) => {
-        if (res.isConfirmed) this.doSubmit(raw, interviewDate);
+        title: 'Créneau horaire indisponible',
+        html: `
+          <p style="text-align:left; color:#334155; margin:0 0 10px 0; font-size:14px;">
+            Un entretien est déjà programmé le <strong>${dateAffichee}</strong> à <strong>${heureDebut}</strong>.
+          </p>
+          <div style="text-align:left; background:#f8fafc; border:1px solid #e2e8f0; padding:10px 14px; border-radius:8px; font-size:13px; color:#64748b; margin-bottom:12px;">
+            <div><strong>Candidat :</strong> ${conflit.candidateName}</div>
+            <div><strong>Recruteur :</strong> ${conflit.interviewerName}</div>
+          </div>
+          <p style="text-align:left; color:#ef4444; font-weight:600; font-size:13px; margin:0;">
+            Veuillez sélectionner une autre heure pour cet entretien.
+          </p>
+        `,
+        confirmButtonText: "Modifier l'heure",
+        confirmButtonColor: '#4f46e5',
       });
-      return;
+      return; // Bloque la validation, la modale reste ouverte
     }
 
     this.doSubmit(raw, interviewDate);
@@ -150,7 +178,12 @@ export class InterviewFormDialogComponent {
     const payload = {
       ...raw,
       interviewDate,
-      meetingLink: raw.mode === 'DISTANCIEL' ? raw.meetingLink : null,
+      // BUG FIX : n'envoyer meetingLink que s'il a été rempli manuellement ;
+      // s'il est vide en DISTANCIEL, le backend génère le lien automatiquement.
+      meetingLink:
+        raw.mode === 'DISTANCIEL' && raw.meetingLink?.trim()
+          ? raw.meetingLink.trim()
+          : null,
       location: raw.mode === 'PRESENTIEL' ? raw.location : null,
     };
 
@@ -159,14 +192,37 @@ export class InterviewFormDialogComponent {
       : this.interviewService.create(payload);
 
     request$.subscribe({
-      next: (result) => {
+      next: (result: any) => {
         this.saving = false;
         this.dialogRef.close(result);
-        this.snackBar.open(
-          this.isEdit ? 'Entretien mis à jour' : 'Entretien planifié',
-          'Fermer',
-          { duration: 3000 },
-        );
+
+        // BUG FIX : afficher le lien Meet généré automatiquement par le
+        // backend, plutôt qu'un simple message de succès générique.
+        if (raw.mode === 'DISTANCIEL' && result?.meetingLink) {
+          Swal.fire({
+            icon: 'success',
+            title: this.isEdit ? 'Entretien mis à jour' : 'Entretien planifié',
+            html: `
+              <p style="text-align:left; font-size:14px; color:#334155; margin:0 0 10px;">
+                Lien Google Meet généré :
+              </p>
+              <a href="${result.meetingLink}" target="_blank" rel="noopener"
+                 style="word-break:break-all; color:#4f46e5; font-weight:600;">
+                ${result.meetingLink}
+              </a>
+            `,
+            confirmButtonText: 'Fermer',
+            confirmButtonColor: '#4f46e5',
+          });
+        } else {
+          this.snackBar.open(
+            this.isEdit
+              ? 'Entretien mis à jour avec succès.'
+              : 'Entretien planifié avec succès.',
+            'Fermer',
+            { duration: 3000 },
+          );
+        }
       },
       error: (err) => {
         this.saving = false;

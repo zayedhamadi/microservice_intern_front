@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../environement/environment';
 import { UpdateProfileRequest } from '../models/update_profile.model';
 import { UserCommonProfile, UserFullProfile } from '../models/userConneccted';
+import { UserProfile } from '../models/UserProfile';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +14,11 @@ export class UserService {
   private readonly employeeMgmtUrl = `${environment.apiUrl}/EmployeeManagementController`;
 
   constructor(private readonly http: HttpClient) {}
-
+  getUserProfilForRH(keycloakId: string): Observable<UserProfile> {
+    return this.http.get<UserProfile>(
+      `${this.apiUrl}/rh/${keycloakId}/profil`, 
+    );
+  }
   getMyProfile(): Observable<UserCommonProfile> {
     return this.http.get<UserCommonProfile>(`${this.apiUrl}/users/me`);
   }
@@ -41,7 +46,6 @@ export class UserService {
   getUserByIddAdmin(id: number): Observable<any> {
     return this.http.get<any>(`${this.employeeMgmtUrl}/usersAdmin/${id}`);
   }
-
 
   getAllActiveAndCongeUsers(): Observable<any[]> {
     return this.http.get<any[]>(`${this.employeeMgmtUrl}/allActiveUsers`);

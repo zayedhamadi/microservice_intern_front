@@ -23,7 +23,6 @@ export interface UserDetailFullResponse {
   niveauEtude?: string | null;
   anneesExperience?: number | null;
   certifications?: CertificationDTO[];
-  // Bloc cessation (jointure Cessation)
   motifCessation?: string | null;
   dateCessation?: string | null;
   motifReactivation?: string | null;

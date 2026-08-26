@@ -262,73 +262,6 @@ export class CalendrierRHComponent implements OnInit, OnDestroy {
     });
   }
 
-  private ouvrirPropositionReprogrammation(dateStr: string): void {
-    const interviewId = this.contexteReprogrammation?.interviewId;
-    if (!interviewId) return;
-
-    const dateAffichee = new Date(dateStr + 'T00:00:00').toLocaleDateString(
-      'fr-FR',
-      { day: 'numeric', month: 'long', year: 'numeric' },
-    );
-
-    Swal.fire({
-      title: 'Proposer un nouveau créneau',
-      html: `
-        <p style="margin-bottom:12px;color:#64748b;text-align:left;">
-          Date sélectionnée : <strong>${dateAffichee}</strong><br>
-          Candidat : <strong>${this.contexteReprogrammation?.candidateName ?? '—'}</strong>
-        </p>
-        <input id="swal-heure" type="time" class="swal2-input" placeholder="Heure">
-        <textarea id="swal-motif" class="swal2-textarea" placeholder="Motif de la nouvelle proposition"></textarea>
-      `,
-      focusConfirm: false,
-      showCancelButton: true,
-      confirmButtonText: 'Envoyer la proposition',
-      cancelButtonText: 'Annuler',
-      preConfirm: () => {
-        const heure = (
-          document.getElementById('swal-heure') as HTMLInputElement
-        )?.value;
-        const motif = (
-          document.getElementById('swal-motif') as HTMLTextAreaElement
-        )?.value?.trim();
-        if (!heure) {
-          Swal.showValidationMessage('Veuillez choisir une heure');
-          return;
-        }
-        if (!motif) {
-          Swal.showValidationMessage('Veuillez indiquer un motif');
-          return;
-        }
-        return { heure, motif };
-      },
-    }).then((res) => {
-      if (!res.isConfirmed || !res.value) return;
-
-      const nouvelleDateProposee = `${dateStr}T${res.value.heure}:00`;
-
-      this.reprogrammerService
-        .proposerParIntervenant(interviewId, {
-          nouvelleDateProposee,
-          motif: res.value.motif,
-        })
-        .subscribe({
-          next: () => {
-            this.snackBar.open('Nouvelle date proposée avec succès', 'Fermer', {
-              duration: 3000,
-            });
-            this.terminerModeReprogrammation();
-          },
-          error: (err) =>
-            Swal.fire(
-              'Erreur',
-              err?.message ?? "Impossible d'envoyer la proposition",
-              'error',
-            ),
-        });
-    });
-  }
-
   // ==================== FILTRAGE RH SPÉCIFIQUE ====================
 
   private isRhOrLibre(interview: Interview): boolean {
@@ -853,29 +786,50 @@ export class CalendrierRHComponent implements OnInit, OnDestroy {
   }
 
   // ==================== Actions CRUD / dialogs ====================
-
-  openCreateDialog(selectedDate?: string): void {
-    if (this.pendingCandidatureContext) {
-      this.openPlanifierCandidatureDialog(selectedDate);
-      return;
-    }
-
+  editInterview(i: Interview): void {
     const ref = this.dialog.open(InterviewFormDialogComponent, {
-      width: '800px',
-      data: { interview: null, allInterviews: this.interviews, selectedDate },
+      width: '760px',
+      maxWidth: '95vw',
+      panelClass: 'interview-dialog-panel', // ✅ AJOUTER
+      autoFocus: false,
+      data: { interview: i, allInterviews: this.interviews },
     });
     ref.afterClosed().subscribe((result) => {
       if (result) this.refresh();
     });
   }
+openCreateDialog(selectedDate?: string): void {
+  if (this.pendingCandidatureContext) {
+    this.openPlanifierCandidatureDialog(selectedDate);
+    return;
+  }
 
-  private openPlanifierCandidatureDialog(selectedDate?: string): void {
-    const context = this.pendingCandidatureContext;
-    if (!context) return;
+  const ref = this.dialog.open(InterviewFormDialogComponent, {
+    width: '760px',
+    maxWidth: '95vw',
+    panelClass: 'interview-dialog-panel',   
+    autoFocus: false,
+    data: { interview: null, allInterviews: this.interviews, selectedDate },
+  });
+  ref.afterClosed().subscribe((result) => {
+    if (result) this.refresh();
+  });
+}
 
-    const ref = this.dialog.open(PlanifierEntretienCandidatureDialogComponent, {
-      width: '560px',
-      data: { context, selectedDate },
+private openPlanifierCandidatureDialog(selectedDate?: string): void {
+  const context = this.pendingCandidatureContext;
+  if (!context) return;
+
+  const ref = this.dialog.open(PlanifierEntretienCandidatureDialogComponent, {
+    width: '600px',                         
+    maxWidth: '95vw',
+    panelClass: 'interview-dialog-panel',    
+    autoFocus: false,
+    data: {
+        context,
+        selectedDate,
+        allInterviews: this.interviews, 
+      },
     });
 
     ref
@@ -903,13 +857,89 @@ export class CalendrierRHComponent implements OnInit, OnDestroy {
       });
   }
 
-  editInterview(i: Interview): void {
-    const ref = this.dialog.open(InterviewFormDialogComponent, {
-      width: '800px',
-      data: { interview: i, allInterviews: this.interviews },
-    });
-    ref.afterClosed().subscribe((result) => {
-      if (result) this.refresh();
+  private ouvrirPropositionReprogrammation(dateStr: string): void {
+    const interviewId = this.contexteReprogrammation?.interviewId;
+    if (!interviewId) return;
+
+    const dateAffichee = new Date(dateStr + 'T00:00:00').toLocaleDateString(
+      'fr-FR',
+      { day: 'numeric', month: 'long', year: 'numeric' },
+    );
+
+    Swal.fire({
+      title: 'Proposer un nouveau créneau',
+      html: `
+        <p style="margin-bottom:12px;color:#64748b;text-align:left;">
+          Date sélectionnée : <strong>${dateAffichee}</strong><br>
+          Candidat : <strong>${this.contexteReprogrammation?.candidateName ?? '—'}</strong>
+        </p>
+        <input id="swal-heure" type="time" class="swal2-input" placeholder="Heure">
+        <textarea id="swal-motif" class="swal2-textarea" placeholder="Motif de la nouvelle proposition"></textarea>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Envoyer la proposition',
+      cancelButtonText: 'Annuler',
+      preConfirm: () => {
+        const heure = (
+          document.getElementById('swal-heure') as HTMLInputElement
+        )?.value;
+        const motif = (
+          document.getElementById('swal-motif') as HTMLTextAreaElement
+        )?.value?.trim();
+
+        if (!heure) {
+          Swal.showValidationMessage('Veuillez choisir une heure.');
+          return;
+        }
+        if (!motif) {
+          Swal.showValidationMessage('Veuillez indiquer un motif.');
+          return;
+        }
+
+        // ⛔ CONTRÔLE DE CONFLIT POUR LA REPROGRAMMATION
+        const aConflit = this.interviews.some((itv) => {
+          return (
+            itv.id !== interviewId &&
+            itv.status !== 'ANNULE' &&
+            itv.interviewDate === dateStr &&
+            itv.startTime?.substring(0, 5) === heure.substring(0, 5)
+          );
+        });
+
+        if (aConflit) {
+          Swal.showValidationMessage(
+            'Un entretien est déjà fixé à cette heure le même jour. Choisissez une autre heure.',
+          );
+          return;
+        }
+
+        return { heure, motif };
+      },
+    }).then((res) => {
+      if (!res.isConfirmed || !res.value) return;
+
+      const nouvelleDateProposee = `${dateStr}T${res.value.heure}:00`;
+
+      this.reprogrammerService
+        .proposerParIntervenant(interviewId, {
+          nouvelleDateProposee,
+          motif: res.value.motif,
+        })
+        .subscribe({
+          next: () => {
+            this.snackBar.open('Nouvelle date proposée avec succès', 'Fermer', {
+              duration: 3000,
+            });
+            this.terminerModeReprogrammation();
+          },
+          error: (err) =>
+            Swal.fire(
+              'Erreur',
+              err?.message ?? "Impossible d'envoyer la proposition",
+              'error',
+            ),
+        });
     });
   }
 

@@ -3,7 +3,462 @@
     padding: 32px 32px 28px !important;
     width: 460px !important;
 }
+/* =======================================
+   MODALES CESSATION & RÉACTIVATION (AMÉLIORÉES)
+======================================= */
 
+.cm-popup {
+    border-radius: 20px !important;
+    padding: 32px !important;
+    width: 480px !important;
+    max-width: 90vw !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+    background: #fff !important;
+    animation: modalFadeIn 0.3s ease-out !important;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ---- En-tête de la modale ---- */
+.cm-title {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    color: var(--navy) !important;
+    margin-bottom: 8px !important;
+    text-align: center !important;
+    letter-spacing: -0.5px !important;
+}
+
+.cm-subtitle {
+    font-size: 14px !important;
+    color: var(--slate-500) !important;
+    text-align: center !important;
+    margin-bottom: 24px !important;
+    line-height: 1.6 !important;
+}
+
+/* ---- Zone icône (améliorée) ---- */
+.cm-icon-zone {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px !important;
+}
+
+.cm-icon-ring {
+    width: 72px !important;
+    height: 72px !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.cm-icon-ring i {
+    animation: pulseIcon 2s ease-in-out infinite;
+}
+
+@keyframes pulseIcon {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.cm-icon-ring-success {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+    color: #047857 !important;
+}
+
+/* ---- Carte utilisateur ---- */
+.cm-user-card {
+    display: flex;
+    align-items: center;
+    gap: 14px !important;
+    background: var(--slate-50) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    padding: 14px 16px !important;
+    margin-bottom: 20px !important;
+}
+
+.cm-avatar {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 10px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px !important;
+    flex-shrink: 0;
+}
+
+.cm-user-name {
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
+    color: var(--navy) !important;
+}
+
+.cm-user-email {
+    font-size: 12.5px !important;
+    color: var(--slate-500) !important;
+}
+
+/* ---- Avertissement (amélioré) ---- */
+.cm-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px !important;
+    background: linear-gradient(135deg, #fff7ed, #fed7aa) !important;
+    border: 1px solid #fde68a !important;
+    border-radius: 10px !important;
+    padding: 12px 14px !important;
+    margin-bottom: 20px !important;
+}
+
+.cm-warning i {
+    color: #d97706 !important;
+    font-size: 16px !important;
+    margin-top: 2px;
+}
+
+/* ---- Champ de texte (amélioré) ---- */
+.cm-field {
+    margin-bottom: 16px !important;
+}
+
+.cm-label {
+    display: block;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--slate-700) !important;
+    margin-bottom: 8px !important;
+}
+
+.cm-textarea {
+    width: 100%;
+    border: 1.5px solid var(--border) !important;
+    border-radius: 10px !important;
+    padding: 12px 14px !important;
+    font-size: 14px !important;
+    font-family: inherit;
+    color: var(--navy);
+    resize: vertical;
+    transition: all 0.2s ease;
+    min-height: 100px !important;
+    box-sizing: border-box;
+}
+
+.cm-textarea:focus {
+    outline: none;
+    border-color: var(--violet) !important;
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.15) !important;
+}
+
+.cm-char-count {
+    text-align: right;
+    font-size: 11.5px !important;
+    color: var(--slate-400) !important;
+    margin-top: 6px !important;
+}
+
+/* =======================================
+   MODALES CESSATION & RÉACTIVATION - DESIGN PRO
+======================================= */
+
+/* 🎨 Couleurs thématiques Supra Technology */
+:host {
+    --cessation-bg: linear-gradient(135deg, #fef2f2, #fee2e2);
+    --cessation-border: #fecaca;
+    --cessation-icon: #dc2626;
+    --reactivation-bg: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    --reactivation-border: #a7f3d0;
+    --reactivation-icon: #059669;
+}
+
+/* 📦 Conteneur de la modale */
+.swal2-popup.swal2-modal {
+    border-radius: 16px !important;
+    padding: 32px !important;
+    width: 500px !important;
+    max-width: 90vw !important;
+    box-shadow: 0 20px 60px rgba(109, 40, 217, 0.15) !important;
+    border: none !important;
+    animation: modalFadeIn 0.3s ease-out !important;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* 🎯 En-tête de la modale */
+.modal-title {
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    color: var(--navy) !important;
+    text-align: center !important;
+    margin-bottom: 8px !important;
+    letter-spacing: -0.5px !important;
+}
+
+.modal-subtitle {
+    font-size: 15px !important;
+    color: var(--slate-500) !important;
+    text-align: center !important;
+    margin-bottom: 24px !important;
+    line-height: 1.6 !important;
+}
+
+/* 👤 Carte utilisateur (améliorée) */
+.modal-user-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--slate-50);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.modal-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.modal-user-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 2px;
+}
+
+.modal-user-email {
+    font-size: 13px;
+    color: var(--slate-500);
+}
+
+/* ⚠️ Zone d'avertissement (Cessation) */
+.cessation-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--cessation-bg);
+    border: 1px solid var(--cessation-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 20px 0;
+}
+
+.cessation-warning i {
+    color: var(--cessation-icon);
+    font-size: 18px;
+    margin-top: 2px;
+}
+
+.cessation-warning-content {
+    font-size: 13.5px;
+    color: #991b1b;
+    line-height: 1.5;
+}
+
+.cessation-warning-content strong {
+    color: #7f1d1d;
+}
+
+/* ✅ Zone de confirmation (Réactivation) */
+.reactivation-confirmation {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--reactivation-bg);
+    border: 1px solid var(--reactivation-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 20px 0;
+}
+
+.reactivation-confirmation i {
+    color: var(--reactivation-icon);
+    font-size: 18px;
+    margin-top: 2px;
+}
+
+.reactivation-confirmation-content {
+    font-size: 13.5px;
+    color: #065f46;
+    line-height: 1.5;
+}
+
+.reactivation-confirmation-content strong {
+    color: #047857;
+}
+
+/* 📝 Champ de motif (amélioré) */
+.modal-field {
+    margin: 20px 0;
+}
+
+.modal-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--slate-700);
+    margin-bottom: 10px;
+}
+
+.modal-label .required {
+    color: var(--cessation-icon);
+    margin-left: 4px;
+}
+
+.modal-textarea {
+    width: 100%;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--navy);
+    resize: vertical;
+    min-height: 120px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.modal-textarea:focus {
+    outline: none;
+    border-color: var(--violet);
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+}
+
+.modal-char-count {
+    text-align: right;
+    font-size: 12px;
+    color: var(--slate-400);
+    margin-top: 6px;
+}
+
+/* 🎯 Boutons (design professionnel) */
+.swal2-actions {
+    margin: 24px 0 0 !important;
+    gap: 12px !important;
+    display: flex;
+    justify-content: center;
+}
+
+.swal2-confirm {
+    background: linear-gradient(135deg, #b91c1c, #dc2626) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3) !important;
+    transition: all 0.2s ease !important;
+}
+
+.swal2-confirm:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4) !important;
+}
+
+.swal2-cancel {
+    background: var(--slate-100) !important;
+    color: var(--slate-600) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    transition: all 0.2s ease !important;
+}
+
+.swal2-cancel:hover {
+    background: var(--slate-200) !important;
+}
+
+/* 🎨 Bouton de réactivation (vert) */
+.swal2-confirm.swal2-styled.reactivation-btn {
+    background: linear-gradient(135deg, #047857, #059669) !important;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3) !important;
+}
+
+.swal2-confirm.swal2-styled.reactivation-btn:hover {
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4) !important;
+}.swal2-confirm.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.swal2-confirm.loading::after {
+  content: '';  
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 📱 Responsive */
+@media (max-width: 600px) {
+    .swal2-popup.swal2-modal {
+        width: 92vw !important;
+        padding: 24px 20px !important;
+    }
+
+    .swal2-actions {
+        flex-direction: column !important;
+    }
+
+    .swal2-confirm,
+    .swal2-cancel {
+        width: 100% !important;
+    }
+}
 .cesser-modal {
     text-align: left;
     font-family: 'Inter', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

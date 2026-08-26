@@ -1,0 +1,466 @@
+:host {
+    display: block;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-light: #eef2ff;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --border: #e2e8f0;
+    --bg-card: #ffffff;
+    --bg-soft: #f8fafc;
+    --radius-lg: 16px;
+    --radius-md: 10px;
+}
+
+/* =============================================
+   RESETS MATERIAL (obligatoires)
+============================================= */
+::ng-deep .interview-dialog-panel .mat-mdc-dialog-surface {
+    padding: 0 !important;
+}
+
+:host ::ng-deep .mat-mdc-dialog-title {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block;
+}
+
+:host ::ng-deep .mat-mdc-dialog-content {
+    display: block;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-height: none !important;
+}
+
+:host ::ng-deep .mat-mdc-dialog-actions {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: unset !important;
+}
+
+/* =============================================
+   STRUCTURE
+============================================= */
+.dialog-wrapper {
+    background: var(--bg-card);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+}
+
+/* =============================================
+   EN-TÊTE
+============================================= */
+.dialog-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 28px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    border-bottom: 1px solid var(--border);
+}
+
+.dialog-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), #8b5cf6);
+}
+
+.header-icon-wrap {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    flex-shrink: 0;
+}
+
+.header-titles {
+    flex: 1;
+    min-width: 0;
+}
+
+.dialog-title {
+    font-size: 19px !important;
+    font-weight: 800 !important;
+    color: var(--text-dark);
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+}
+
+.dialog-subtitle {
+    margin: 3px 0 0 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.btn-close {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.btn-close:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    border-color: #fca5a5;
+    transform: rotate(90deg);
+}
+
+/* =============================================
+   CORPS
+============================================= */
+.dialog-body {
+    padding: 22px 28px 24px !important;
+    max-height: 68vh;
+    overflow-y: auto;
+}
+
+/* =============================================
+   FICHE CANDIDAT
+============================================= */
+.candidate-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%);
+    border: 1px solid #e0e7ff;
+    border-left: 4px solid var(--primary);
+    border-radius: 12px;
+    margin-bottom: 22px;
+}
+
+.candidate-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    color: #fff;
+    font-weight: 800;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    flex-shrink: 0;
+}
+
+.candidate-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.candidate-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.candidate-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.type-pill {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: #ffffff;
+    color: var(--primary);
+    border: 1px solid #c7d2fe;
+    padding: 4px 11px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.candidate-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.meta-item i {
+    color: var(--text-light);
+    font-size: 12px;
+}
+
+.meta-separator {
+    color: #cbd5e1;
+}
+
+/* =============================================
+   FORMULAIRE
+============================================= */
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-full {
+    width: 100%;
+}
+
+.field-suffix-icon {
+    color: var(--text-light);
+    font-size: 14px;
+    margin-right: 6px;
+    pointer-events: none;
+}
+
+.option-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.option-content i {
+    color: var(--primary);
+    width: 16px;
+    text-align: center;
+}
+
+/* Animation champs conditionnels */
+.anim-slide {
+    animation: fadeInDown 0.22s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =============================================
+   MATERIAL FORM FIELDS
+============================================= */
+::ng-deep .dialog-body .mat-mdc-form-field {
+    width: 100%;
+    --mdc-outlined-text-field-container-shape: 10px;
+}
+
+::ng-deep .dialog-body .mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--focused .mdc-notched-outline__leading,
+::ng-deep .dialog-body .mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--focused .mdc-notched-outline__notch,
+::ng-deep .dialog-body .mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--focused .mdc-notched-outline__trailing {
+    border-color: var(--primary) !important;
+    border-width: 1.5px !important;
+}
+
+::ng-deep .dialog-body .mdc-text-field--outlined:hover:not(.mdc-text-field--focused):not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+::ng-deep .dialog-body .mdc-text-field--outlined:hover:not(.mdc-text-field--focused):not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+::ng-deep .dialog-body .mdc-text-field--outlined:hover:not(.mdc-text-field--focused):not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
+    border-color: #94a3b8 !important;
+}
+
+::ng-deep .dialog-body .mat-mdc-form-field-subscript-wrapper {
+    margin-bottom: -8px !important;
+}
+
+/* =============================================
+   BANNIÈRE NOTIFICATION
+============================================= */
+.notification-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-top: 18px;
+}
+
+.notif-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.notif-text {
+    font-size: 12.5px;
+    color: #166534;
+    line-height: 1.5;
+}
+
+/* =============================================
+   PIED — ACTIONS
+============================================= */
+.dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 28px 20px !important;
+    border-top: 1px solid var(--border);
+    background: #fafafa;
+}
+
+.btn-cancel {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text-muted);
+    padding: 0 22px;
+    height: 42px;
+    border-radius: var(--radius-md);
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.btn-cancel:hover {
+    background: #f1f5f9;
+    color: var(--text-dark);
+    border-color: #94a3b8;
+}
+
+.btn-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    color: #fff;
+    border: none;
+    padding: 0 24px;
+    height: 42px;
+    border-radius: var(--radius-md);
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    transition: all 0.18s ease;
+}
+
+.btn-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+}
+
+.btn-submit:active {
+    transform: translateY(0);
+}
+.meet-auto-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: #3730a3;
+}
+
+.meet-auto-banner i {
+    font-size: 16px;
+    color: #4f46e5;
+}.meet-auto-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: #3730a3;
+}
+
+.meet-auto-banner i,
+.meet-auto-banner mat-icon {
+    color: #4f46e5;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.meet-auto-banner a {
+    color: #4338ca;
+    word-break: break-all;
+}
+
+.meet-auto-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+/* =============================================
+   RESPONSIVE
+============================================= */
+@media (max-width: 640px) {
+    .dialog-header {
+        padding: 18px 20px 16px;
+    }
+
+    .dialog-body {
+        padding: 18px 20px 20px !important;
+        max-height: 70vh;
+    }
+
+    .dialog-footer {
+        padding: 14px 20px 18px !important;
+    }
+
+    .candidate-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+}

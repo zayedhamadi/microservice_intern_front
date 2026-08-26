@@ -37,9 +37,11 @@ import { InterviewFormDialogComponent } from './components/interview-form-dialog
 import { PlanifierEntretienCandidatureDialogComponent } from './components/planifier-entretien-candidature-dialog/planifier-entretien-candidature-dialog.component';
 import { ConsulterUneProgrammeSpecifiqueDecalendrierDunVueTableComponent } from './components/consulter-une-programme-specifique-decalendrier-dun-vue-table/consulter-une-programme-specifique-decalendrier-dun-vue-table.component';
 import { InterviewDetailDialogComponent } from './components/interview-detail-dialog/interview-detail-dialog.component';
+import { StatutLabelPipe } from '../core/service/statut-label.pipe';
 
 @NgModule({
   declarations: [
+    StatutLabelPipe,
     DashboardRHComponent,
     SideBarComponent,
     ListUsersComponent,
@@ -56,7 +58,7 @@ import { InterviewDetailDialogComponent } from './components/interview-detail-di
     PlanifierEntretienCandidatureDialogComponent,
     ConsulterUneProgrammeSpecifiqueDecalendrierDunVueTableComponent,
     InterviewDetailDialogComponent,
-    ],
+  ],
   imports: [
     CommonModule,
     FormsModule,

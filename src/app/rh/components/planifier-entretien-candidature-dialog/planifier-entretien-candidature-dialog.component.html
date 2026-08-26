@@ -1,91 +1,128 @@
-<h2 mat-dialog-title
-    style="font-size: 20px; font-weight: 800; letter-spacing: -0.02em; padding: 20px 24px 10px; color: var(--text-main);">
-    <i class="fa-solid fa-calendar-check" style="color: var(--primary); margin-right: 8px;"></i> Planifier un entretien
-</h2>
-
-<mat-dialog-content [formGroup]="form" style="padding: 10px 24px 24px; font-family: inherit;">
-    <!-- Fiche candidat épurée -->
-    <div
-        style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid var(--border); padding: 16px 20px; border-radius: 12px; margin-bottom: 24px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-            <span style="font-size: 15px; font-weight: 700; color: #0f172a;">{{ data.context.candidateName }}</span>
-            <span
-                style="font-size: 11px; background: rgba(79, 70, 229, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-weight: 700; text-transform: uppercase;">
-                {{ typeLabels[data.context.typeEntretien] }}
-            </span>
+<div class="dialog-wrapper">
+    <!-- En-tête -->
+    <div class="dialog-header">
+        <div class="header-icon-wrap">
+            <i class="fa-solid fa-calendar-check"></i>
         </div>
-        <div
-            style="font-size: 13px; color: var(--text-muted); font-weight: 500; display: flex; flex-direction: column; gap: 2px;">
-            <span><i class="fa-regular fa-envelope" style="margin-right:6px;"></i>{{ data.context.candidateEmail
-                }}</span>
-            <span><i class="fa-solid fa-briefcase" style="margin-right:6px;"></i>Poste : <strong>{{
-                    data.context.posteRecrutement }}</strong></span>
+        <div class="header-titles">
+            <h2 mat-dialog-title class="dialog-title">Planifier un entretien</h2>
+            <p class="dialog-subtitle">Sélectionnez la date, l'heure et les modalités de convocation.</p>
         </div>
+        <button type="button" class="btn-close" (click)="annuler()" aria-label="Fermer">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
     </div>
 
-    <!-- Sélections de formulaires et inputs -->
-    <div style="display: flex; flex-direction: column; gap: 16px;">
-        <mat-form-field appearance="outline" style="width:100%">
-            <mat-label>Type d'entretien</mat-label>
-            <mat-select formControlName="typeEntretien">
-                <mat-option [value]="data.context.typeEntretien">{{ typeLabels[data.context.typeEntretien]
-                    }}</mat-option>
-            </mat-select>
-        </mat-form-field>
+    <mat-dialog-content class="dialog-body" [formGroup]="form">
+        <!-- Fiche Candidat Pro -->
+        <div class="candidate-card">
+            <div class="candidate-avatar">
+                {{ data.context.candidateName ? data.context.candidateName.charAt(0).toUpperCase() : 'C' }}
+            </div>
+            <div class="candidate-details">
+                <div class="candidate-top">
+                    <span class="candidate-name">{{ data.context.candidateName }}</span>
+                    <span class="type-pill">
+                        {{ typeLabels[data.context.typeEntretien] }}
+                    </span>
+                </div>
+                <div class="candidate-meta">
+                    <span class="meta-item">
+                        <i class="fa-regular fa-envelope"></i> {{ data.context.candidateEmail }}
+                    </span>
+                    <span class="meta-separator">•</span>
+                    <span class="meta-item">
+                        <i class="fa-solid fa-briefcase"></i> {{ data.context.posteRecrutement }}
+                    </span>
+                </div>
+            </div>
+        </div>
 
-        <mat-form-field appearance="outline" style="width:100%">
-            <mat-label>Date et heure de rendez-vous</mat-label>
-            <input matInput type="datetime-local" formControlName="dateEntretien" [min]="minDateTime" />
-            <mat-error *ngIf="form.get('dateEntretien')?.hasError('required')">La date et l'heure sont
-                requises.</mat-error>
-            <mat-error *ngIf="form.get('dateEntretien')?.hasError('datePassee')">La date doit se situer dans le
-                futur.</mat-error>
-        </mat-form-field>
+        <!-- Formulaire -->
+        <div class="form-grid">
+            <!-- Type d'entretien -->
+            <mat-form-field appearance="outline" class="field-full">
+                <mat-label>Type d'entretien</mat-label>
+                <mat-select formControlName="typeEntretien">
+                    <mat-option [value]="data.context.typeEntretien">
+                        {{ typeLabels[data.context.typeEntretien] }}
+                    </mat-option>
+                </mat-select>
+                <i matSuffix class="fa-solid fa-layer-group field-suffix-icon"></i>
+            </mat-form-field>
 
-        <mat-form-field appearance="outline" style="width:100%">
-            <mat-label>Mode de convocation</mat-label>
-            <mat-select formControlName="mode">
-                <mat-option value="TELEPHONIQUE" [disabled]="!telephoneAutorise">Téléphonique</mat-option>
-                <mat-option value="DISTANCIEL">Google Meet (Visioconférence)</mat-option>
-                <mat-option value="PRESENTIEL">Présentiel (Sur site)</mat-option>
-            </mat-select>
-            <mat-error *ngIf="form.get('mode')?.hasError('telephoneNonAutorise')">Téléphone disponible uniquement pour
-                les entretiens initiaux.</mat-error>
-        </mat-form-field>
+            <!-- Date & Heure -->
+            <mat-form-field appearance="outline" class="field-full">
+                <mat-label>Date et heure du rendez-vous</mat-label>
+                <input matInput type="datetime-local" formControlName="dateEntretien" [min]="minDateTime" />
+                <i matSuffix class="fa-regular fa-clock field-suffix-icon"></i>
+                <mat-error *ngIf="form.get('dateEntretien')?.hasError('required')">
+                    La date et l'heure sont obligatoires.
+                </mat-error>
+                <mat-error *ngIf="form.get('dateEntretien')?.hasError('datePassee')">
+                    La date doit être fixée dans le futur.
+                </mat-error>
+            </mat-form-field>
 
-        <!-- Formulaires conditionnels fluides -->
-        <mat-form-field *ngIf="form.get('mode')?.value === 'PRESENTIEL'" appearance="outline" style="width:100%">
-            <mat-label>Adresse physique des locaux</mat-label>
-            <input matInput formControlName="lieu"
-                placeholder="Ex: Bureau 302, Rue de la Bourse, Les Berges du Lac 2, Tunis" />
-            <mat-error *ngIf="form.get('lieu')?.hasError('required')">L'adresse exacte est requise.</mat-error>
-        </mat-form-field>
+            <!-- Mode de convocation -->
+            <mat-form-field appearance="outline" class="field-full">
+                <mat-label>Mode de convocation</mat-label>
+                <mat-select formControlName="mode">
+                    <mat-option value="DISTANCIEL">
+                        <span class="option-content"><i class="fa-solid fa-video"></i> Visioconférence (Google
+                            Meet)</span>
+                    </mat-option>
+                    <mat-option value="PRESENTIEL">
+                        <span class="option-content"><i class="fa-solid fa-building"></i> Présentiel (Sur site)</span>
+                    </mat-option>
+                    <mat-option value="TELEPHONIQUE" [disabled]="!telephoneAutorise">
+                        <span class="option-content"><i class="fa-solid fa-phone"></i> Téléphonique (RH initial
+                            uniquement)</span>
+                    </mat-option>
+                </mat-select>
+                <i matSuffix class="fa-solid fa-handshake field-suffix-icon"></i>
+                <mat-error *ngIf="form.get('mode')?.hasError('telephoneNonAutorise')">
+                    L'entretien téléphonique est réservé aux étapes préliminaires.
+                </mat-error>
+            </mat-form-field>
 
-        <mat-form-field *ngIf="form.get('mode')?.value === 'DISTANCIEL'" appearance="outline" style="width:100%">
-            <mat-label>Lien d'invitation Google Meet</mat-label>
-            <input matInput formControlName="lienVisio" placeholder="https://meet.google.com/abc-defg-hij" />
-            <mat-error *ngIf="form.get('lienVisio')?.hasError('required')">Le lien Meet est obligatoire pour la
-                visioconférence.</mat-error>
-            <mat-error *ngIf="form.get('lienVisio')?.hasError('pattern')">L'URL du lien doit débuter par
-                https://</mat-error>
-        </mat-form-field>
+            <!-- Champs conditionnels fluides -->
+            <mat-form-field *ngIf="form.get('mode')?.value === 'PRESENTIEL'" appearance="outline"
+                class="field-full anim-slide">
+                <mat-label>Adresse physique ou salle de réunion</mat-label>
+                <input matInput formControlName="lieu" placeholder="Ex. : Bâtiment A, Bureau 302, Les Berges du Lac" />
+                <i matSuffix class="fa-solid fa-location-dot field-suffix-icon"></i>
+                <mat-error *ngIf="form.get('lieu')?.hasError('required')">
+                    L'adresse exacte ou le numéro de salle est requis.
+                </mat-error>
+            </mat-form-field>
+
+    <div *ngIf="form.get('mode')?.value === 'DISTANCIEL'" class="field-full anim-slide meet-auto-banner">
+        <i class="fa-solid fa-video"></i>
+        <span>Un lien Google Meet sera généré automatiquement et envoyé au candidat avec la convocation.</span>
     </div>
+        </div>
 
-    <!-- Notification d'invitation automatique -->
-    <div
-        style="font-size: 12.5px; color: var(--text-muted); margin-top: 18px; display: flex; align-items: center; gap: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 14px; border-radius: 8px;">
-        <i class="fa-solid fa-paper-plane" style="color: #16a34a;"></i>
-        <span>Une convocation par email incluant le planning sera envoyée à <strong>{{ data.context.candidateEmail
-                }}</strong>.</span>
-    </div>
-</mat-dialog-content>
+        <!-- Notice informative convocation automatique -->
+        <div class="notification-banner">
+            <div class="notif-icon">
+                <i class="fa-solid fa-paper-plane"></i>
+            </div>
+            <div class="notif-text">
+                Une convocation par email incluant le récapitulatif sera automatiquement transmise à
+                <strong>{{ data.context.candidateEmail }}</strong>.
+            </div>
+        </div>
+    </mat-dialog-content>
 
-<mat-dialog-actions align="end"
-    style="padding: 16px 24px 20px; border-top: 1px solid var(--border); background-color: #fafafa; gap: 12px;">
-    <button mat-button type="button" (click)="annuler()"
-        style="font-weight: 600; color: var(--text-muted);">Annuler</button>
-    <button mat-raised-button color="primary" type="button" (click)="enregistrer()"
-        style="font-weight: 600; background-color: var(--primary) !important; border-radius: var(--radius-sm); padding: 0 20px; height: 40px; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15)">
-        Confirmer et Envoyer
-    </button>
-</mat-dialog-actions>
+    <!-- Actions -->
+    <mat-dialog-actions class="dialog-footer">
+        <button type="button" class="btn-cancel" (click)="annuler()">
+            Annuler
+        </button>
+        <button type="button" class="btn-submit" (click)="enregistrer()">
+            <i class="fa-solid fa-check"></i>
+            Confirmer et planifier
+        </button>
+    </mat-dialog-actions>
+</div>

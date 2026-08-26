@@ -1,27 +1,10 @@
 import { Component, Inject } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-  AbstractControl,
-} from '@angular/forms';
-import {
-  MatDialogRef,
-  MAT_DIALOG_DATA,
-  MatDialogModule,
-} from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { CommonModule } from '@angular/common';
-import { QuillModule } from 'ngx-quill';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import Swal from 'sweetalert2';
+
+import { Interview } from '../../../core/models/interview';
 import { InterviewService } from '../../../core/service/interview.service';
 
 @Component({
@@ -34,10 +17,14 @@ export class InterviewEmployeeFormDialogComponent {
   isEdit = false;
   saving = false;
 
-  // Ajout des modes/status pour éviter undefined
-  modes = ['PRESENTIEL', 'DISTANCIEL', 'TELEPHONIQUE', 'VISIOCONFERENCE'];
-  statuses = ['PLANIFIE', 'EN_COURS', 'TERMINE', 'ANNULE', 'REPORTE'];
-  statusLabels: Record<string, string> = {
+  readonly modes = [
+    'PRESENTIEL',
+    'DISTANCIEL',
+    'TELEPHONIQUE',
+    'VISIOCONFERENCE',
+  ];
+  readonly statuses = ['PLANIFIE', 'EN_COURS', 'TERMINE', 'ANNULE', 'REPORTE'];
+  readonly statusLabels: Record<string, string> = {
     PLANIFIE: 'Planifié',
     EN_COURS: 'En cours',
     TERMINE: 'Terminé',
@@ -57,18 +44,24 @@ export class InterviewEmployeeFormDialogComponent {
   };
 
   constructor(
-    private interviewService: InterviewService,
-    private fb: FormBuilder,
+    private readonly interviewService: InterviewService,
+    private readonly fb: FormBuilder,
     @Inject(MatDialogRef)
-    private dialogRef: MatDialogRef<InterviewEmployeeFormDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
-    private snackBar: MatSnackBar,
+    private readonly dialogRef: MatDialogRef<InterviewEmployeeFormDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public readonly data: any,
+    private readonly snackBar: MatSnackBar,
   ) {
     this.isEdit = !!data?.interview?.id;
     const i = data?.interview || {};
 
     this.minDate = new Date();
     this.minDate.setHours(0, 0, 0, 0);
+
+    const dateInitiale = i.interviewDate
+      ? new Date(i.interviewDate)
+      : data?.selectedDate
+        ? new Date(data.selectedDate)
+        : new Date();
 
     this.form = this.fb.group({
       candidateName: [
@@ -78,10 +71,7 @@ export class InterviewEmployeeFormDialogComponent {
       candidateEmail: [i.candidateEmail || '', Validators.email],
       posteRecrutement: [i.posteRecrutement || '', Validators.required],
       interviewerName: [i.interviewerName || '', Validators.required],
-      interviewDate: [
-        i.interviewDate ? new Date(i.interviewDate) : new Date(),
-        Validators.required,
-      ],
+      interviewDate: [dateInitiale, Validators.required],
       startTime: [i.startTime || '09:00', Validators.required],
       endTime: [i.endTime || '10:00', [Validators.required]],
       mode: [i.mode || 'PRESENTIEL', Validators.required],
@@ -93,20 +83,85 @@ export class InterviewEmployeeFormDialogComponent {
   }
 
   get f() {
-    return (this.form as FormGroup).controls;
+    return this.form.controls;
+  }
+
+  private formatIsoDate(d: any): string {
+    if (!d) return '';
+    if (typeof d === 'string') {
+      return d.includes('T') ? d.split('T')[0] : d;
+    }
+    if (d instanceof Date && !isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return '';
   }
 
   submit(): void {
     if (this.form.invalid) {
-      /* inchangé */ return;
+      this.form.markAllAsTouched();
+      return;
     }
-    this.saving = true;
+
     const raw = this.form.getRawValue();
-    const dateObj = new Date(raw.interviewDate);
+    const interviewDate = this.formatIsoDate(raw.interviewDate);
+    const heureDebut = raw.startTime ? raw.startTime.substring(0, 5) : '';
+    const interviewIdActuelle = this.data?.interview?.id;
+
+    const conflit = (this.data?.allInterviews || []).find((itv: Interview) => {
+      if (itv.id === interviewIdActuelle || itv.status === 'ANNULE') {
+        return false;
+      }
+
+      const dateExistante = this.formatIsoDate(itv.interviewDate);
+      const heureExistante = itv.startTime ? itv.startTime.substring(0, 5) : '';
+
+      return dateExistante === interviewDate && heureExistante === heureDebut;
+    });
+
+    if (conflit) {
+      const dateAffichee = new Date(
+        interviewDate + 'T00:00:00',
+      ).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+
+      Swal.fire({
+        icon: 'warning',
+        title: 'Créneau horaire indisponible',
+        html: `
+          <p style="text-align:left; color:#334155; margin:0 0 10px; font-size:14px;">
+            Un entretien est déjà planifié le <strong>${dateAffichee}</strong> à <strong>${heureDebut}</strong>.
+          </p>
+          <div style="text-align:left; background:#f8fafc; border:1px solid #e2e8f0; padding:10px 14px; border-radius:8px; font-size:13px; color:#64748b; margin-bottom:12px;">
+            <div><strong>Candidat :</strong> ${conflit.candidateName}</div>
+            <div><strong>Intervenant :</strong> ${conflit.interviewerName}</div>
+          </div>
+          <p style="text-align:left; color:#ef4444; font-weight:600; font-size:13px; margin:0;">
+            Veuillez sélectionner une autre heure pour éviter tout chevauchement.
+          </p>
+        `,
+        confirmButtonText: "Modifier l'heure",
+        confirmButtonColor: '#4f46e5',
+      });
+      return;
+    }
+
+    this.saving = true;
     const payload = {
       ...raw,
-      interviewDate: dateObj.toISOString().split('T')[0],
-      meetingLink: raw.mode === 'DISTANCIEL' ? raw.meetingLink : null,
+      interviewDate,
+      // BUG FIX : on n'envoie meetingLink que s'il a été rempli manuellement ;
+      // s'il est vide en DISTANCIEL, le backend génère le lien automatiquement.
+      meetingLink:
+        raw.mode === 'DISTANCIEL' && raw.meetingLink?.trim()
+          ? raw.meetingLink.trim()
+          : null,
       location: raw.mode === 'PRESENTIEL' ? raw.location : null,
     };
 
@@ -115,14 +170,37 @@ export class InterviewEmployeeFormDialogComponent {
       : this.interviewService.create(payload);
 
     request$.subscribe({
-      next: (result) => {
+      next: (result: any) => {
         this.saving = false;
         this.dialogRef.close(result);
-        this.snackBar.open(
-          this.isEdit ? '✅ Entretien mis à jour' : '✅ Entretien planifié',
-          'Fermer',
-          { duration: 3000 },
-        );
+
+        // BUG FIX : afficher le lien Meet généré automatiquement par le
+        // backend, plutôt qu'un simple message de succès générique.
+        if (raw.mode === 'DISTANCIEL' && result?.meetingLink) {
+          Swal.fire({
+            icon: 'success',
+            title: this.isEdit ? 'Entretien mis à jour' : 'Entretien planifié',
+            html: `
+              <p style="text-align:left; font-size:14px; color:#334155; margin:0 0 10px;">
+                Lien Google Meet généré :
+              </p>
+              <a href="${result.meetingLink}" target="_blank" rel="noopener"
+                 style="word-break:break-all; color:#4f46e5; font-weight:600;">
+                ${result.meetingLink}
+              </a>
+            `,
+            confirmButtonText: 'Fermer',
+            confirmButtonColor: '#4f46e5',
+          });
+        } else {
+          this.snackBar.open(
+            this.isEdit
+              ? 'Entretien mis à jour avec succès.'
+              : 'Entretien planifié avec succès.',
+            'Fermer',
+            { duration: 3000 },
+          );
+        }
       },
       error: (err) => {
         this.saving = false;
@@ -143,4 +221,3 @@ export class InterviewEmployeeFormDialogComponent {
     return this.isEdit ? "Modifier l'entretien" : 'Planifier un entretien';
   }
 }
-

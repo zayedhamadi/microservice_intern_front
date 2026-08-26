@@ -10,4 +10,16 @@ body {
 body {
     margin: 0;
     font-family: Roboto, "Helvetica Neue", sans-serif;
+}/* =============================================
+   DIALOG PANEL PERSONNALISÉ (global)
+============================================= */
+.interview-dialog-panel .mat-mdc-dialog-surface {
+    padding: 0 !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.25) !important;
+}
+
+.interview-dialog-panel .mat-mdc-dialog-container {
+    --mdc-dialog-container-shape: 16px;
 }

@@ -9,7 +9,7 @@ import { UserService } from '../../../core/service/user.service';
 import { CessationService } from '../../../core/service/cessation.service';
 import { NotificationService } from '../../../core/service/notification.service';
 import { UserDetailFullResponse } from '../../../core/models/UserDetailFullResponse';
-
+import { switchMap } from 'rxjs/operators';
 export type UserDetailRH = UserDetailFullResponse;
 
 @Component({
@@ -99,37 +99,27 @@ export class ConsulterUserByAdminComponent implements OnInit, OnDestroy {
 
     forkJoin({
       user: this.userService.getUserByIddAdmin(id),
-      certifications: this.certificationService
-        .getCertificationsByUserId(id)
-        .pipe(
-          catchError((error: any) => {
-            console.log(error);
-            return of([]);
-          }),
-        ),
+      certifications: this.certificationService.getCertificationsssByUserId(id),
     })
       .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: ({ user, certifications }) => {
+      .subscribe(
+        ({ user, certifications }) => {
           this.user = this.normalizeUserData({
             ...user,
             certifications: certifications || [],
           });
           this.isLoading = false;
         },
-        error: (error: any) => {
+        (error: any) => {
           console.log(error);
-          console.error('Erreur lors du chargement du profil:', error);
+          console.error('Erreur:', error);
           this.user = null;
           this.isLoading = false;
-          this.notification.toastError(
-            'Impossible de charger le profil utilisateur',
-          );
+          this.notification.toastError('Impossible de charger le profil');
           this.router.navigate([ConsulterUserByAdminComponent.LIST_ROUTE]);
         },
-      });
+      );
   }
-
   private normalizeUserData(data: UserDetailFullResponse): UserDetailRH {
     return {
       ...data,
@@ -142,34 +132,6 @@ export class ConsulterUserByAdminComponent implements OnInit, OnDestroy {
       anneesExperience: data.anneesExperience ?? 0,
       certifications: data.certifications || [],
     };
-  }
-
-  get pagedCertifications(): CertificationDTO[] {
-    if (!this.user?.certifications) return [];
-    const start = (this.certPage - 1) * this.CERT_PAGE_SIZE;
-    return this.user.certifications.slice(start, start + this.CERT_PAGE_SIZE);
-  }
-
-  get certTotalPages(): number {
-    return Math.max(
-      1,
-      Math.ceil((this.user?.certifications?.length ?? 0) / this.CERT_PAGE_SIZE),
-    );
-  }
-
-  get certPages(): number[] {
-    return Array.from({ length: this.certTotalPages }, (_, i) => i + 1);
-  }
-
-  get certRangeStart(): number {
-    return (this.certPage - 1) * this.CERT_PAGE_SIZE + 1;
-  }
-
-  get certRangeEnd(): number {
-    return Math.min(
-      this.certPage * this.CERT_PAGE_SIZE,
-      this.user?.certifications?.length ?? 0,
-    );
   }
 
   certGoTo(page: number): void {
@@ -212,6 +174,9 @@ export class ConsulterUserByAdminComponent implements OnInit, OnDestroy {
     }
   }
 
+  // =======================================
+  // MODALE CESSATION (VERSION PRO)
+  // =======================================
   async openCesserModal(): Promise<void> {
     if (!this.user) return;
 
@@ -219,43 +184,47 @@ export class ConsulterUserByAdminComponent implements OnInit, OnDestroy {
     const roleColor = this.getRoleColor(this.user.role);
 
     const result = await Swal.fire({
+      title: '<div class="modal-title">Cesser ce compte ?</div>',
       html: `
-      <div class="cesser-modal">
-        <div class="cm-icon-zone">
-          <div class="cm-icon-ring"><i class="fa-solid fa-user-slash"></i></div>
+      <div class="modal-subtitle">
+        Cette action désactivera <strong>définivement</strong> l'accès de l'utilisateur à la plateforme.
+      </div>
+
+      <div class="modal-user-card">
+        <div class="modal-avatar" style="background:${roleColor}">${initials}</div>
+        <div>
+          <div class="modal-user-name">${this.user.prenom} ${this.user.nom}</div>
+          <div class="modal-user-email">${this.user.email}</div>
         </div>
-        <h2 class="cm-title">Cesser ce compte ?</h2>
-        <p class="cm-subtitle">Cette action désactivera l'accès de l'utilisateur à la plateforme.</p>
-        <div class="cm-user-card">
-          <div class="cm-avatar" style="background:${roleColor}">${initials}</div>
-          <div class="cm-user-info">
-            <div class="cm-user-name">${this.user.prenom} ${this.user.nom}</div>
-            <div class="cm-user-email">${this.user.email}</div>
-          </div>
+      </div>
+
+      <div class="cessation-warning">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div class="cessation-warning-content">
+          <strong>Attention</strong> : Une réactivation manuelle sera nécessaire pour redonner l'accès.
+          <br>Les données seront conservées.
         </div>
-        <div class="cm-warning">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <span>Une réactivation manuelle sera nécessaire pour redonner l'accès.</span>
-        </div>
-        <div class="cm-field">
-          <label class="cm-label">Motif de la cessation <span class="cm-required">*</span></label>
-          <textarea id="swal-cesser-motif" class="cm-textarea"
-            placeholder="Ex : Fin de contrat, démission, faute grave…" rows="4" maxlength="300"></textarea>
-          <div class="cm-char-count"><span id="cm-char-counter">0</span> / 300</div>
-        </div>
-      </div>`,
+      </div>
+
+      <div class="modal-field">
+        <label class="modal-label">
+          Motif de la cessation <span class="required">*</span>
+        </label>
+        <textarea id="swal-cesser-motif" class="modal-textarea"
+          placeholder="Ex : Fin de contrat, démission, faute grave, départ à la retraite..."
+          rows="5" maxlength="500"></textarea>
+        <div class="modal-char-count"><span id="cm-char-counter">0</span> / 500 caractères</div>
+      </div>
+    `,
       showCancelButton: true,
       confirmButtonText:
         '<i class="fa-solid fa-user-slash"></i> Confirmer la cessation',
       cancelButtonText: 'Annuler',
-      buttonsStyling: false,
       customClass: {
-        popup: 'cm-popup',
-        confirmButton: 'cm-btn cm-btn-danger',
-        cancelButton: 'cm-btn cm-btn-cancel',
-        actions: 'cm-actions',
+        popup: 'swal2-popup',
+        confirmButton: 'swal2-confirm',
+        cancelButton: 'swal2-cancel',
       },
-      focusConfirm: false,
       didOpen: () => {
         const textarea = document.getElementById(
           'swal-cesser-motif',
@@ -271,15 +240,11 @@ export class ConsulterUserByAdminComponent implements OnInit, OnDestroy {
           document.getElementById('swal-cesser-motif') as HTMLTextAreaElement
         )?.value?.trim();
         if (!motif) {
-          Swal.showValidationMessage(
-            'Le motif est obligatoire pour confirmer la cessation',
-          );
+          Swal.showValidationMessage('Le motif est obligatoire');
           return false;
         }
-        if (motif.length < 5) {
-          Swal.showValidationMessage(
-            'Merci de préciser un motif un peu plus détaillé',
-          );
+        if (motif.length < 10) {
+          Swal.showValidationMessage('Minimum 10 caractères requis');
           return false;
         }
         return motif;
@@ -291,6 +256,52 @@ export class ConsulterUserByAdminComponent implements OnInit, OnDestroy {
     }
   }
 
+  // =======================================
+  // MODALE RÉACTIVATION (VERSION PRO)
+  // =======================================
+  async openReactiverModal(): Promise<void> {
+    if (!this.user) return;
+
+    const initials = this.getInitials(this.user);
+    const roleColor = this.getRoleColor(this.user.role);
+
+    const result = await Swal.fire({
+      title: '<div class="modal-title">Réactiver ce compte ?</div>',
+      html: `
+      <div class="modal-subtitle">
+        L'utilisateur retrouvera <strong>immédiatement</strong> l'accès à la plateforme avec toutes ses données intactes.
+      </div>
+
+      <div class="modal-user-card">
+        <div class="modal-avatar" style="background:${roleColor}">${initials}</div>
+        <div>
+          <div class="modal-user-name">${this.user.prenom} ${this.user.nom}</div>
+          <div class="modal-user-email">${this.user.email}</div>
+        </div>
+      </div>
+
+      <div class="reactivation-confirmation">
+        <i class="fa-solid fa-circle-check"></i>
+        <div class="reactivation-confirmation-content">
+          <strong>Confirmation</strong> : Toutes les données et permissions seront restaurées.
+        </div>
+      </div>
+    `,
+      showCancelButton: true,
+      confirmButtonText:
+        '<i class="fa-solid fa-user-check"></i> Confirmer la réactivation',
+      cancelButtonText: 'Annuler',
+      customClass: {
+        popup: 'swal2-popup',
+        confirmButton: 'swal2-confirm reactivation-btn',
+        cancelButton: 'swal2-cancel',
+      },
+    });
+
+    if (result.isConfirmed) {
+      this.reactiverUser();
+    }
+  }
   private cesserUser(motif: string): void {
     this.cessationService
       .cesserUser(this.userId, motif)
@@ -307,47 +318,6 @@ export class ConsulterUserByAdminComponent implements OnInit, OnDestroy {
           this.notification.toastError('Échec de la désactivation du compte');
         },
       });
-  }
-
-  async openReactiverModal(): Promise<void> {
-    if (!this.user) return;
-
-    const initials = this.getInitials(this.user);
-    const roleColor = this.getRoleColor(this.user.role);
-
-    const result = await Swal.fire({
-      html: `
-      <div class="cesser-modal cm-reactiver">
-        <div class="cm-icon-zone cm-icon-zone-success">
-          <div class="cm-icon-ring cm-icon-ring-success"><i class="fa-solid fa-user-check"></i></div>
-        </div>
-        <h2 class="cm-title">Réactiver ce compte ?</h2>
-        <p class="cm-subtitle">L'utilisateur retrouvera immédiatement l'accès à la plateforme.</p>
-        <div class="cm-user-card">
-          <div class="cm-avatar" style="background:${roleColor}">${initials}</div>
-          <div class="cm-user-info">
-            <div class="cm-user-name">${this.user.prenom} ${this.user.nom}</div>
-            <div class="cm-user-email">${this.user.email}</div>
-          </div>
-        </div>
-      </div>`,
-      showCancelButton: true,
-      confirmButtonText:
-        '<i class="fa-solid fa-user-check"></i> Confirmer la réactivation',
-      cancelButtonText: 'Annuler',
-      buttonsStyling: false,
-      customClass: {
-        popup: 'cm-popup',
-        confirmButton: 'cm-btn cm-btn-success',
-        cancelButton: 'cm-btn cm-btn-cancel',
-        actions: 'cm-actions',
-      },
-      focusConfirm: false,
-    });
-
-    if (result.isConfirmed) {
-      this.reactiverUser();
-    }
   }
 
   private reactiverUser(): void {
@@ -457,5 +427,34 @@ export class ConsulterUserByAdminComponent implements OnInit, OnDestroy {
 
   isAccountInactive(): boolean {
     return this.user?.etatCompte === 'INACTIF';
+  }
+
+  // 👇 Ajoutez ces 4 méthodes (pagedCertifications + les autres getters pour la pagination)
+  get pagedCertifications(): CertificationDTO[] {
+    if (!this.user?.certifications) return [];
+    const start = (this.certPage - 1) * this.CERT_PAGE_SIZE;
+    return this.user.certifications.slice(start, start + this.CERT_PAGE_SIZE);
+  }
+
+  get certTotalPages(): number {
+    return Math.max(
+      1,
+      Math.ceil((this.user?.certifications?.length ?? 0) / this.CERT_PAGE_SIZE),
+    );
+  }
+
+  get certPages(): number[] {
+    return Array.from({ length: this.certTotalPages }, (_, i) => i + 1);
+  }
+
+  get certRangeStart(): number {
+    return (this.certPage - 1) * this.CERT_PAGE_SIZE + 1;
+  }
+
+  get certRangeEnd(): number {
+    return Math.min(
+      this.certPage * this.CERT_PAGE_SIZE,
+      this.user?.certifications?.length ?? 0,
+    );
   }
 }

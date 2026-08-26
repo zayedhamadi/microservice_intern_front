@@ -1,14 +1,9 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogRef,
-} from '@angular/material/dialog';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import Swal from 'sweetalert2';
 
+import { Interview } from '../../../core/models/interview';
 import {
   PlanificationCandidatureContext,
   PlanifierEntretienPayload,
@@ -18,18 +13,19 @@ import {
 export interface PlanifierEntretienDialogData {
   context: PlanificationCandidatureContext;
   selectedDate?: string;
+  allInterviews?: Interview[];
 }
 
 export interface PlanifierEntretienDialogResult {
   type: RecrutementInterviewType;
   payload: PlanifierEntretienPayload;
 }
+
 @Component({
   selector:
     'app-planifier-entretient-technique-candidature-dialog-with-employee',
   templateUrl:
     './planifier-entretient-technique-candidature-dialog-with-employee.component.html',
-  // styleUrl: './planifier-entretient-technique-candidature-dialog-with-employee.component.css'
 })
 export class PlanifierEntretientTechniqueCandidatureDialogWithEmployeeComponent implements OnInit {
   readonly typeLabels: Record<RecrutementInterviewType, string> = {
@@ -94,15 +90,54 @@ export class PlanifierEntretientTechniqueCandidatureDialogWithEmployeeComponent 
     if (mode === 'PRESENTIEL') {
       lieu.setValidators([Validators.required, Validators.maxLength(500)]);
     }
+    // BUG FIX : lienVisio n'est plus obligatoire — le backend
+    // (GoogleMeetService) génère automatiquement le lien Google Meet.
+    // On garde uniquement la validation de format, au cas où l'utilisateur
+    // choisit de saisir un lien de secours manuellement.
     if (mode === 'DISTANCIEL') {
-      lienVisio.setValidators([
-        Validators.required,
-        Validators.pattern(/^https?:\/\/.+$/i),
-      ]);
+      lienVisio.setValidators([Validators.pattern(/^https?:\/\/.+$/i)]);
     }
 
     lieu.updateValueAndValidity({ emitEvent: false });
     lienVisio.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private toMinutes(timeStr?: string): number {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  }
+
+  private chercherConflitHoraire(
+    dateIso: string,
+    heureDebut: string,
+    dureeMinutes = 60,
+  ): Interview | null {
+    const interviews = this.data.allInterviews || [];
+    const debutNouveau = this.toMinutes(heureDebut);
+    const finNouveau = debutNouveau + dureeMinutes;
+
+    for (const itv of interviews) {
+      if (itv.status === 'ANNULE') continue;
+
+      if (itv.interviewDate === dateIso) {
+        if (!itv.startTime) continue;
+
+        const debutExistant = this.toMinutes(itv.startTime);
+        const finExistant = itv.endTime
+          ? this.toMinutes(itv.endTime)
+          : debutExistant + 60;
+
+        const chevauchement =
+          debutNouveau < finExistant && finNouveau > debutExistant;
+
+        if (chevauchement) {
+          return itv;
+        }
+      }
+    }
+
+    return null;
   }
 
   enregistrer(): void {
@@ -119,6 +154,35 @@ export class PlanifierEntretientTechniqueCandidatureDialogWithEmployeeComponent 
       return;
     }
 
+    const dateChoisie = v.dateEntretien.substring(0, 10);
+    const heureChoisie = v.dateEntretien.substring(11, 16);
+
+    const conflit = this.chercherConflitHoraire(dateChoisie, heureChoisie);
+
+    if (conflit) {
+      const nomCandidat = conflit.candidateName || 'un autre candidat';
+      const heurePlage = conflit.endTime
+        ? `${conflit.startTime} à ${conflit.endTime}`
+        : `${conflit.startTime}`;
+
+      Swal.fire({
+        icon: 'warning',
+        title: 'Créneau horaire indisponible',
+        html: `
+          <p style="font-size: 14px; color: #334155; text-align: left; margin: 0 0 10px;">
+            Un entretien est déjà programmé le <strong>${dateChoisie}</strong> à cette heure avec
+            <strong>${nomCandidat}</strong> (${heurePlage}).
+          </p>
+          <p style="font-size: 13.5px; color: #ef4444; font-weight: 600; text-align: left; margin: 0;">
+            Veuillez choisir une autre heure pour cet entretien technique.
+          </p>
+        `,
+        confirmButtonText: "Modifier l'heure",
+        confirmButtonColor: '#4f46e5',
+      });
+      return;
+    }
+
     const dateEntretien =
       v.dateEntretien.length === 16 ? `${v.dateEntretien}:00` : v.dateEntretien;
 
@@ -128,7 +192,12 @@ export class PlanifierEntretientTechniqueCandidatureDialogWithEmployeeComponent 
         mode: v.mode,
         dateEntretien,
         lieu: v.mode === 'PRESENTIEL' ? v.lieu.trim() : undefined,
-        lienVisio: v.mode === 'DISTANCIEL' ? v.lienVisio.trim() : undefined,
+        // BUG FIX : n'envoyer lienVisio que s'il a été rempli manuellement ;
+        // sinon on laisse undefined pour que le backend génère le lien.
+        lienVisio:
+          v.mode === 'DISTANCIEL' && v.lienVisio.trim()
+            ? v.lienVisio.trim()
+            : undefined,
       },
     });
   }
@@ -147,4 +216,3 @@ export class PlanifierEntretientTechniqueCandidatureDialogWithEmployeeComponent 
     return this.toLocalDateTimeInput(d);
   }
 }
-

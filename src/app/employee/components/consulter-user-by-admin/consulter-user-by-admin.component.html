@@ -245,7 +245,7 @@
             <div class="cert-grid" *ngIf="hasCertifications()">
                 <div class="cert-card" *ngFor="let cert of pagedCertifications">
                     <div class="cert-header">
-                        <div class="cert-icon"><i class="fa-solid fa-certificate"></i></div>
+                        <div class="cert-icon"><i class="fa-solid fa-certificate"></i></div>    
                         <div class="cert-meta">
                             <div class="cert-title">{{ cert.titre }}</div>
                             <div class="cert-date">
@@ -293,25 +293,15 @@
                 <i class="fa-solid fa-user-xmark"></i> Détails de la cessation
             </div>
         
-            <div class="cess-timeline">
-                <div class="cess-tl-item">
-                    <div class="cess-tl-dot cess-tl-dot-red"><i class="fa-solid fa-user-slash"></i></div>
-                    <div class="cess-tl-content">
-                        <div class="cess-tl-label">Compte désactivé</div>
-                        <div class="cess-tl-date">{{ user.dateCessation ? (user.dateCessation | date:'dd/MM/yyyy') : 'Date non
-                            renseignée' }}</div>
-                        <div class="cess-tl-motif">{{ user.motifCessation || 'Aucun motif renseigné' }}</div>
-                    </div>
-                </div>
-        
-                <div class="cess-tl-item" *ngIf="user.motifReactivation">
-                    <div class="cess-tl-dot cess-tl-dot-green"><i class="fa-solid fa-user-check"></i></div>
-                    <div class="cess-tl-content">
-                        <div class="cess-tl-label">Dernière réactivation</div>
-                        <div class="cess-tl-motif">{{ user.motifReactivation }}</div>
-                    </div>
-                </div>
-            </div>
+    <div class="cess-tl-item">
+        <div class="cess-tl-dot cess-tl-dot-red"><i class="fa-solid fa-user-slash"></i></div>
+        <div class="cess-tl-content">
+            <div class="cess-tl-label">Compte désactivé</div>
+            <div class="cess-tl-date">{{ user.dateCessation ? (user.dateCessation | date:'dd/MM/yyyy') : 'Date non
+                renseignée' }}</div>
+            <div class="cess-tl-motif">{{ user.motifCessation || 'Aucun motif renseigné' }}</div>
+        </div>
+    </div>
         
             <button class="btn btn-success" style="margin-top:24px" (click)="openReactiverModal()">
                 <i class="fa-solid fa-user-check"></i> Réactiver ce compte
