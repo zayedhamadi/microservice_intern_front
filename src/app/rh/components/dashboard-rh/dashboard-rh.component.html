@@ -1,342 +1,160 @@
 <div class="admin-layout">
     <main class="main-content">
-
-
-        
         <div class="section-header">
             <div class="section-title-group">
-                <h2 class="section-title">
-                    Tableau de bord RH
-                </h2>
-
-                <p class="section-sub">
-                    Vue d'ensemble du recrutement, des entretiens,
-                    des postes et des demandes de report
-                </p>
+                <h2 class="section-title">Tableau de bord RH</h2>
+                <p class="section-sub">Vue d'ensemble du recrutement, des entretiens, des postes et des demandes de
+                    report</p>
             </div>
-
             <div class="section-actions">
+                <div class="ws-badge" [ngClass]="{
+          'ws-connected': wsStatus === 'CONNECTED',
+          'ws-connecting': wsStatus === 'CONNECTING',
+          'ws-disconnected': wsStatus === 'DISCONNECTED',
+          'ws-error': wsStatus === 'ERROR'
+        }">
+                    <span class="ws-dot"></span>
+                    {{ wsStatus === 'CONNECTED' ? 'Connecté' : wsStatus === 'CONNECTING' ? 'Connexion…' : wsStatus ===
+                    'DISCONNECTED' ? 'Déconnecté' : 'Erreur' }}
+                </div>
                 <button type="button" class="refresh-btn" title="Rafraîchir" aria-label="Rafraîchir le tableau de bord"
                     [disabled]="isLoading" [class.spinning]="isLoading" (click)="refresh()">
                     <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
+                <button type="button" class="refresh-btn" title="Notifications" aria-label="Voir les notifications"
+                    *ngIf="unreadNotifications > 0" (click)="markAsRead()">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notification-badge">{{ unreadNotifications }}</span>
+                </button>
             </div>
         </div>
 
-        
+        <div class="realtime-toast" *ngIf="showNotificationToast && lastNotification" role="alert" aria-live="polite">
+            <div class="toast-icon" [style.background]="lastNotification.color">
+                <i class="fa-solid" [ngClass]="lastNotification.icon"></i>
+            </div>
+            <div class="toast-body">
+                <div class="toast-title">{{ lastNotification.text }}</div>
+                <div class="toast-time"><i class="fa-regular fa-clock"></i> {{ lastNotification.time }}</div>
+            </div>
+            <button class="toast-close" (click)="dismissNotificationToast()" aria-label="Fermer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
         <div class="empty-state" *ngIf="errorMessage && !isLoading">
             <i class="fa-solid fa-triangle-exclamation"></i>
-
             <span>{{ errorMessage }}</span>
-
             <button type="button" class="refresh-btn" title="Réessayer" aria-label="Réessayer" (click)="refresh()">
                 <i class="fa-solid fa-arrows-rotate"></i>
             </button>
         </div>
 
-        <!-- =====================================================
-             KPI PRINCIPAUX
-        ====================================================== -->
         <div class="kpi-grid" *ngIf="data as d">
-            <!-- Candidatures -->
             <div class="kpi-card kpi-blue">
-                <div class="kpi-icon">
-                    <i class="fa-solid fa-file-lines"></i>
-                </div>
-
+                <div class="kpi-icon"><i class="fa-solid fa-file-lines"></i></div>
                 <div class="kpi-body">
-                    <div class="kpi-label">
-                        Total des candidatures
-                    </div>
-
-                    <div class="kpi-value">
-                        {{ formatNumber(d.applications.total) }}
-                    </div>
-
-                    <div class="kpi-trend" [class.up]="
-                            isUp(
-                                d.applications.evolution.variationPourcent
-                            )
-                        " [class.down]="
-                            isDown(
-                                d.applications.evolution.variationPourcent
-                            )
-                        ">
-                        <i class="fa-solid" [class.fa-arrow-trend-up]="
-                                isUp(
-                                    d.applications.evolution.variationPourcent
-                                )
-                            " [class.fa-arrow-trend-down]="
-                                isDown(
-                                    d.applications.evolution.variationPourcent
-                                )
-                            "></i>
-
-                        {{
-                        formatVariation(
-                        d.applications.evolution.variationPourcent
-                        )
-                        }}
+                    <div class="kpi-label">Total des candidatures</div>
+                    <div class="kpi-value">{{ formatNumber(d.applications.total) }}</div>
+                    <div class="kpi-trend" [class.up]="isUp(d.applications.evolution.variationPourcent)"
+                        [class.down]="isDown(d.applications.evolution.variationPourcent)">
+                        <i class="fa-solid" [class.fa-arrow-trend-up]="isUp(d.applications.evolution.variationPourcent)"
+                            [class.fa-arrow-trend-down]="isDown(d.applications.evolution.variationPourcent)"></i>
+                        {{ formatVariation(d.applications.evolution.variationPourcent) }}
                     </div>
                 </div>
-
-                <div class="kpi-bg-icon">
-                    <i class="fa-solid fa-file-lines"></i>
-                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-file-lines"></i></div>
             </div>
 
-            <!-- Entretiens -->
             <div class="kpi-card kpi-green">
-                <div class="kpi-icon">
-                    <i class="fa-solid fa-comments"></i>
-                </div>
-
+                <div class="kpi-icon"><i class="fa-solid fa-comments"></i></div>
                 <div class="kpi-body">
-                    <div class="kpi-label">
-                        Entretiens à venir
-                    </div>
-
-                    <div class="kpi-value">
-                        {{ formatNumber(d.interviews.aVenir) }}
-                    </div>
-
-                    <div class="kpi-trend">
-                        <i class="fa-regular fa-clock"></i>
-
-                        {{ formatNumber(d.interviews.dansLes7Jours) }}
-                        sous 7 jours
-                    </div>
+                    <div class="kpi-label">Entretiens à venir</div>
+                    <div class="kpi-value">{{ formatNumber(d.interviews.aVenir) }}</div>
+                    <div class="kpi-trend"><i class="fa-regular fa-clock"></i> {{
+                        formatNumber(d.interviews.dansLes7Jours) }} sous 7 jours</div>
                 </div>
-
-                <div class="kpi-bg-icon">
-                    <i class="fa-solid fa-comments"></i>
-                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-comments"></i></div>
             </div>
 
-            <!-- Postes ouverts -->
             <div class="kpi-card kpi-orange">
-                <div class="kpi-icon">
-                    <i class="fa-solid fa-briefcase"></i>
-                </div>
-
+                <div class="kpi-icon"><i class="fa-solid fa-briefcase"></i></div>
                 <div class="kpi-body">
-                    <div class="kpi-label">
-                        Postes ouverts
-                    </div>
-
-                    <div class="kpi-value">
-                        {{ formatNumber(d.postes.ouverts) }}
-                    </div>
-
-                    <div class="kpi-trend" [class.up]="
-                            isUp(
-                                d.postes.evolution.variationPourcent
-                            )
-                        " [class.down]="
-                            isDown(
-                                d.postes.evolution.variationPourcent
-                            )
-                        ">
-                        <i class="fa-solid" [class.fa-arrow-trend-up]="
-                                isUp(
-                                    d.postes.evolution.variationPourcent
-                                )
-                            " [class.fa-arrow-trend-down]="
-                                isDown(
-                                    d.postes.evolution.variationPourcent
-                                )
-                            "></i>
-
-                        {{
-                        formatVariation(
-                        d.postes.evolution.variationPourcent
-                        )
-                        }}
+                    <div class="kpi-label">Postes ouverts</div>
+                    <div class="kpi-value">{{ formatNumber(d.postes.ouverts) }}</div>
+                    <div class="kpi-trend" [class.up]="isUp(d.postes.evolution.variationPourcent)"
+                        [class.down]="isDown(d.postes.evolution.variationPourcent)">
+                        <i class="fa-solid" [class.fa-arrow-trend-up]="isUp(d.postes.evolution.variationPourcent)"
+                            [class.fa-arrow-trend-down]="isDown(d.postes.evolution.variationPourcent)"></i>
+                        {{ formatVariation(d.postes.evolution.variationPourcent) }}
                     </div>
                 </div>
-
-                <div class="kpi-bg-icon">
-                    <i class="fa-solid fa-briefcase"></i>
-                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-briefcase"></i></div>
             </div>
 
-            <!-- Taux d'acceptation -->
             <div class="kpi-card kpi-purple">
-                <div class="kpi-icon">
-                    <i class="fa-solid fa-check-double"></i>
-                </div>
-
+                <div class="kpi-icon"><i class="fa-solid fa-check-double"></i></div>
                 <div class="kpi-body">
-                    <div class="kpi-label">
-                        Taux d'acceptation
-                    </div>
-
-                    <div class="kpi-value">
-                        {{
-                        formatPct(
-                        d.applications.tauxAcceptation
-                        )
-                        }}
-                    </div>
-
-                    <div class="kpi-trend">
-                        <i class="fa-solid fa-xmark"></i>
-
-                        {{
-                        formatPct(
-                        d.applications.tauxRejet
-                        )
-                        }}
-                        de rejet
-                    </div>
+                    <div class="kpi-label">Taux d'acceptation</div>
+                    <div class="kpi-value">{{ formatPct(d.applications.tauxAcceptation) }}</div>
+                    <div class="kpi-trend"><i class="fa-solid fa-xmark"></i> {{ formatPct(d.applications.tauxRejet) }}
+                        de rejet</div>
                 </div>
-
-                <div class="kpi-bg-icon">
-                    <i class="fa-solid fa-check-double"></i>
-                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-check-double"></i></div>
             </div>
 
-            <!-- Demandes de report -->
             <div class="kpi-card kpi-red">
-                <div class="kpi-icon">
-                    <i class="fa-solid fa-calendar-xmark"></i>
-                </div>
-
+                <div class="kpi-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
                 <div class="kpi-body">
-                    <div class="kpi-label">
-                        Reports en attente
-                    </div>
-
-                    <div class="kpi-value">
-                        {{
-                        formatNumber(
-                        d.reprogrammations.enAttente
-                        )
-                        }}
-                    </div>
-
-                    <div class="kpi-trend">
-                        <i class="fa-solid fa-rotate"></i>
-
-                        {{
-                        formatNumber(
-                        d.reprogrammations.total
-                        )
-                        }}
-                        au total
-                    </div>
+                    <div class="kpi-label">Reports en attente</div>
+                    <div class="kpi-value">{{ formatNumber(d.reprogrammations.enAttente) }}</div>
+                    <div class="kpi-trend"><i class="fa-solid fa-rotate"></i> {{ formatNumber(d.reprogrammations.total)
+                        }} au total</div>
                 </div>
-
-                <div class="kpi-bg-icon">
-                    <i class="fa-solid fa-calendar-xmark"></i>
-                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
             </div>
         </div>
 
-
         <div class="secondary-kpi-grid" *ngIf="data as d">
             <div class="secondary-kpi">
-                <div class="secondary-kpi-icon blue">
-                    <i class="fa-solid fa-spinner"></i>
-                </div>
-
+                <div class="secondary-kpi-icon blue"><i class="fa-solid fa-spinner"></i></div>
                 <div>
-                    <div class="secondary-kpi-label">
-                        Candidatures en cours
-                    </div>
-
-                    <div class="secondary-kpi-value">
-                        {{ formatNumber(candidaturesEnCours) }}
-                    </div>
-
-                    <div class="secondary-kpi-description">
-                        En attente, sélectionnées ou actuellement
-                        dans le processus d'entretien
-                    </div>
+                    <div class="secondary-kpi-label">Candidatures en cours</div>
+                    <div class="secondary-kpi-value">{{ formatNumber(candidaturesEnCours) }}</div>
+                    <div class="secondary-kpi-description">En attente, sélectionnées ou actuellement dans le processus
+                        d'entretien</div>
                 </div>
             </div>
-
             <div class="secondary-kpi">
-                <div class="secondary-kpi-icon green">
-                    <i class="fa-solid fa-list-check"></i>
-                </div>
-
+                <div class="secondary-kpi-icon green"><i class="fa-solid fa-list-check"></i></div>
                 <div>
-                    <div class="secondary-kpi-label">
-                        Candidatures clôturées
-                    </div>
-
-                    <div class="secondary-kpi-value">
-                        {{ formatNumber(applicationsTraitees) }}
-                    </div>
-
-                    <div class="secondary-kpi-description">
-                        Candidatures acceptées, rejetées ou retirées
-                    </div>
+                    <div class="secondary-kpi-label">Candidatures clôturées</div>
+                    <div class="secondary-kpi-value">{{ formatNumber(applicationsTraitees) }}</div>
+                    <div class="secondary-kpi-description">Candidatures acceptées, rejetées ou retirées</div>
                 </div>
             </div>
-
             <div class="secondary-kpi">
-                <div class="secondary-kpi-icon purple">
-                    <i class="fa-solid fa-trophy"></i>
-                </div>
-
+                <div class="secondary-kpi-icon purple"><i class="fa-solid fa-trophy"></i></div>
                 <div>
-                    <div class="secondary-kpi-label">
-                        Réussite des entretiens
-                    </div>
-
-                    <div class="secondary-kpi-value">
-                        {{ formatPct(d.interviews.tauxReussite) }}
-                    </div>
-
-                    <div class="secondary-kpi-description">
-                        Entretiens réussis parmi les entretiens terminés
-                    </div>
+                    <div class="secondary-kpi-label">Réussite des entretiens</div>
+                    <div class="secondary-kpi-value">{{ formatPct(d.interviews.tauxReussite) }}</div>
+                    <div class="secondary-kpi-description">Entretiens réussis parmi les entretiens terminés</div>
                 </div>
             </div>
-
             <div class="secondary-kpi">
-                <div class="secondary-kpi-icon orange">
-                    <i class="fa-solid fa-hourglass-end"></i>
-                </div>
-
+                <div class="secondary-kpi-icon orange"><i class="fa-solid fa-hourglass-end"></i></div>
                 <div>
-                    <div class="secondary-kpi-label">
-                        Postes expirant bientôt
-                    </div>
-
-                    <div class="secondary-kpi-value">
-                        {{
-                        formatNumber(
-                        d.postes.expirantSous7Jours
-                        )
-                        }}
-                    </div>
-
-                    <div class="secondary-kpi-description">
-                        Postes arrivant à expiration sous sept jours
-                    </div>
+                    <div class="secondary-kpi-label">Postes expirant bientôt</div>
+                    <div class="secondary-kpi-value">{{ formatNumber(d.postes.expirantSous7Jours) }}</div>
+                    <div class="secondary-kpi-description">Postes arrivant à expiration sous sept jours</div>
                 </div>
             </div>
-
             <div class="secondary-kpi">
-                <div class="secondary-kpi-icon red">
-                    <i class="fa-solid fa-ban"></i>
-                </div>
-
+                <div class="secondary-kpi-icon red"><i class="fa-solid fa-ban"></i></div>
                 <div>
-                    <div class="secondary-kpi-label">
-                        Postes indisponibles
-                    </div>
-
-                    <div class="secondary-kpi-value">
-                        {{ formatNumber(postesNonOuverts) }}
-                    </div>
-
-                    <div class="secondary-kpi-description">
-                        Postes fermés ou expirés
-                    </div>
+                    <div class="secondary-kpi-label">Postes indisponibles</div>
+                    <div class="secondary-kpi-value">{{ formatNumber(postesNonOuverts) }}</div>
+                    <div class="secondary-kpi-description">Postes fermés ou expirés</div>
                 </div>
             </div>
         </div>
@@ -346,123 +164,70 @@
             <span>Aucune donnée disponible</span>
         </div>
 
-
         <div class="charts-row row-2cols">
             <section class="chart-card chart-large">
                 <div class="chart-header">
                     <div>
-                        <div class="chart-title">
-                            Activité mensuelle
-                        </div>
-
-                        <div class="chart-sub">
-                            Nombre de candidatures, entretiens,
-                            postes et reprogrammations par mois
+                        <div class="chart-title">Activité mensuelle</div>
+                        <div class="chart-sub">Nombre de candidatures, entretiens, postes et reprogrammations par mois
                         </div>
                     </div>
                 </div>
-
-                <div class="chart-wrap" style="height: 240px">
+                <div class="chart-wrap" style="height: 240px;">
                     <canvas #lineChart></canvas>
                 </div>
-
                 <div class="stats-explanation">
                     <i class="fa-solid fa-circle-info"></i>
-
-                    <span>
-                        Ce graphique permet de comparer l'évolution
-                        mensuelle de l'activité de recrutement pendant
-                        l'année en cours.
-                    </span>
+                    <span>Ce graphique permet de comparer l'évolution mensuelle de l'activité de recrutement pendant
+                        l'année en cours.</span>
                 </div>
             </section>
 
             <section class="chart-card chart-small">
                 <div class="chart-header">
                     <div>
-                        <div class="chart-title">
-                            Candidatures par statut
-                        </div>
-
-                        <div class="chart-sub">
-                            Répartition actuelle des candidatures
-                        </div>
+                        <div class="chart-title">Candidatures par statut</div>
+                        <div class="chart-sub">Répartition actuelle des candidatures</div>
                     </div>
                 </div>
-
-                <div class="chart-wrap" style="height: 180px">
+                <div class="chart-wrap" style="height: 180px;">
                     <canvas #statutChart></canvas>
                 </div>
-
                 <div class="donut-legend">
-                    <div class="donut-leg-item" *ngFor="
-                            let item of candidaturesStatutLegend;
-                            trackBy: trackLegend
-                        ">
+                    <div class="donut-leg-item" *ngFor="let item of candidaturesStatutLegend; trackBy: trackLegend">
                         <span class="leg-dot" [style.background]="item.color"></span>
-
-                        <span class="leg-label">
-                            {{ item.label }}
-                        </span>
-
-                        <span class="leg-pct">
-                            {{ formatNumber(item.value) }}
-                            ({{ item.pct }}%)
-                        </span>
+                        <span class="leg-label">{{ item.label }}</span>
+                        <span class="leg-pct">{{ formatNumber(item.value) }} ({{ item.pct }}%)</span>
                     </div>
-
-                    <div class="empty-state compact" *ngIf="
-                            candidaturesStatutLegend.length === 0
-                        ">
+                    <div class="empty-state compact" *ngIf="candidaturesStatutLegend.length === 0">
                         <span>Aucune candidature</span>
                     </div>
                 </div>
             </section>
         </div>
 
-
         <div class="charts-row row-2cols-equal">
             <section class="chart-card">
                 <div class="chart-header">
                     <div class="chart-header-content">
                         <div>
-                            <div class="chart-title">
-                                Postes par département
-                            </div>
-
-                            <div class="chart-sub">
-                                Nombre de postes publiés dans chaque
-                                département
-                            </div>
+                            <div class="chart-title">Postes par département</div>
+                            <div class="chart-sub">Nombre de postes publiés dans chaque département</div>
                         </div>
-
-                        <a class="link-active" [routerLink]="[
-                                '/rh',
-                                'ListePosteRecrutement'
-                            ]">
-                            Voir tous les postes →
-                        </a>
+                        <a class="link-active" [routerLink]="['/rh', 'ListePosteRecrutement']">Voir tous les postes
+                            →</a>
                     </div>
                 </div>
-
-                <div class="chart-wrap" style="height: 220px">
+                <div class="chart-wrap" style="height: 220px;">
                     <canvas #departementChart></canvas>
                 </div>
-
-                <div class="empty-state compact" *ngIf="
-                        postesDepartementLegend.length === 0
-                    ">
+                <div class="empty-state compact" *ngIf="postesDepartementLegend.length === 0">
                     <i class="fa-solid fa-building"></i>
                     <span>Aucun poste publié</span>
                 </div>
-
                 <div class="stats-explanation">
                     <i class="fa-solid fa-circle-info"></i>
-
-                    <span>
-                        Cette statistique permet d'identifier les
-                        départements qui recrutent le plus.
-                    </span>
+                    <span>Cette statistique permet d'identifier les départements qui recrutent le plus.</span>
                 </div>
             </section>
 
@@ -470,291 +235,135 @@
                 <div class="chart-header">
                     <div class="chart-header-content">
                         <div>
-                            <div class="chart-title">
-                                Entretiens par type
-                            </div>
-
-                            <div class="chart-sub">
-                                Répartition des différentes étapes
-                                d'entretien
-                            </div>
+                            <div class="chart-title">Entretiens par type</div>
+                            <div class="chart-sub">Répartition des différentes étapes d'entretien</div>
                         </div>
-
-                        <a class="link-active" [routerLink]="[
-                                '/rh',
-                                'calendrierRH'
-                            ]">
-                            Voir le calendrier →
-                        </a>
+                        <a class="link-active" [routerLink]="['/rh', 'calendrierRH']">Voir le calendrier →</a>
                     </div>
                 </div>
-
-                <div class="chart-wrap" style="height: 220px">
+                <div class="chart-wrap" style="height: 220px;">
                     <canvas #typeEntretienChart></canvas>
                 </div>
-
-                <div class="empty-state compact" *ngIf="
-                        entretiensTypeLegend.length === 0
-                    ">
+                <div class="empty-state compact" *ngIf="entretiensTypeLegend.length === 0">
                     <i class="fa-solid fa-comments"></i>
                     <span>Aucun entretien</span>
                 </div>
-
                 <div class="stats-explanation">
                     <i class="fa-solid fa-circle-info"></i>
-
-                    <span>
-                        Un entretien libre est créé directement dans
-                        le calendrier et n'est pas rattaché à une
-                        candidature.
-                    </span>
+                    <span>Un entretien libre est créé directement dans le calendrier et n'est pas rattaché à une
+                        candidature.</span>
                 </div>
             </section>
         </div>
-
-
 
         <div class="charts-row row-2cols-equal" *ngIf="data">
             <section class="chart-card">
                 <div class="chart-header">
                     <div>
-                        <div class="chart-title">
-                            Situation des entretiens
-                        </div>
-
-                        <div class="chart-sub">
-                            État actuel de tous les entretiens
-                        </div>
+                        <div class="chart-title">Situation des entretiens</div>
+                        <div class="chart-sub">État actuel de tous les entretiens</div>
                     </div>
-
-                    <a class="link-active" [routerLink]="[
-                            '/rh',
-                            'calendrierRH'
-                        ]">
-                        Consulter →
-                    </a>
+                    <a class="link-active" [routerLink]="['/rh', 'calendrierRH']">Consulter →</a>
                 </div>
-
-                <div class="progress-stat-list" *ngIf="
-                        entretiensStatutLegend.length > 0;
-                        else aucunEntretien
-                    ">
-                    <div class="progress-stat-item" *ngFor="
-                            let item of entretiensStatutLegend;
-                            trackBy: trackLegend
-                        ">
+                <div class="progress-stat-list" *ngIf="entretiensStatutLegend.length > 0; else aucunEntretien">
+                    <div class="progress-stat-item" *ngFor="let item of entretiensStatutLegend; trackBy: trackLegend">
                         <div class="progress-stat-header">
-                            <span class="progress-stat-name">
-                                {{ item.label }}
-                            </span>
-
-                            <span class="progress-stat-value">
-                                {{ formatNumber(item.value) }}
-
-                                <small>
-                                    {{ item.pct }}%
-                                </small>
-                            </span>
+                            <span class="progress-stat-name">{{ item.label }}</span>
+                            <span class="progress-stat-value">{{ formatNumber(item.value) }}<small>{{ item.pct
+                                    }}%</small></span>
                         </div>
-
                         <div class="progress-stat-track">
-                            <div class="progress-stat-fill" [style.width.%]="
-                                    getProgressWidth(
-                                        item.value,
-                                        entretiensStatutLegend
-                                    )
-                                " [style.background]="item.color"></div>
+                            <div class="progress-stat-fill"
+                                [style.width.%]="getProgressWidth(item.value, entretiensStatutLegend)"
+                                [style.background]="item.color"></div>
                         </div>
                     </div>
                 </div>
-
                 <ng-template #aucunEntretien>
                     <div class="empty-state compact">
                         <i class="fa-solid fa-comments"></i>
                         <span>Aucun entretien enregistré</span>
                     </div>
                 </ng-template>
-
                 <div class="stats-explanation">
                     <i class="fa-solid fa-circle-info"></i>
-
-                    <span>
-                        Les entretiens à venir comprennent les
-                        entretiens planifiés, confirmés ou reportés
-                        dont la date se trouve dans le futur.
-                    </span>
+                    <span>Les entretiens à venir comprennent les entretiens planifiés, confirmés ou reportés dont la
+                        date se trouve dans le futur.</span>
                 </div>
             </section>
 
-             <section class="chart-card">
+            <section class="chart-card">
                 <div class="chart-header">
                     <div>
-                        <div class="chart-title">
-                            État des postes
-                        </div>
-
-                        <div class="chart-sub">
-                            Répartition des postes ouverts, expirés
-                            et fermés
-                        </div>
+                        <div class="chart-title">État des postes</div>
+                        <div class="chart-sub">Répartition des postes ouverts, expirés et fermés</div>
                     </div>
-
-                    <a class="link-active" [routerLink]="[
-                            '/rh',
-                            'ListePosteRecrutement'
-                        ]">
-                        Gérer les postes →
-                    </a>
+                    <a class="link-active" [routerLink]="['/rh', 'ListePosteRecrutement']">Gérer les postes →</a>
                 </div>
-
-                <div class="status-card-list" *ngIf="
-                        postesStatutLegend.length > 0;
-                        else aucunStatutPoste
-                    ">
-                    <div class="status-mini-card" *ngFor="
-                            let item of postesStatutLegend;
-                            trackBy: trackLegend
-                        ">
+                <div class="status-card-list" *ngIf="postesStatutLegend.length > 0; else aucunStatutPoste">
+                    <div class="status-mini-card" *ngFor="let item of postesStatutLegend; trackBy: trackLegend">
                         <span class="status-color" [style.background]="item.color"></span>
-
                         <div class="status-mini-content">
-                            <span class="status-mini-label">
-                                {{ item.label }}
-                            </span>
-
-                            <strong class="status-mini-value">
-                                {{ formatNumber(item.value) }}
-                            </strong>
-
-                            <span class="status-mini-pct">
-                                {{ item.pct }}% du total
-                            </span>
+                            <span class="status-mini-label">{{ item.label }}</span>
+                            <strong class="status-mini-value">{{ formatNumber(item.value) }}</strong>
+                            <span class="status-mini-pct">{{ item.pct }}% du total</span>
                         </div>
                     </div>
                 </div>
-
                 <ng-template #aucunStatutPoste>
                     <div class="empty-state compact">
                         <i class="fa-solid fa-briefcase"></i>
                         <span>Aucun poste enregistré</span>
                     </div>
                 </ng-template>
-
                 <div class="stats-explanation">
                     <i class="fa-solid fa-circle-info"></i>
-
-                    <span>
-                        Un poste réellement ouvert doit avoir le
-                        statut « Ouvert » et une date d'expiration
-                        qui n'est pas encore dépassée.
-                    </span>
+                    <span>Un poste réellement ouvert doit avoir le statut « Ouvert » et une date d'expiration qui n'est
+                        pas encore dépassée.</span>
                 </div>
             </section>
         </div>
 
-        <!-- =====================================================
-             DEMANDES DE REPORT
-        ====================================================== -->
         <section class="chart-card reports-stat-card" *ngIf="data">
             <div class="chart-header">
                 <div>
-                    <div class="chart-title">
-                        Analyse des demandes de report
-                    </div>
-
-                    <div class="chart-sub">
-                        Décisions et origines des demandes de
-                        reprogrammation
-                    </div>
+                    <div class="chart-title">Analyse des demandes de report</div>
+                    <div class="chart-sub">Décisions et origines des demandes de reprogrammation</div>
                 </div>
-
-                <a class="link-active" [routerLink]="[
-                        '/rh',
-                        'demandes-reprogrammation'
-                    ]">
-                    Traiter les demandes →
-                </a>
+                <a class="link-active" [routerLink]="['/rh', 'demandes-reprogrammation']">Traiter les demandes →</a>
             </div>
-
             <div class="reports-columns">
-                <!-- Statuts des demandes -->
                 <div class="report-stat-section">
-                    <h4 class="report-stat-title">
-                        Décision sur les demandes
-                    </h4>
-
-                    <div class="report-stat-row" *ngFor="
-                            let item of reprogrammationsStatutLegend;
-                            trackBy: trackLegend
-                        ">
+                    <h4 class="report-stat-title">Décision sur les demandes</h4>
+                    <div class="report-stat-row"
+                        *ngFor="let item of reprogrammationsStatutLegend; trackBy: trackLegend">
                         <span class="leg-dot" [style.background]="item.color"></span>
-
-                        <span class="report-stat-label">
-                            {{ item.label }}
-                        </span>
-
-                        <strong>
-                            {{ formatNumber(item.value) }}
-                        </strong>
-
-                        <span class="report-stat-percentage">
-                            {{ item.pct }}%
-                        </span>
+                        <span class="report-stat-label">{{ item.label }}</span>
+                        <strong>{{ formatNumber(item.value) }}</strong>
+                        <span class="report-stat-percentage">{{ item.pct }}%</span>
                     </div>
-
-                    <div class="empty-state compact" *ngIf="
-                            reprogrammationsStatutLegend.length === 0
-                        ">
+                    <div class="empty-state compact" *ngIf="reprogrammationsStatutLegend.length === 0">
                         <span>Aucune demande de report</span>
                     </div>
                 </div>
-
-                <!-- Types des demandes -->
                 <div class="report-stat-section">
-                    <h4 class="report-stat-title">
-                        Origine des demandes
-                    </h4>
-
-                    <div class="report-stat-row" *ngFor="
-                            let item of reprogrammationsTypeLegend;
-                            trackBy: trackLegend
-                        ">
+                    <h4 class="report-stat-title">Origine des demandes</h4>
+                    <div class="report-stat-row" *ngFor="let item of reprogrammationsTypeLegend; trackBy: trackLegend">
                         <span class="leg-dot" [style.background]="item.color"></span>
-
-                        <span class="report-stat-label">
-                            {{ item.label }}
-                        </span>
-
-                        <strong>
-                            {{ formatNumber(item.value) }}
-                        </strong>
-
-                        <span class="report-stat-percentage">
-                            {{ item.pct }}%
-                        </span>
+                        <span class="report-stat-label">{{ item.label }}</span>
+                        <strong>{{ formatNumber(item.value) }}</strong>
+                        <span class="report-stat-percentage">{{ item.pct }}%</span>
                     </div>
-
-                    <div class="empty-state compact" *ngIf="
-                            reprogrammationsTypeLegend.length === 0
-                        ">
-                        <span>
-                            Aucune origine disponible
-                        </span>
+                    <div class="empty-state compact" *ngIf="reprogrammationsTypeLegend.length === 0">
+                        <span>Aucune origine disponible</span>
                     </div>
                 </div>
             </div>
-
             <div class="stats-explanation">
                 <i class="fa-solid fa-circle-info"></i>
-
-                <span>
-                    Une demande en attente nécessite une décision du
-                    RH. Une demande acceptée modifie la planification
-                    de l'entretien. Une demande refusée conserve la
-                    planification actuelle.
-                </span>
+                <span>Une demande en attente nécessite une décision du RH. Une demande acceptée modifie la planification
+                    de l'entretien. Une demande refusée conserve la planification actuelle.</span>
             </div>
         </section>
-
     </main>
 </div>

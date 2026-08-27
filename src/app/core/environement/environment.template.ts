@@ -5,6 +5,7 @@ export const environment = {
   CONFIG_PORT: 8888,
   GATEWAY_PORT: 8080,
   EMPLOYEE_PORT: 8081,
+  RECRUTEMENT_PORT:8082,
 
   keycloak: {
     url: 'http://localhost:8180',

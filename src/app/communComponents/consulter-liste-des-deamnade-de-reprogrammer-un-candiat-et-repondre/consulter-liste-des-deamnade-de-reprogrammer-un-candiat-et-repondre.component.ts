@@ -314,12 +314,7 @@ export class ConsulterListeDesDeamnadeDeReprogrammerUnCandiatEtRepondreComponent
     }
   }
 
-  /**
-   * Détermine le keycloakId du candidat concerné par la demande.
-   * - Demande du candidat / réactivation après absence : le candidat est l'auteur.
-   * - Proposition de l'intervenant : le candidat est la cible.
-   * À vérifier/ajuster selon la sémantique exacte de ton backend.
-   */
+  
   candidatKeycloakId(demande: Reprogrammer): string | undefined {
     return demande.type === TypeDemandeReport.PROPOSITION_INTERVENANT
       ? demande.cibleKeycloakId

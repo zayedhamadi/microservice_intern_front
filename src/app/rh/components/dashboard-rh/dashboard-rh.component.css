@@ -1,7 +1,3 @@
-/* ============================================================
-   LAYOUT GÉNÉRAL
-============================================================ */
-
 .admin-layout {
     display: flex;
     min-height: 100vh;
@@ -15,10 +11,6 @@
     padding: 28px;
     overflow-y: auto;
 }
-
-/* ============================================================
-   EN-TÊTE DE SECTION
-============================================================ */
 
 .section-header {
     display: flex;
@@ -53,11 +45,8 @@
     gap: 10px;
 }
 
-/* ============================================================
-   BOUTON RAFRAÎCHIR
-============================================================ */
-
 .refresh-btn {
+    position: relative;
     width: 36px;
     height: 36px;
     border-radius: 10px;
@@ -94,9 +83,111 @@
     animation: spin 0.8s linear infinite;
 }
 
-/* ============================================================
-   KPI PRINCIPAUX
-============================================================ */
+.ws-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.ws-badge .ws-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ws-connected {
+    background: #e6f7f2;
+    color: #0F6E56;
+    border-color: #b2e8d8;
+}
+
+.ws-connecting {
+    background: #fff8eb;
+    color: #854F0B;
+    border-color: #fde68a;
+}
+
+.ws-disconnected {
+    background: #f1f5f9;
+    color: #64748b;
+    border-color: #e2e8f0;
+}
+
+.ws-error {
+    background: #fff0f0;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+.ws-connected .ws-dot {
+    background: #1D9E75;
+    animation: ws-pulse 2s infinite;
+}
+
+.ws-connecting .ws-dot {
+    background: #f59e0b;
+    animation: ws-blink 0.8s infinite;
+}
+
+.ws-disconnected .ws-dot {
+    background: #94a3b8;
+}
+
+.ws-error .ws-dot {
+    background: #ef4444;
+}
+
+@keyframes ws-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(0.8);
+    }
+}
+
+@keyframes ws-blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.2;
+    }
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 10px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
 .kpi-grid {
     display: grid;
@@ -212,10 +303,6 @@
     pointer-events: none;
 }
 
-/* ============================================================
-   KPI SECONDAIRES
-============================================================ */
-
 .secondary-kpi-grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -296,10 +383,6 @@
     line-height: 1.35;
 }
 
-/* ============================================================
-   GRILLES DE GRAPHIQUES
-============================================================ */
-
 .charts-row {
     display: grid;
     gap: 16px;
@@ -317,10 +400,6 @@
 .row-bottom {
     grid-template-columns: 1.6fr 1fr;
 }
-
-/* ============================================================
-   CARTES DE GRAPHIQUES
-============================================================ */
 
 .chart-card {
     background: white;
@@ -365,10 +444,6 @@
     width: 100%;
 }
 
-/* ============================================================
-   LÉGENDE DU DONUT
-============================================================ */
-
 .donut-legend {
     display: flex;
     flex-direction: column;
@@ -404,10 +479,6 @@
     white-space: nowrap;
 }
 
-/* ============================================================
-   LIENS DE NAVIGATION
-============================================================ */
-
 .link-active {
     color: #4a6cf7;
     cursor: pointer;
@@ -436,10 +507,6 @@ button.link-active {
     background: transparent;
     font-family: inherit;
 }
-
-/* ============================================================
-   BARRES DE PROGRESSION (STATUTS DES ENTRETIENS)
-============================================================ */
 
 .progress-stat-list {
     display: flex;
@@ -496,10 +563,6 @@ button.link-active {
     transition: width 0.4s ease;
 }
 
-/* ============================================================
-   CARTES DE STATUTS (POSTES)
-============================================================ */
-
 .status-card-list {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -555,10 +618,6 @@ button.link-active {
     font-size: 10px;
 }
 
-/* ============================================================
-   DEMANDES DE REPORT
-============================================================ */
-
 .reports-stat-card {
     margin-bottom: 20px;
 }
@@ -607,10 +666,6 @@ button.link-active {
     text-align: right;
 }
 
-/* ============================================================
-   BLOCS D'EXPLICATION EN FRANÇAIS
-============================================================ */
-
 .stats-explanation {
     display: flex;
     align-items: flex-start;
@@ -630,10 +685,6 @@ button.link-active {
     color: #4a6cf7;
     flex-shrink: 0;
 }
-
-/* ============================================================
-   ÉTATS VIDES
-============================================================ */
 
 .empty-state {
     display: flex;
@@ -656,9 +707,88 @@ button.link-active {
     padding: 20px 10px;
 }
 
-/* ============================================================
-   RESPONSIVE
-============================================================ */
+.realtime-toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(226, 232, 240, 0.8);
+    min-width: 280px;
+    max-width: 360px;
+    animation: toast-slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    pointer-events: all;
+}
+
+.toast-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+    color: #ffffff;
+}
+
+.toast-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 3px;
+    line-height: 1.3;
+}
+
+.toast-time {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    line-height: 1;
+    flex-shrink: 0;
+    align-self: flex-start;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.toast-close:hover {
+    color: #334155;
+    background: #f1f5f9;
+}
+
+@keyframes toast-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
 
 @media (max-width: 1400px) {
     .secondary-kpi-grid {

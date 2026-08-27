@@ -15,23 +15,30 @@ import {
   ConnectionStatus,
   AdminRealtimeEvent,
 } from '../../../core/models/websocket';
+import {
+  RecrutementRealtimeEvent,
+  buildRecrutementNotificationText,
+  recrutementEventIcon,
+  recrutementEventColor,
+} from '../../../core/models/websocket-recrutement';
 import { StatsPayload } from '../../../core/models/userstatistics';
 import { AuthService } from '../../../core/service/auth.service';
 import { UserService } from '../../../core/service/user.service';
 import {
-  
   eventColor,
   wsStatusLabel,
   wsStatusClass,
   eventIcon,
   WebSocketService,
 } from '../../../core/service/web-socket.service';
+import { RecrutementWebSocketService } from '../../../core/service/recrutement-web-socket.service';
 import { StatsService } from '../../../core/service/stats.service';
 import { UserProfileResponse } from '../../../core/models/UserProfileResponse';
 import { UserCommonProfile } from '../../../core/models/userConneccted';
 
 Chart.register(...registerables);
 
+// Interface pour les éléments d'activité
 interface ActivityItem {
   type: string;
   message: string;
@@ -42,10 +49,11 @@ interface ActivityItem {
   createdAt: string;
 }
 
+// Interface pour les utilisateurs récents
 interface RecentUser {
   id: number;
   matricule: string;
-  cin: number;
+  cin: string | number;
   nom: string;
   prenom: string;
   email: string;
@@ -56,6 +64,7 @@ interface RecentUser {
   imageLoading: boolean;
 }
 
+// Interface pour la répartition des rôles
 interface RoleDistribution {
   label: string;
   role: string;
@@ -63,16 +72,20 @@ interface RoleDistribution {
   color: string;
 }
 
+// Interface pour l'affichage des activités
 interface ActivityDisplay {
   text: string;
   time: string;
   color: string;
 }
 
+type RealtimeEventUnion = AdminRealtimeEvent | RecrutementRealtimeEvent;
+type EventKind = 'admin' | 'recrutement';
+
 @Component({
   selector: 'app-dashboard-employee',
   templateUrl: './dashboard-employee.component.html',
-  styleUrl: './dashboard-employee.component.css',
+  styleUrls: ['./dashboard-employee.component.css'],
 })
 export class DashboardEmployeeComponent
   implements OnInit, AfterViewInit, OnDestroy
@@ -80,12 +93,16 @@ export class DashboardEmployeeComponent
   @ViewChild('lineChart') lineChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('doughnutChart') doughnutChartRef!: ElementRef<HTMLCanvasElement>;
 
+  // Couleurs des rôles
   private static readonly ROLE_COLORS: Readonly<Record<string, string>> = {
     RH: '#1D9E75',
     EMPLOYEE: '#f59e0b',
     CANDIDAT: '#4a6cf7',
+    ADMIN: '#4f46e5',
+    MANAGER: '#065f46',
   };
 
+  // Mois pour les graphiques
   private static readonly MONTH_LABELS = [
     'Jan',
     'Fév',
@@ -101,22 +118,42 @@ export class DashboardEmployeeComponent
     'Déc',
   ];
 
+  // Titres des toasts pour les événements admin
+  private static readonly ADMIN_TOAST_TITLES: Record<string, string> = {
+    NEW_USER: 'Nouvel utilisateur',
+    CESSATION: 'Compte suspendu',
+    REACTIVATION: 'Compte réactivé',
+    LOGIN_ACTIVITY: 'Connexion détectée',
+    CERTIFICATION: 'Certification',
+    DEMANDE_CONGE: 'Demande de congé',
+    STATS_UPDATE: 'Mise à jour des statistiques',
+  };
+
+  // Tableau des graphiques
   private charts: Chart[] = [];
   private chartsReady = false;
   private pendingUpdate: (() => void) | null = null;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly destroy$ = new Subject<void>();
 
+  // Statut de connexion WebSocket
   wsStatus: ConnectionStatus = 'DISCONNECTED';
-  lastEvent: AdminRealtimeEvent | null = null;
+  lastEvent: RealtimeEventUnion | null = null;
+  lastEventKind: EventKind = 'admin';
   showToast = false;
 
+  // Statut de chargement
   isLoading = false;
   isLoadingActivities = false;
 
+  // Date actuelle
   today = new Date();
-  profile: UserProfileResponse | null = null;
 
+  // Profil utilisateur
+  profile: UserProfileResponse | null = null;
+  private keycloakId?: string;
+
+  // Statistiques
   stats = {
     totalUsers: 0,
     deltaUsers: 0,
@@ -130,22 +167,27 @@ export class DashboardEmployeeComponent
     deltaInactifs: 0,
   };
 
+  // Utilisateurs récents
   recentUsers: RecentUser[] = [];
 
+  // Répartition des rôles
   roleDistribution: RoleDistribution[] = [
     { label: 'RH', role: 'RH', pct: 0, color: '#1D9E75' },
     { label: 'Employés', role: 'EMPLOYEE', pct: 0, color: '#f59e0b' },
     { label: 'Candidats', role: 'CANDIDAT', pct: 0, color: '#4a6cf7' },
   ];
 
+  // Activités récentes
   activities: ActivityDisplay[] = [];
 
+  // Données mensuelles
   private monthlyData: Record<string, number[]> = {};
   private inscrCessData = {
     inscriptions: [] as number[],
     cessations: [] as number[],
   };
 
+  // Pagination des activités
   actPage = 1;
   actPageSize = 5;
 
@@ -154,6 +196,7 @@ export class DashboardEmployeeComponent
     private readonly userService: UserService,
     private readonly statsService: StatsService,
     private readonly wsService: WebSocketService,
+    private readonly recrutementWsService: RecrutementWebSocketService,
     private readonly router: Router,
   ) {}
 
@@ -180,9 +223,11 @@ export class DashboardEmployeeComponent
     this.destroy$.complete();
     this.charts.forEach((c) => c.destroy());
     this.wsService.disconnect();
+    this.recrutementWsService.disconnect();
     if (this.toastTimer) clearTimeout(this.toastTimer);
   }
 
+  // Pagination des activités
   get pagedActivities(): ActivityDisplay[] {
     const start = (this.actPage - 1) * this.actPageSize;
     return this.activities.slice(start, start + this.actPageSize);
@@ -222,13 +267,21 @@ export class DashboardEmployeeComponent
     if (pg >= 1 && pg <= this.actTotalPages) this.actPage = pg;
   }
 
+  // Chargement du profil utilisateur
   loadProfile(): void {
     this.userService
       .getMyProfile()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (p) => (this.profile = this.mapToProfileResponse(p)),
-        error: () => (this.profile = null),
+        next: (p) => {
+          this.profile = this.mapToProfileResponse(p);
+          this.keycloakId = p.keycloakId;
+          this.initRecrutementWebSocket(); // Initialiser après avoir le keycloakId
+        },
+        error: () => {
+          this.profile = null;
+          console.error('Erreur lors du chargement du profil');
+        },
       });
   }
 
@@ -249,6 +302,7 @@ export class DashboardEmployeeComponent
     };
   }
 
+  // Chargement des statistiques
   loadStats(): void {
     this.isLoading = true;
 
@@ -265,16 +319,18 @@ export class DashboardEmployeeComponent
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
+          console.log('Données statistiques reçues:', data);
           this.applyStatsPayload(data as unknown as StatsPayload);
           this.isLoading = false;
         },
         error: (err) => {
-          console.error('Erreur chargement stats :', err);
+          console.error('Erreur lors du chargement des statistiques:', err);
           this.isLoading = false;
         },
       });
   }
 
+  // Chargement des activités
   loadActivities(): void {
     this.isLoadingActivities = true;
 
@@ -283,15 +339,25 @@ export class DashboardEmployeeComponent
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data: ActivityItem[]) => {
+          console.log('Activités reçues:', data);
+          if (!data || data.length === 0) {
+            console.warn('Aucune activité reçue du backend');
+            this.activities = [];
+            this.actPage = 1;
+            this.isLoadingActivities = false;
+            return;
+          }
+
           this.activities = data.map((a) => ({
             text: this.buildActivityText(a),
             time: this.formatTime(a.createdAt),
             color: eventColor(a.type),
           }));
-          this.actPage = 1;
+          this.actPage = 1; // Réinitialiser la page
           this.isLoadingActivities = false;
         },
-        error: () => {
+        error: (err) => {
+          console.error('Erreur lors du chargement des activités:', err);
           this.activities = [];
           this.actPage = 1;
           this.isLoadingActivities = false;
@@ -299,6 +365,7 @@ export class DashboardEmployeeComponent
       });
   }
 
+  // Construction du texte des activités
   private buildActivityText(a: ActivityItem): string {
     const map: Record<string, string> = {
       NEW_USER: `Nouveau compte <strong>${a.role ?? ''}</strong> : ${a.actorPrenom ?? ''} ${a.actorNom ?? ''}`,
@@ -312,6 +379,7 @@ export class DashboardEmployeeComponent
     return map[a.type] ?? a.message ?? 'Événement reçu';
   }
 
+  // Effacer les activités
   clearActivities(): void {
     this.statsService
       .clearActivities()
@@ -321,25 +389,57 @@ export class DashboardEmployeeComponent
           this.activities = [];
           this.actPage = 1;
         },
-        error: (err: any) => console.error('Erreur clear activités :', err),
+        error: (err: any) =>
+          console.error('Erreur lors de la suppression des activités:', err),
       });
   }
 
+  // Initialisation du WebSocket admin
   private initWebSocket(): void {
     const token = this.authService.getToken() ?? undefined;
-    this.wsService.connect(token);
+    this.wsService.connect(token, 'EMPLOYEE');
 
     this.wsService.status$
       .pipe(takeUntil(this.destroy$))
       .subscribe((s: ConnectionStatus) => (this.wsStatus = s));
+
     this.wsService.stats$
       .pipe(takeUntil(this.destroy$))
-      .subscribe((payload) => this.applyStatsPayload(payload));
-    this.wsService.events$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((event) => this.handleRealtimeEvent(event));
+      .subscribe((payload) => {
+        console.log('Stats mises à jour via WebSocket:', payload);
+        this.applyStatsPayload(payload);
+      });
+
+    this.wsService.events$.pipe(takeUntil(this.destroy$)).subscribe((event) => {
+      console.log('Événement admin reçu:', event);
+      this.handleRealtimeEvent(event);
+    });
   }
+
+  // Initialisation du WebSocket recrutement
+  private initRecrutementWebSocket(): void {
+    if (!this.keycloakId) {
+      console.warn(
+        "keycloakId non défini, impossible d'initialiser le WebSocket recrutement",
+      );
+      return;
+    }
+
+    const token = this.authService.getToken() ?? undefined;
+    this.recrutementWsService.connect(token, 'EMPLOYEE', this.keycloakId);
+
+    this.recrutementWsService.events$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((event) => {
+        console.log('Événement recrutement reçu:', event);
+        this.handleRecrutementEvent(event);
+      });
+  }
+
+  // Application des données statistiques
   private applyStatsPayload(data: StatsPayload): void {
+    console.log('Application des données statistiques:', data);
+
     this.stats.totalUsers = data.users?.total ?? 0;
     this.stats.deltaUsers = data.users?.delta ?? 0;
     this.stats.totalRH = data.rh?.total ?? 0;
@@ -354,72 +454,53 @@ export class DashboardEmployeeComponent
     this.monthlyData = data.monthly ?? {};
     this.inscrCessData = data.inscrCess ?? { inscriptions: [], cessations: [] };
 
+    console.log('Derniers 5 utilisateurs:', data.last5);
     this.mapRecentUsers(data.last5 ?? []);
-    // this.loadRecentUsersImages(); ← supprimé, plus nécessaire
+
     this.computeRoleDistribution(data);
 
     if (this.chartsReady) this.updateCharts();
     else this.pendingUpdate = () => this.updateCharts();
   }
 
+  // Mappage des utilisateurs récents
   private mapRecentUsers(last5: any[]): void {
+    if (!last5 || last5.length === 0) {
+      console.warn('Aucun utilisateur récent reçu');
+      this.recentUsers = [];
+      return;
+    }
+
     this.recentUsers = last5.map((u: any) => ({
-      id: u.id,
-      cin: u.cin,
-      matricule: u.matricule,
-      nom: u.nom,
-      prenom: u.prenom,
-      email: u.email,
-      role: u.role,
-      etatCompte: u.etatCompte,
-      dateInscrit: u.dateInscrit,
+      id: u.id ?? 0,
+      cin: u.cin ?? 'N/A',
+      matricule: u.matricule ?? 'N/A',
+      nom: u.nom ?? 'Inconnu',
+      prenom: u.prenom ?? 'Inconnu',
+      email: u.email ?? 'N/A',
+      role: u.role ?? 'N/A',
+      etatCompte: u.etatCompte ?? 'ACTIF',
+      dateInscrit: u.dateInscrit ?? new Date().toISOString(),
       image: u.image ?? null,
       imageLoading: false,
     }));
   }
 
+  // Calcul de la répartition des rôles
   private computeRoleDistribution(data: StatsPayload): void {
-    const grand = (data.users?.total ?? 0) || 1;
+    const grandTotal = (data.users?.total ?? 0) || 1;
     this.roleDistribution[0].pct = Math.round(
-      ((data.rh?.total ?? 0) / grand) * 100,
+      ((data.rh?.total ?? 0) / grandTotal) * 100,
     );
     this.roleDistribution[1].pct = Math.round(
-      ((data.employees?.total ?? 0) / grand) * 100,
+      ((data.employees?.total ?? 0) / grandTotal) * 100,
     );
     this.roleDistribution[2].pct = Math.round(
-      ((data.candidats?.total ?? 0) / grand) * 100,
+      ((data.candidats?.total ?? 0) / grandTotal) * 100,
     );
   }
 
-  private loadRecentUsersImages(): void {
-    this.recentUsers.forEach((user, index) => {
-      if (!user.id) {
-        this.recentUsers[index].imageLoading = false;
-        return;
-      }
-
-      this.userService
-        .getUserById(user.id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (detail: any) => {
-            this.recentUsers[index].image = detail.image ?? null;
-            this.recentUsers[index].imageLoading = false;
-          },
-          error: () => {
-            console.log(
-              ' error Image loaded for user',
-              user.id,
-              this.recentUsers[index].image,
-            );
-
-            this.recentUsers[index].image = null;
-            this.recentUsers[index].imageLoading = false;
-          },
-        });
-    });
-  }
-
+  // Construction de la source de l'image
   buildImageSrc(image: string | null): string | null {
     if (!image) return null;
     return image.startsWith('data:')
@@ -427,28 +508,36 @@ export class DashboardEmployeeComponent
       : `data:image/jpeg;base64,${image}`;
   }
 
+  // Récupération des initiales
   getInitials(user: RecentUser): string {
     const p = user.prenom?.charAt(0)?.toUpperCase() ?? '';
     const n = user.nom?.charAt(0)?.toUpperCase() ?? '';
     return `${p}${n}`;
   }
 
+  // Récupération de la source de l'avatar
   getAvatarSrc(): string | null {
     const img = this.profile?.image;
     if (!img) return null;
     return img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
   }
 
+  // Récupération de la couleur du rôle
   getRoleColor(role: string): string {
     return DashboardEmployeeComponent.ROLE_COLORS[role] ?? '#9ca3af';
   }
 
+  // Gestion des événements admin en temps réel
   private handleRealtimeEvent(event: AdminRealtimeEvent): void {
+    console.log("Gestion de l'événement admin:", event);
     this.lastEvent = event;
+    this.lastEventKind = 'admin';
     this.showEventToast();
     this.addActivityFromEvent(event);
+    this.actPage = 1; // Réinitialiser la page
   }
 
+  // Ajout d'une activité à partir d'un événement
   private addActivityFromEvent(event: AdminRealtimeEvent): void {
     const p = event.payload as any;
 
@@ -462,83 +551,146 @@ export class DashboardEmployeeComponent
       STATS_UPDATE: `Statistiques mises à jour`,
     };
 
+    const text = textMap[event.type] ?? 'Événement reçu';
+    const time = this.formatTime(event.timestamp);
+    const color = eventColor(event.type);
+
+    // Éviter les doublons pour STATS_UPDATE
     if (
       event.type === 'STATS_UPDATE' &&
       this.activities.length > 0 &&
-      this.activities[0].text === 'Statistiques mises à jour'
+      this.activities[0].text === text
     ) {
-      this.activities[0].time = this.formatTime(event.timestamp);
+      this.activities[0].time = time; // Mettre à jour l'heure
       return;
     }
 
-    this.activities.unshift({
-      text: textMap[event.type] ?? 'Événement reçu',
-      time: this.formatTime(event.timestamp),
-      color: eventColor(event.type),
-    });
-
-    if (this.activities.length > 20)
+    this.activities.unshift({ text, time, color });
+    if (this.activities.length > 20) {
       this.activities = this.activities.slice(0, 20);
+    }
   }
 
+  // Gestion des événements recrutement en temps réel
+  private handleRecrutementEvent(event: RecrutementRealtimeEvent): void {
+    console.log("Gestion de l'événement recrutement:", event);
+    this.lastEvent = event;
+    this.lastEventKind = 'recrutement';
+    this.showEventToast();
+
+    this.activities.unshift({
+      text: buildRecrutementNotificationText(event),
+      time: this.formatTime(event.timestamp),
+      color: recrutementEventColor(event.type),
+    });
+
+    if (this.activities.length > 20) {
+      this.activities = this.activities.slice(0, 20);
+    }
+    this.actPage = 1; // Réinitialiser la page
+  }
+
+  // Affichage du toast pour les événements
   private showEventToast(): void {
     this.showToast = true;
     if (this.toastTimer) clearTimeout(this.toastTimer);
     this.toastTimer = setTimeout(() => (this.showToast = false), 4000);
   }
 
-  private formatTime(iso: string): string {
+  // Formatage de l'heure
+  formatTime(iso: string): string {
     return new Date(iso).toLocaleTimeString('fr-FR', {
       hour: '2-digit',
       minute: '2-digit',
     });
   }
 
+  // Récupération du label du statut WebSocket
   get wsStatusLabel(): string {
     return wsStatusLabel(this.wsStatus);
   }
 
+  // Récupération de la classe du statut WebSocket
   get wsStatusClass(): string {
     return wsStatusClass(this.wsStatus);
   }
 
+  // Récupération du titre du toast
+  getToastTitle(): string {
+    if (!this.lastEvent) return 'Mise à jour';
+    if (this.lastEventKind === 'recrutement') {
+      return buildRecrutementNotificationText(
+        this.lastEvent as RecrutementRealtimeEvent,
+      );
+    }
+    const type = (this.lastEvent as AdminRealtimeEvent).type;
+    return DashboardEmployeeComponent.ADMIN_TOAST_TITLES[type] ?? 'Mise à jour';
+  }
+
+  // Récupération du sous-titre du toast
+  getToastSub(): string {
+    if (!this.lastEvent || this.lastEventKind === 'recrutement') return '';
+    const p = (this.lastEvent as AdminRealtimeEvent).payload as any;
+    if (!p?.prenom) return '';
+    let sub = `${p.prenom} ${p.nom ?? ''}`.trim();
+    if (p.role) sub += ` — ${p.role}`;
+    if (p.titre) sub += ` — ${p.titre}`;
+    return sub;
+  }
+
+  // Récupération de l'icône du toast
   getToastIcon(): string {
-    return eventIcon(this.lastEvent?.type);
+    if (!this.lastEvent) return 'fa-bell';
+    return this.lastEventKind === 'recrutement'
+      ? recrutementEventIcon((this.lastEvent as RecrutementRealtimeEvent).type)
+      : eventIcon((this.lastEvent as AdminRealtimeEvent).type);
   }
 
+  // Récupération de la couleur du toast
   getToastColor(): string {
-    return eventColor(this.lastEvent?.type);
+    if (!this.lastEvent) return '#64748b';
+    return this.lastEventKind === 'recrutement'
+      ? recrutementEventColor((this.lastEvent as RecrutementRealtimeEvent).type)
+      : eventColor((this.lastEvent as AdminRealtimeEvent).type);
   }
 
+  // Fermeture du toast
   dismissToast(): void {
     this.showToast = false;
   }
 
+  // Formatage du delta
   formatDelta(delta: number): string {
     return delta >= 0 ? `+${delta} ce mois` : `${delta} ce mois`;
   }
 
+  // Vérification si le delta est positif
   isDeltaUp(d: number): boolean {
     return d >= 0;
   }
 
+  // Vérification si le delta est négatif
   isDeltaDown(d: number): boolean {
     return d < 0;
   }
 
+  // Navigation vers la page des utilisateurs
   goToUsersPage(): void {
     this.router.navigate(['/manager/listUsersManager']);
   }
 
+  // Déconnexion
   logout(): void {
     this.authService.logout();
   }
 
+  // Initialisation des graphiques
   private initCharts(): void {
     this.buildLineChart();
     this.buildDoughnutChart();
   }
 
+  // Mise à jour des graphiques
   private updateCharts(): void {
     const now = new Date().getMonth();
     const slice = (arr: number[]) => (arr ?? []).slice(0, now + 1);
@@ -567,6 +719,7 @@ export class DashboardEmployeeComponent
     }
   }
 
+  // Construction du graphique en ligne
   private buildLineChart(): void {
     const ctx = this.lineChartRef?.nativeElement;
     if (!ctx) return;
@@ -637,6 +790,7 @@ export class DashboardEmployeeComponent
     );
   }
 
+  // Construction du graphique en donut
   private buildDoughnutChart(): void {
     const ctx = this.doughnutChartRef?.nativeElement;
     if (!ctx) return;

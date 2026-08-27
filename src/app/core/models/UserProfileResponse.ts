@@ -1,11 +1,13 @@
-// core/models/user-profile.model.ts
+import { Role } from "./enums/enumUser";
+
 export interface UserProfileResponse {
   id: number;
+  KeycloakId?: string;
   matricule: string | null;
   nom: string;
   prenom: string;
   email: string;
-  role: 'RH' | 'EMPLOYEE' | 'CANDIDAT';
+  role: Role;
   etatCompte: string;
   image: string | null;
   numTel?: string | null;
