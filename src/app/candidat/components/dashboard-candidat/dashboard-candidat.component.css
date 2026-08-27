@@ -1,0 +1,476 @@
+.candidat-dashboard {
+    padding: 28px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Header ─────────────────────────────────── */
+.section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.section-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.section-sub {
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 4px 0 0;
+}
+
+.refresh-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid #e8eeff;
+    background: white;
+    color: #4a6cf7;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+    background: #4a6cf7;
+    color: white;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.refresh-btn.spinning i {
+    animation: spin 0.8s linear infinite;
+}
+
+/* ── State banners ──────────────────────────── */
+.state-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+.state-error {
+    background: #fff0f0;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.state-loading {
+    background: #eef1ff;
+    color: #4a6cf7;
+    border: 1px solid #e0e7ff;
+}
+
+.retry-btn {
+    margin-left: auto;
+    border: 1px solid currentColor;
+    background: transparent;
+    color: inherit;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* ── KPI grid ───────────────────────────────── */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.kpi-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #e8eeff;
+    box-shadow: 0 2px 12px rgba(74, 108, 247, 0.06);
+    cursor: default;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.kpi-card[style],
+.kpi-card:has(.kpi-label) {
+    cursor: default;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(74, 108, 247, 0.12);
+}
+
+.kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.kpi-blue .kpi-icon {
+    background: #eef1ff;
+    color: #4a6cf7;
+}
+
+.kpi-purple .kpi-icon {
+    background: #f3f0ff;
+    color: #8b5cf6;
+}
+
+.kpi-violet .kpi-icon {
+    background: #eef1ff;
+    color: #6366f1;
+}
+
+.kpi-green .kpi-icon {
+    background: #e6f7f2;
+    color: #1D9E75;
+}
+
+.kpi-orange .kpi-icon {
+    background: #fff8eb;
+    color: #f59e0b;
+}
+
+.kpi-red .kpi-icon {
+    background: #fff0f0;
+    color: #ef4444;
+}
+
+.kpi-label {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.kpi-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.kpi-trend {
+    font-size: 11.5px;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.kpi-trend.up {
+    color: #1D9E75;
+}
+
+.kpi-trend.down {
+    color: #f59e0b;
+}
+
+.kpi-bg-icon {
+    position: absolute;
+    right: -8px;
+    bottom: -8px;
+    font-size: 64px;
+    opacity: 0.04;
+    color: #4a6cf7;
+    pointer-events: none;
+}
+
+/* ── Charts ─────────────────────────────────── */
+.charts-row {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.row-2cols {
+    grid-template-columns: 1.45fr 1fr;
+}
+
+.row-bottom {
+    grid-template-columns: 1fr 1fr;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    border: 1px solid #e8eeff;
+    box-shadow: 0 2px 12px rgba(74, 108, 247, 0.05);
+}
+
+.chart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.chart-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+}
+
+.chart-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+}
+
+.chart-sub {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.chart-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.link-active {
+    color: #4a6cf7;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.link-active:hover {
+    color: #3b59e0;
+}
+
+/* ── Donut legend ───────────────────────────── */
+.donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.donut-leg-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.leg-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.leg-label {
+    color: #64748b;
+    flex: 1;
+}
+
+.leg-pct {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.empty-inline {
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: center;
+    padding: 10px 0;
+}
+
+/* ── Interview list ─────────────────────────── */
+.interview-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.interview-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.interview-item:hover {
+    background: #fafbff;
+}
+
+.interview-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.interview-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.interview-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.interview-meta {
+    font-size: 11.5px;
+    color: #94a3b8;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dot-sep {
+    color: #cbd5e1;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.badge-expiring {
+    background: #fff0f0;
+    color: #ef4444;
+}
+
+/* ── Poste list ─────────────────────────────── */
+.poste-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.poste-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.poste-item:hover {
+    background: #fafbff;
+}
+
+.poste-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.poste-meta {
+    font-size: 11.5px;
+    color: #94a3b8;
+    margin-top: 2px;
+    display: flex;
+    gap: 5px;
+}
+
+/* ── Empty state ────────────────────────────── */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 36px 20px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.empty-state i {
+    font-size: 26px;
+    color: #cbd5e1;
+}
+
+/* ── Mini stats ──────────────────────────────── */
+.mini-stats-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.mini-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1px solid #e8eeff;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: #475569;
+}
+
+.mini-stat i {
+    color: #4a6cf7;
+}
+
+/* ── Responsive ─────────────────────────────── */
+@media (max-width: 1200px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .row-2cols {
+        grid-template-columns: 1fr;
+    }
+
+    .row-bottom {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .candidat-dashboard {
+        padding: 16px;
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+}

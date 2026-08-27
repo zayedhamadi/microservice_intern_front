@@ -39,7 +39,7 @@ export class ForgetPaswwordComponent {
     this.errorMessage = '';
 
     if (this.form.invalid) {
-      this.notify.toast('warning', 'Veuillez saisir un email valide.');
+      this.notify.formInvalid('Veuillez saisir un email valide');
       return;
     }
 
@@ -50,22 +50,12 @@ export class ForgetPaswwordComponent {
       next: (res: any) => {
         this.isLoading = false;
         this.successMessage = res.message;
-
-        this.notify
-          .success(
-            'Email envoyé !',
-            res.message ||
-              'Vérifiez votre boîte mail pour le lien de réinitialisation.',
-          )
-          .then(() => this.router.navigate(['/signin']));
+        this.notify.toastSuccess('Email envoyé');
       },
       error: () => {
         this.isLoading = false;
         this.successMessage = 'Si cet email existe, vous recevrez un lien.';
-        this.notify.toast(
-          'info',
-          'Si cet email existe, vous recevrez un lien.',
-        );
+        this.notify.toastInfo('Si cet email existe, vous recevrez un lien');
       },
     });
   }

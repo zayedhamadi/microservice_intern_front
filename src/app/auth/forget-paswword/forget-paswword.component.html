@@ -1,27 +1,23 @@
 <div class="fp-shell">
 
-    <div class="noise"></div>
-
-    <!-- LEFT PANEL -->
     <aside class="fp-panel">
         <div class="panel-inner">
 
             <a class="brand" routerLink="/home">
                 <span class="brand-mark">
-                    <svg width="22" height="22" viewBox="0 0 32 32">
-                        <path d="M8 8L16 4L24 8V16C24 21 16 28 16 28S8 21 8 16V8Z" fill="currentColor" />
-                        <path d="M12 16L15 19L20 13" stroke="white" stroke-width="2.5" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <rect x="3" y="7" width="18" height="13" rx="2" />
+                        <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <path d="M3 13h18" />
                     </svg>
                 </span>
-                <span class="brand-name">SkillExchange</span>
+                <span class="brand-name">Hirely</span>
             </a>
 
             <div class="panel-copy">
                 <p class="panel-eyebrow">Sécurité du compte</p>
                 <h1 class="panel-title">Récupérez<br>votre <em>accès</em></h1>
-                <p class="panel-body">
-                    Entrez votre email pour recevoir un lien sécurisé.
-                </p>
+                <p class="panel-body">Entrez votre email pour recevoir un lien sécurisé.</p>
             </div>
 
             <ul class="panel-steps">
@@ -37,57 +33,67 @@
         <div class="fp-card">
 
             <div class="card-icon">
-                🔐
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none" />
+                </svg>
             </div>
 
             <h2 class="card-title">Mot de passe oublié ?</h2>
-            <p class="card-sub">Nous vous enverrons un lien</p>
+            <p class="card-sub">Nous vous enverrons un lien de réinitialisation</p>
 
-            <div class="fp-alert fp-alert--success" *ngIf="successMessage">
-                <strong>Email envoyé !</strong>
+            <div class="fp-alert fp-alert--success" *ngIf="successMessage" role="status">
+                <strong>Email envoyé</strong>
                 <p>{{ successMessage }}</p>
             </div>
 
-            <div class="fp-alert fp-alert--error" *ngIf="errorMessage">
+            <div class="fp-alert fp-alert--error" *ngIf="errorMessage" role="alert">
                 {{ errorMessage }}
             </div>
 
-            <form class="fp-form" [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!successMessage">
+            <form class="fp-form" [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!successMessage" novalidate>
 
                 <div class="field-wrap">
-
-                    <label class="field-label">Adresse email</label>
+                    <label class="field-label" for="email">Adresse email</label>
 
                     <div class="field-input-wrap" [class.field-error]="isEmailInvalid()"
                         [class.field-ok]="email.valid && email.touched">
-
-                        <input class="field-input" type="email" formControlName="email" placeholder="votre@email.com" />
-
+                        <svg class="field-ico" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                            <polyline points="22,6 12,13 2,6" />
+                        </svg>
+                        <input id="email" class="field-input" type="email" formControlName="email"
+                            placeholder="nom@entreprise.com" [attr.aria-invalid]="isEmailInvalid()" />
                     </div>
 
                     <div class="field-errors" *ngIf="isEmailInvalid()">
-
-                        <div class="field-err-item" *ngIf="email.errors?.['required']">
-                            <p style="color: red; font-size: 12px;"> Email obligatoire </p>
-                        </div>
-
-                        <div class="field-err-item" *ngIf="email.errors?.['email']">
-                           <p style="color: red; font-size: 12px;"> Format email invalide </p>
-                        </div>
-
+                        <div class="field-err-item" *ngIf="email.errors?.['required']">Email obligatoire</div>
+                        <div class="field-err-item" *ngIf="email.errors?.['email']">Format email invalide</div>
                     </div>
-
                 </div>
 
                 <button type="submit" class="btn-primary" [disabled]="isLoading">
-                    <span *ngIf="!isLoading">Envoyer le lien</span>
-                    <span *ngIf="isLoading">...</span>
+                    <span *ngIf="!isLoading" class="btn-content">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M22 2L11 13" />
+                            <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+                        </svg>
+                        Envoyer le lien
+                    </span>
+                    <span *ngIf="isLoading" class="btn-dots"><span></span><span></span><span></span></span>
                 </button>
 
             </form>
 
-            <!-- BACK -->
             <button class="btn-ghost" (click)="goToSignin()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                </svg>
                 Retour à la connexion
             </button>
 

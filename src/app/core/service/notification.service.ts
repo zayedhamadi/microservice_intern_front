@@ -1,15 +1,29 @@
 import { Injectable } from '@angular/core';
 import Swal, { SweetAlertIcon } from 'sweetalert2';
 
-
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
+  private readonly brandColor = '#2563EB';
+  private readonly dangerColor = '#DC2626';
+  private readonly neutralColor = '#94A3B8';
+
   private readonly toastMixin = Swal.mixin({
     toast: true,
     position: 'top-end',
     showConfirmButton: false,
     timer: 2500,
     timerProgressBar: true,
+    didOpen: (el) => {
+      el.addEventListener('mouseenter', Swal.stopTimer);
+      el.addEventListener('mouseleave', Swal.resumeTimer);
+    },
+  });
+
+  private readonly dialogMixin = Swal.mixin({
+    buttonsStyling: true,
+    confirmButtonColor: this.brandColor,
+    cancelButtonColor: this.neutralColor,
+    reverseButtons: true,
   });
 
   toast(icon: SweetAlertIcon, title: string, timer = 2500): void {
@@ -24,23 +38,30 @@ export class NotificationService {
     this.toast('error', title, 3500);
   }
 
+  toastWarning(title: string): void {
+    this.toast('warning', title, 3000);
+  }
+
+  toastInfo(title: string): void {
+    this.toast('info', title);
+  }
+
   error(title: string, text?: string): Promise<any> {
-    return Swal.fire({
+    return this.dialogMixin.fire({
       title,
       text,
       icon: 'error',
-      confirmButtonColor: '#d33',
-      confirmButtonText: 'OK',
+      confirmButtonColor: this.dangerColor,
+      confirmButtonText: 'Compris',
     });
   }
 
   success(title: string, text?: string): Promise<any> {
-    return Swal.fire({
+    return this.dialogMixin.fire({
       title,
       text,
       icon: 'success',
-      confirmButtonColor: '#3085d6',
-      confirmButtonText: 'OK',
+      confirmButtonText: 'Continuer',
     });
   }
 
@@ -49,31 +70,35 @@ export class NotificationService {
     text?: string,
     confirmButtonText = 'OK',
   ): Promise<any> {
-    return Swal.fire({
+    return this.dialogMixin.fire({
       title,
       text,
       icon: 'warning',
-      confirmButtonColor: '#3085d6',
       confirmButtonText,
     });
   }
 
-  /** Boîte de confirmation Oui/Non, retourne true si confirmé. */
   async confirm(
     title: string,
     text?: string,
     confirmButtonText = 'Confirmer',
   ): Promise<boolean> {
-    const result = await Swal.fire({
+    const result = await this.dialogMixin.fire({
       title,
       text,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#aaa',
       confirmButtonText,
       cancelButtonText: 'Annuler',
     });
     return result.isConfirmed;
+  }
+
+  formInvalid(message = 'Veuillez corriger les erreurs du formulaire'): void {
+    this.toastError(message);
+  }
+
+  connectionError(message = 'Impossible de contacter le serveur'): void {
+    this.toastError(message);
   }
 }

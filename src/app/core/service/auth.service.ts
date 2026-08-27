@@ -1,6 +1,5 @@
 import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import {
   catchError,
@@ -25,10 +24,10 @@ import { UserSession } from '../models/userSession';
 export class AuthService {
   private readonly apiUrl = environment.apiUrl;
   private readonly keycloakUrl = environment.keycloak.url;
+  private readonly realm = environment.keycloak.realm;
   private readonly clientId = environment.keycloak.clientId;
   private readonly clientSecret = environment.keycloak.clientSecret;
   private readonly redirectUri = environment.keycloak.redirectUri;
-  private authFlowInProgress = false;
 
   private static readonly STORAGE_KEYS = {
     ACCESS_TOKEN: 'access_token',
@@ -36,6 +35,7 @@ export class AuthService {
     USER: 'user_info',
   } as const;
 
+  private authFlowInProgress = false;
   private loggedInSubject = new BehaviorSubject<boolean>(false);
 
   constructor(
@@ -51,26 +51,12 @@ export class AuthService {
     return isPlatformBrowser(this.platformId);
   }
 
-
-  isLoggedInObservable(): Observable<boolean> {
-    return this.loggedInSubject.asObservable();
-  }
-
   private setLoggedIn(value: boolean): void {
     this.loggedInSubject.next(value);
   }
 
-  getCurrentUser(): UserSession | null {
-    if (!this.isBrowser()) return null;
-
-    const raw = localStorage.getItem(AuthService.STORAGE_KEYS.USER);
-    if (!raw) return null;
-
-    try {
-      return JSON.parse(raw) as UserSession;
-    } catch {
-      return null;
-    }
+  isLoggedInObservable(): Observable<boolean> {
+    return this.loggedInSubject.asObservable();
   }
 
   setAuthFlowInProgress(value: boolean): void {
@@ -79,6 +65,27 @@ export class AuthService {
 
   isAuthFlowInProgress(): boolean {
     return this.authFlowInProgress;
+  }
+
+  private buildOAuthUrl(idpHint: 'google' | 'github'): string {
+    return (
+      `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/auth` +
+      `?client_id=${this.clientId}` +
+      `&redirect_uri=${encodeURIComponent(this.redirectUri)}` +
+      `&response_type=code` +
+      `&scope=openid%20profile%20email` +
+      `&kc_idp_hint=${idpHint}`
+    );
+  }
+
+  loginWithGoogle(): void {
+    if (!this.isBrowser()) return;
+    window.location.href = this.buildOAuthUrl('google');
+  }
+
+  loginWithGitHub(): void {
+    if (!this.isBrowser()) return;
+    window.location.href = this.buildOAuthUrl('github');
   }
 
   exchangeCodeForToken(code: string): Observable<any> {
@@ -90,7 +97,7 @@ export class AuthService {
     body.set('code', code);
 
     return this.http.post(
-      `${this.keycloakUrl}/realms/${environment.keycloak.realm}/protocol/openid-connect/token`,
+      `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/token`,
       body.toString(),
       {
         headers: new HttpHeaders({
@@ -105,10 +112,7 @@ export class AuthService {
       retry({
         count: 2,
         delay: (error, retryCount) => {
-          if (error.status === 503) {
-            console.log(error);
-            return timer(2000);
-          }
+          if (error.status === 503) return timer(2000);
           throw error;
         },
       }),
@@ -140,20 +144,6 @@ export class AuthService {
     return this.http.put(`${this.apiUrl}/users/complete-profile`, dto);
   }
 
-  loginWithGoogle(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-
-    const url =
-      `${this.keycloakUrl}/realms/${environment.keycloak.realm}/protocol/openid-connect/auth` +
-      `?client_id=${this.clientId}` +
-      `&redirect_uri=${encodeURIComponent(this.redirectUri)}` +
-      `&response_type=code` +
-      `&scope=openid%20profile%20email` +
-      `&kc_idp_hint=google`;
-
-    window.location.href = url;
-  }
-
   handleGoogleCallback(code: string): Observable<any> {
     const params = new HttpParams().set('code', code);
     return this.http.post(`${this.apiUrl}/auth/google/callback`, null, {
@@ -174,26 +164,24 @@ export class AuthService {
   }
 
   saveToken(token: string): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(AuthService.STORAGE_KEYS.ACCESS_TOKEN, token);
-      this.setLoggedIn(true);
-    }
+    if (!this.isBrowser()) return;
+    localStorage.setItem(AuthService.STORAGE_KEYS.ACCESS_TOKEN, token);
+    this.setLoggedIn(true);
   }
 
   saveRefreshToken(token: string): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(AuthService.STORAGE_KEYS.REFRESH_TOKEN, token);
-    }
+    if (!this.isBrowser()) return;
+    localStorage.setItem(AuthService.STORAGE_KEYS.REFRESH_TOKEN, token);
   }
 
   getToken(): string | null {
-    return isPlatformBrowser(this.platformId)
+    return this.isBrowser()
       ? localStorage.getItem(AuthService.STORAGE_KEYS.ACCESS_TOKEN)
       : null;
   }
 
   refreshAccessToken(): Observable<any> {
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!this.isBrowser()) {
       return throwError(() => new Error('Not in browser'));
     }
     const refreshToken = localStorage.getItem(
@@ -208,7 +196,7 @@ export class AuthService {
     body.set('refresh_token', refreshToken);
 
     return this.http.post(
-      `${this.keycloakUrl}/realms/${environment.keycloak.realm}/protocol/openid-connect/token`,
+      `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/token`,
       body.toString(),
       {
         headers: new HttpHeaders({
@@ -219,24 +207,26 @@ export class AuthService {
   }
 
   clearTokens(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem(AuthService.STORAGE_KEYS.ACCESS_TOKEN);
-      localStorage.removeItem(AuthService.STORAGE_KEYS.REFRESH_TOKEN);
-      localStorage.removeItem(AuthService.STORAGE_KEYS.USER);
-      this.setLoggedIn(false);
-    }
+    if (!this.isBrowser()) return;
+    localStorage.removeItem(AuthService.STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(AuthService.STORAGE_KEYS.REFRESH_TOKEN);
+    localStorage.removeItem(AuthService.STORAGE_KEYS.USER);
+    this.setLoggedIn(false);
   }
 
   saveUserInfo(user: any): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(AuthService.STORAGE_KEYS.USER, JSON.stringify(user));
-    }
+    if (!this.isBrowser()) return;
+    localStorage.setItem(AuthService.STORAGE_KEYS.USER, JSON.stringify(user));
   }
 
   getUserInfo(): any {
-    if (!isPlatformBrowser(this.platformId)) return null;
+    if (!this.isBrowser()) return null;
     const raw = localStorage.getItem(AuthService.STORAGE_KEYS.USER);
     return raw ? JSON.parse(raw) : null;
+  }
+
+  getCurrentUser(): UserSession | null {
+    return this.getUserInfo();
   }
 
   getRole(): string | null {
@@ -247,8 +237,36 @@ export class AuthService {
     return !!this.getToken();
   }
 
+  private revokeKeycloakSession(refreshToken: string): void {
+    const body = new URLSearchParams();
+    body.set('client_id', this.clientId);
+    body.set('client_secret', this.clientSecret);
+    body.set('refresh_token', refreshToken);
+    fetch(
+      `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/logout`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      },
+    ).catch(() => {});
+  }
+
+  private notifySuccessAndRedirect(): void {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    Toast.fire({ icon: 'success', title: 'Déconnexion réussie' }).then(() => {
+      window.location.href = '/signin';
+    });
+  }
+
   logout(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!this.isBrowser()) return;
 
     const refreshToken = localStorage.getItem(
       AuthService.STORAGE_KEYS.REFRESH_TOKEN,
@@ -259,34 +277,8 @@ export class AuthService {
     const finalizeLogout = () => {
       localStorage.clear();
       this.setLoggedIn(false);
-
-      if (refreshToken) {
-        const body = new URLSearchParams();
-        body.set('client_id', this.clientId);
-        body.set('client_secret', this.clientSecret);
-        body.set('refresh_token', refreshToken);
-        fetch(
-          `${this.keycloakUrl}/realms/${environment.keycloak.realm}/protocol/openid-connect/logout`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: body.toString(),
-          },
-        ).catch(() => {});
-      }
-
-      const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-      });
-      Toast.fire({ icon: 'success', title: 'Déconnexion réussie !' }).then(
-        () => {
-          window.location.href = '/signin';
-        },
-      );
+      if (refreshToken) this.revokeKeycloakSession(refreshToken);
+      this.notifySuccessAndRedirect();
     };
 
     const notifyLoginActivityThenFinalize = () => {

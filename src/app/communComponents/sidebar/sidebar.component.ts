@@ -27,10 +27,6 @@ type SubmenuKey = 'postes' | 'employees' | 'recrutement' | 'candidat';
   styleUrls: ['./sidebar.component.css'],
 })
 export class SideBarComponent implements OnInit, OnDestroy {
-  // =========================================================
-  // SIDEBAR
-  // =========================================================
-
   isCollapsed = false;
   isMobileOpen = false;
 
@@ -41,28 +37,12 @@ export class SideBarComponent implements OnInit, OnDestroy {
     candidat: false,
   };
 
-  // =========================================================
-  // AUTHENTIFICATION
-  // =========================================================
-
   isLoggedIn = false;
   user: UserConnected | null = null;
 
-  // =========================================================
-  // NOTIFICATIONS
-  // =========================================================
-
   notifCount = 0;
 
-  // =========================================================
-  // WEBSOCKET
-  // =========================================================
-
   wsStatus: ConnectionStatus = 'DISCONNECTED';
-
-  // =========================================================
-  // ROUTES
-  // =========================================================
 
   readonly profileRoute = '/getMyprofile';
 
@@ -70,12 +50,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
   readonly calendarRoute = CALENDAR_ROUTES;
 
-  /**
-   * Route commune fonctionnelle selon le rôle.
-   *
-   * RH       -> /rh/demandes-reprogrammation
-   * EMPLOYEE -> /manager/demandes-reprogrammation
-   */
   readonly reprogrammationRoutes = {
     RH: '/rh/demandes-reprogrammation',
     EMPLOYEE: '/manager/demandes-reprogrammation',
@@ -84,10 +58,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
   } as const;
 
   currentRole: keyof typeof ROLE_ROUTES = 'EMPLOYEE';
-
-  // =========================================================
-  // LIFECYCLE
-  // =========================================================
 
   private readonly destroy$ = new Subject<void>();
 
@@ -110,20 +80,12 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.wsService.disconnect();
   }
 
-  // =========================================================
-  // AUTHENTIFICATION
-  // =========================================================
-
   private syncAuthentication(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
     this.user = this.authService.getCurrentUser();
 
     this.updateCurrentRole();
   }
-
-  // =========================================================
-  // PROFIL
-  // =========================================================
 
   private loadUserProfile(): void {
     if (!this.isLoggedIn) {
@@ -153,10 +115,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
       });
   }
 
-  // =========================================================
-  // RÔLE
-  // =========================================================
-
   private updateCurrentRole(): void {
     const role = this.user?.role;
 
@@ -164,10 +122,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
       this.currentRole = role as keyof typeof ROLE_ROUTES;
     }
   }
-
-  // =========================================================
-  // ROUTES
-  // =========================================================
 
   getDashboardRoute(): string {
     return this.dashboardRoute[this.currentRole];
@@ -177,10 +131,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
     return this.calendarRoute[this.currentRole];
   }
 
-  /**
-   * Retourne automatiquement la bonne route
-   * selon le rôle de l'utilisateur.
-   */
   getReprogrammationRoute(): string {
     if (this.user?.role === 'RH') {
       return this.reprogrammationRoutes.RH;
@@ -192,10 +142,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
     return '';
   }
-
-  // =========================================================
-  // WEBSOCKET
-  // =========================================================
 
   private connectRealtime(): void {
     if (!this.isLoggedIn) {
@@ -232,10 +178,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
     });
   }
 
-  // =========================================================
-  // NOTIFICATIONS
-  // =========================================================
-
   clearNotifCount(): void {
     this.notifCount = 0;
   }
@@ -247,10 +189,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
     return this.notifCount.toString();
   }
-
-  // =========================================================
-  // WEBSOCKET UI
-  // =========================================================
 
   get wsStatusLabel(): string {
     switch (this.wsStatus) {
@@ -279,10 +217,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
   eventColor(type?: string): string {
     return eventColor(type as any);
   }
-
-  // =========================================================
-  // USER INFORMATION
-  // =========================================================
 
   getFullName(): string {
     const firstName = this.user?.prenom ?? '';
@@ -334,10 +268,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
     return initials ? initials.toUpperCase() : 'U';
   }
 
-  // =========================================================
-  // SIDEBAR
-  // =========================================================
-
   toggleSidebar(): void {
     this.isCollapsed = !this.isCollapsed;
 
@@ -346,10 +276,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
     }
   }
 
-  // =========================================================
-  // MOBILE
-  // =========================================================
-
   toggleMobileSidebar(): void {
     this.isMobileOpen = !this.isMobileOpen;
   }
@@ -357,10 +283,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
   closeMobileSidebar(): void {
     this.isMobileOpen = false;
   }
-
-  // =========================================================
-  // SOUS-MENUS
-  // =========================================================
 
   toggleSubmenu(key: SubmenuKey, event?: Event): void {
     event?.preventDefault();
@@ -399,10 +321,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
       candidat: false,
     };
   }
-
-  // =========================================================
-  // LOGOUT
-  // =========================================================
 
   logout(): void {
     this.wsService.disconnect();

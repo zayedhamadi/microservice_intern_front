@@ -1,103 +1,83 @@
 <header class="navbar" *ngIf="!hideNavbar">
     <div class="navbar-left">
-        <!-- ================= LOGO ================= -->
         <a class="logo" [routerLink]="getHomeRoute()">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>Supra Technology</span>
+            <span class="logo-icon">
+                <i class="fa-solid fa-briefcase"></i>
+            </span>
+            <span class="logo-text">Hirely</span>
         </a>
 
-        <!-- ================= NAVIGATION PAR RÔLE ================= -->
         <nav class="nav-links" *ngIf="isLoggedIn">
-
-            <!-- ACCUEIL COMMUN -->
             <a [routerLink]="getHomeRoute()" routerLinkActive="nav-active" [routerLinkActiveOptions]="{ exact: true }">
                 <i class="fa-solid fa-gauge-high"></i>
                 <span>Accueil</span>
             </a>
 
-            <!-- ================= RESSOURCES HUMAINES (RH) ================= -->
             <ng-container *ngIf="user?.role === 'RH'">
                 <a routerLink="/rh/listUsers" routerLinkActive="nav-active">
                     <i class="fa-solid fa-users"></i>
                     <span>Collaborateurs</span>
                 </a>
-
                 <a routerLink="/rh/ListePosteRecrutement" routerLinkActive="nav-active">
                     <i class="fa-solid fa-briefcase"></i>
                     <span>Postes</span>
                 </a>
-
                 <a routerLink="/rh/ConsulteLesPosteQuiLesCandidatsPostulent" routerLinkActive="nav-active">
                     <i class="fa-solid fa-file-signature"></i>
                     <span>Candidatures</span>
                 </a>
-
                 <a routerLink="/rh/listConges" routerLinkActive="nav-active">
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>Congés</span>
                 </a>
             </ng-container>
 
-            <!-- ================= EMPLOYÉ / MANAGER ================= -->
             <ng-container *ngIf="user?.role === 'EMPLOYEE'">
                 <a routerLink="/manager/listUsersManager" routerLinkActive="nav-active">
                     <i class="fa-solid fa-users"></i>
                     <span>Collaborateurs</span>
                 </a>
-
                 <a routerLink="/manager/consulterlesPosteDisponibles" routerLinkActive="nav-active">
                     <i class="fa-solid fa-briefcase"></i>
                     <span>Postes ouverts</span>
                 </a>
-
                 <a routerLink="/manager/consulterlistUSersPourFaireDesEntretientTechniques"
                     routerLinkActive="nav-active">
                     <i class="fa-solid fa-user-check"></i>
                     <span>Entretiens techniques</span>
                 </a>
-
                 <a routerLink="/manager/departement" routerLinkActive="nav-active">
                     <i class="fa-solid fa-building"></i>
                     <span>Départements</span>
                 </a>
             </ng-container>
 
-            <!-- ================= CANDIDAT ================= -->
             <ng-container *ngIf="user?.role === 'CANDIDAT'">
                 <a routerLink="/candidat/consulterlesPosteDisponibles" routerLinkActive="nav-active">
                     <i class="fa-solid fa-briefcase"></i>
                     <span>Offres disponibles</span>
                 </a>
-
                 <a routerLink="/candidat/MesCandidatures" routerLinkActive="nav-active">
                     <i class="fa-solid fa-file-lines"></i>
                     <span>Mes candidatures</span>
                 </a>
-
                 <a routerLink="/candidat/postulerAunePosteSpecific" routerLinkActive="nav-active">
                     <i class="fa-solid fa-paper-plane"></i>
                     <span>Postuler</span>
                 </a>
             </ng-container>
-
         </nav>
     </div>
 
-    <!-- ================= SECTION DROITE ================= -->
     <div class="navbar-right">
         <div class="user-menu-row" *ngIf="isLoggedIn">
-
-            <!-- ================= NOTIFICATIONS ================= -->
             <div class="notif-wrap">
                 <button class="notif-btn" type="button" (click)="toggleNotifDropdown()"
                     aria-label="Consulter les notifications">
                     <i class="fa-regular fa-bell"></i>
-                    <span class="notif-badge" *ngIf="notifCount > 0">
-                        {{ notifCount > 99 ? '99+' : notifCount }}
-                    </span>
+                    <span class="notif-badge" *ngIf="notifCount > 0">{{ notifCount > 99 ? '99+' : notifCount }}</span>
                 </button>
 
-                <!-- DROPDOWN NOTIFICATIONS -->
                 <div class="notif-dropdown" *ngIf="showNotifDropdown">
                     <div class="notif-dropdown-header">
                         <span>Notifications</span>
@@ -132,25 +112,19 @@
                 </div>
             </div>
 
-            <!-- ================= MENU UTILISATEUR ================= -->
             <div class="user-menu">
                 <div class="user-avatar" (click)="toggleDropdown()" role="button" aria-haspopup="true"
                     [attr.aria-expanded]="showDropdown">
                     <img *ngIf="getAvatarSrc()" [src]="getAvatarSrc()!" alt="Photo de profil" class="avatar-img" />
-                    <span *ngIf="!getAvatarSrc()">
-                        {{ getUserInitials() }}
-                    </span>
+                    <span *ngIf="!getAvatarSrc()">{{ getUserInitials() }}</span>
                 </div>
 
-                <!-- DROPDOWN UTILISATEUR -->
                 <div class="user-dropdown" *ngIf="showDropdown">
                     <div class="dropdown-header">
                         <div class="dropdown-avatar">
                             <img *ngIf="getAvatarSrc()" [src]="getAvatarSrc()!" alt="Photo de profil"
                                 class="avatar-img" />
-                            <span *ngIf="!getAvatarSrc()">
-                                {{ getUserInitials() }}
-                            </span>
+                            <span *ngIf="!getAvatarSrc()">{{ getUserInitials() }}</span>
                         </div>
                         <div class="dropdown-user-meta">
                             <div class="dropdown-name">{{ user?.prenom }} {{ user?.nom }}</div>
@@ -166,7 +140,6 @@
                             <i class="fa-regular fa-user"></i>
                             <span>Mon profil</span>
                         </a>
-
                         <a [routerLink]="getCalendarRoute()" (click)="closeDropdown()">
                             <i class="fa-regular fa-calendar-days"></i>
                             <span>Mon calendrier</span>
@@ -183,7 +156,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </header>

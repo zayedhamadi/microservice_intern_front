@@ -8,7 +8,6 @@ import {
 } from '@angular/forms';
 import { AuthService } from '../../core/service/auth.service';
 import { NotificationService } from '../../core/service/notification.service';
-import { ROLE_ROUTES } from '../../core/constant/role-route';
 
 @Component({
   selector: 'app-signin',
@@ -54,43 +53,14 @@ export class SigninComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.clearTimers();
   }
-  /*
+
   onLogin(): void {
     if (this.isBlocked) return;
     this.form.markAllAsTouched();
-    if (this.form.invalid) return;
-
-    this.isLoading = true;
-    this.errorMessage = '';
-
-    const { email, password } = this.form.value;
-
-    this.authService.login(email, password).subscribe({
-      next: (response) => {
-        this.clearTimers();
-        this.attemptsLeft = this.MAX_ATTEMPTS;
-
-        this.authService.saveToken(response.accessToken);
-        this.authService.saveRefreshToken(response.refreshToken);
-        this.authService.saveUserInfo({ ...response });
-
-        this.isLoading = false;
-        this.notify.toastSuccess('Connexion réussie !');
-        this.redirectByProfile(response);
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.registerFailedAttempt();
-        this.errorMessage =
-          err.error?.error || 'Email ou mot de passe incorrect';
-      },
-    });
-  }
-*/
-  onLogin(): void {
-    if (this.isBlocked) return;
-    this.form.markAllAsTouched();
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.notify.formInvalid();
+      return;
+    }
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -107,18 +77,19 @@ export class SigninComponent implements OnInit, OnDestroy {
         this.authService.saveUserInfo({ ...response });
 
         this.isLoading = false;
-        this.notify.toastSuccess('Connexion réussie !');
+        this.notify.toastSuccess('Connexion réussie');
         this.router.navigate(['/callback']);
       },
       error: (err) => {
-        console.log(err);
         this.isLoading = false;
         this.registerFailedAttempt();
         this.errorMessage =
           err.error?.error || 'Email ou mot de passe incorrect';
+        this.notify.toastError(this.errorMessage);
       },
     });
   }
+
   private clearTimers(): void {
     if (this.blockTimer) {
       clearInterval(this.blockTimer);
@@ -154,6 +125,8 @@ export class SigninComponent implements OnInit, OnDestroy {
     this.form.disable();
     this.clearTimers();
 
+    this.notify.toastWarning('Compte temporairement bloqué');
+
     this.blockTimer = setInterval(() => {
       this.blockCountdown--;
       if (this.blockCountdown <= 0) this.unblock();
@@ -181,26 +154,6 @@ export class SigninComponent implements OnInit, OnDestroy {
         this.attemptCountdown = 0;
       }
     }, 1000);
-  }
-
-  private redirectByProfile(user: any): void {
-    this.authService.getMyProfile().subscribe({
-      next: (response) => {
-        this.clearTimers();
-        this.attemptsLeft = this.MAX_ATTEMPTS;
-
-        this.authService.saveToken(response.accessToken);
-        this.authService.saveRefreshToken(response.refreshToken);
-        this.authService.saveUserInfo({ ...response });
-
-        this.isLoading = false;
-        this.router.navigate(['/callback']);
-      },
-      error: (err: any) => {
-        console.log(err);
-        this.router.navigate(['/signin']);
-      },
-    });
   }
 
   f(name: string): AbstractControl {
@@ -235,5 +188,8 @@ export class SigninComponent implements OnInit, OnDestroy {
 
   onGoogleSignup(): void {
     this.authService.loginWithGoogle();
+  }
+  onGitHubSignup(): void {
+    this.authService.loginWithGitHub();
   }
 }

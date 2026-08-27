@@ -1,4 +1,10 @@
-import { Component, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  PLATFORM_ID,
+  Inject,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { take } from 'rxjs/operators';
@@ -11,13 +17,16 @@ import { ROLE_ROUTES } from '../../core/constant/role-route';
   templateUrl: './callback.component.html',
   styleUrl: './callback.component.css',
 })
-export class CallbackComponent implements OnInit {
+export class CallbackComponent implements OnInit, OnDestroy {
   message = 'Préparation de votre session...';
   stepIndex = 0;
   readonly totalSteps = 3;
 
   private isProcessing = false;
+  private destroyed = false;
   private readonly roleRoutes = ROLE_ROUTES;
+
+  private pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
 
   private readonly STEP_DELAY = 1400;
   private readonly FINAL_DELAY = 1600;
@@ -35,8 +44,6 @@ export class CallbackComponent implements OnInit {
     if (this.isProcessing) return;
     this.isProcessing = true;
 
-    // On lit les query params UNE SEULE FOIS (take(1)), pour ne jamais
-    // se refaire déclencher par le navigate() qui nettoie l'URL plus tard.
     this.route.queryParams.pipe(take(1)).subscribe((params) => {
       const code = params['code'];
 
@@ -54,11 +61,27 @@ export class CallbackComponent implements OnInit {
     });
   }
 
-  private wait(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    this.pendingTimeouts.forEach((id) => clearTimeout(id));
+    this.pendingTimeouts = [];
   }
 
-  // ───────────────────── GOOGLE FLOW ─────────────────────
+  private wait(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      const id = setTimeout(() => {
+        this.pendingTimeouts = this.pendingTimeouts.filter((t) => t !== id);
+        resolve();
+      }, ms);
+      this.pendingTimeouts.push(id);
+    });
+  }
+
+  private navigate(commands: any[]): void {
+    if (this.destroyed) return;
+    this.router.navigate(commands);
+  }
+
 
   private runGoogleFlow(code: string): void {
     this.authService.clearTokens();
@@ -66,9 +89,9 @@ export class CallbackComponent implements OnInit {
 
     this.authService.exchangeCodeForToken(code).subscribe({
       next: (tokenData) => {
-        // On ne nettoie l'URL qu'APRÈS avoir capturé le code avec succès,
-        // et ce nettoyage ne redéclenchera plus rien puisque take(1)
-        // a déjà consommé et désinscrit l'abonnement aux queryParams.
+        if (this.destroyed) return;
+
+      
         this.router.navigate([], {
           relativeTo: this.route,
           queryParams: {},
@@ -77,13 +100,14 @@ export class CallbackComponent implements OnInit {
         this.handleTokenReceived(tokenData);
       },
       error: (err) => {
+        if (this.destroyed) return;
         console.error('Token error:', err);
         this.message = 'La connexion a échoué.';
         this.notify.error(
           'Connexion impossible',
           'Le lien de connexion Google a expiré ou est invalide. Veuillez réessayer.',
         );
-        setTimeout(() => this.router.navigate(['/signin']), 2000);
+        this.wait(2000).then(() => this.navigate(['/signin']));
       },
     });
   }
@@ -93,6 +117,7 @@ export class CallbackComponent implements OnInit {
     this.authService.saveRefreshToken(tokenData.refresh_token);
 
     await this.wait(this.STEP_DELAY);
+    if (this.destroyed) return;
     this.setStep(1, 'Synchronisation de votre profil...');
 
     this.authService.syncGoogleUser(tokenData.access_token).subscribe({
@@ -102,6 +127,8 @@ export class CallbackComponent implements OnInit {
   }
 
   private async handleSyncSuccess(user: any): Promise<void> {
+    if (this.destroyed) return;
+
     this.authService.saveUserInfo({
       id: user.id,
       keycloakId: user.keycloakId,
@@ -114,19 +141,23 @@ export class CallbackComponent implements OnInit {
     });
 
     await this.wait(this.STEP_DELAY);
+    if (this.destroyed) return;
     this.setStep(2, `Bienvenue, ${user.prenom} !`);
     this.notify.toastSuccess(
       `Bonjour ${user.prenom} ! Votre profil est synchronisé ✓`,
     );
 
     await this.wait(this.FINAL_DELAY);
+    if (this.destroyed) return;
     this.checkProfileAndRedirect(user);
   }
 
   private async handleSyncError(err: any): Promise<void> {
+    if (this.destroyed) return;
     console.warn('Sync error:', err);
 
     await this.wait(this.STEP_DELAY);
+    if (this.destroyed) return;
     this.setStep(2, 'Redirection vers la complétion du profil...');
     this.notify.toast(
       'warning',
@@ -134,29 +165,31 @@ export class CallbackComponent implements OnInit {
     );
 
     await this.wait(this.FINAL_DELAY);
-    this.router.navigate(['/complete-profile']);
+    this.navigate(['/complete-profile']);
   }
 
-  // ───────────────────── MANUAL FLOW (signin / signup) ─────────────────────
 
   private async runManualFlow(): Promise<void> {
     this.setStep(0, 'Vérification de vos identifiants...');
     await this.wait(this.STEP_DELAY);
+    if (this.destroyed) return;
 
     this.setStep(1, 'Chargement de votre profil...');
     const cachedUser = this.authService.getUserInfo();
     await this.wait(this.STEP_DELAY);
+    if (this.destroyed) return;
 
     if (!cachedUser) {
       this.setStep(2, 'Profil introuvable, redirection...');
       await this.wait(this.FINAL_DELAY);
-      this.router.navigate(['/complete-profile']);
+      this.navigate(['/complete-profile']);
       return;
     }
 
     this.setStep(2, `Bienvenue, ${cachedUser.prenom ?? ''} !`);
     this.notify.toastSuccess('Connexion réussie !');
     await this.wait(this.FINAL_DELAY);
+    if (this.destroyed) return;
 
     this.checkProfileAndRedirect(cachedUser);
   }
@@ -166,11 +199,12 @@ export class CallbackComponent implements OnInit {
     this.message = message;
   }
 
-  // ───────────────────── SOURCE DE VÉRITÉ UNIQUE ─────────────────────
 
   private checkProfileAndRedirect(fallbackUser: any): void {
     this.authService.getMyProfile().subscribe({
       next: (fullProfile: any) => {
+        if (this.destroyed) return;
+
         const merged = { ...fallbackUser, ...fullProfile };
         this.authService.saveUserInfo(merged);
 
@@ -187,17 +221,16 @@ export class CallbackComponent implements OnInit {
             'info',
             'Complétez votre profil pour accéder à votre espace.',
           );
-          this.router.navigate(['/complete-profile']);
+          this.navigate(['/complete-profile']);
           return;
         }
 
         this.notify.toastSuccess('Tout est prêt ! 🎉');
-        this.router.navigate([
-          this.roleRoutes[merged.role] ?? '/complete-profile',
-        ]);
+        this.navigate([this.roleRoutes[merged.role] ?? '/complete-profile']);
       },
       error: () => {
-        this.router.navigate(['/complete-profile']);
+        if (this.destroyed) return;
+        this.navigate(['/complete-profile']);
       },
     });
   }

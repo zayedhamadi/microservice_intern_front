@@ -109,7 +109,7 @@ export class CompleteProfileComponent implements OnInit {
       },
     });
 
-    this.loadExistingCv(); // <-- CV chargé séparément, plus via getMyProfile()
+    this.loadExistingCv(); 
   }
 
   private loadExistingCv(): void {
@@ -121,7 +121,7 @@ export class CompleteProfileComponent implements OnInit {
         }
       },
       error: () => {
-        // pas de CV existant, ou recrutement-service indisponible — non bloquant
+
       },
     });
   }
@@ -169,8 +169,8 @@ export class CompleteProfileComponent implements OnInit {
     if (profile?.imageBase64) {
       this.imagePreview = profile.imageBase64;
     }
-    // cvBase64 retiré : profile n'expose plus le CV (voir loadExistingCv)
 
+    
     this.applyRoleSpecificValidators();
     this.isInitializing = false;
   }
@@ -206,9 +206,10 @@ export class CompleteProfileComponent implements OnInit {
     niveau.updateValueAndValidity();
   }
 
-  // --- CV : toujours la dernière étape, pour tous les rôles ---
+
   get totalSteps(): number {
-    return this.requiresEtudes() ? 4 : 3; // Infos, Bio, [Études], CV
+    return this.requiresEtudes() ? 4 : 3; 
+    
   }
 
   get etudesStepIndex(): number | null {
@@ -216,7 +217,7 @@ export class CompleteProfileComponent implements OnInit {
   }
 
   get cvStepIndex(): number {
-    return this.totalSteps; // toujours la dernière étape
+    return this.totalSteps; 
   }
 
   private get stepFields(): Record<number, string[]> {
@@ -227,7 +228,8 @@ export class CompleteProfileComponent implements OnInit {
     if (this.etudesStepIndex !== null) {
       fields[this.etudesStepIndex] = ['specialiteEtude', 'niveauEtude'];
     }
-    fields[this.cvStepIndex] = []; // CV optionnel, pas de validation bloquante
+    fields[this.cvStepIndex] = []; 
+    
     return fields;
   }
 
@@ -266,6 +268,12 @@ export class CompleteProfileComponent implements OnInit {
     };
     const firstKey = Object.keys(c.errors)[0];
     return map[name]?.[firstKey] ?? 'Champ invalide.';
+  }
+
+  
+  
+  trackByValue(_index: number, item: { value: string; label: string }): string {
+    return item.value;
   }
 
   nextStep(): void {
@@ -380,12 +388,12 @@ export class CompleteProfileComponent implements OnInit {
       role: this.hadRoleAlready ? null : this.selectedRole,
       num_Tel: raw.num_Tel ? Number(raw.num_Tel) : null,
       imageBase64: this.imageBase64 || null,
-      // cvBase64 retiré : géré séparément via recrutement-service
+
     };
 
     this.authService.completeProfile(payload).subscribe({
       next: (res: any) => {
-        this.handleCvUpload(res); // <-- envoie le CV après succès du profil
+        this.handleCvUpload(res); 
       },
       error: (err: any) => {
         console.log(err);
@@ -407,7 +415,7 @@ export class CompleteProfileComponent implements OnInit {
     this.fileUserMongoService.uploadCv(this.cvFile).subscribe({
       next: () => this.finishComplete(res),
       error: () => {
-        // profil déjà sauvegardé — on n'échoue pas tout pour un CV en erreur
+
         this.notify.toast(
           'warning',
           "Profil enregistré, mais l'envoi du CV a échoué. Réessayez depuis votre profil.",

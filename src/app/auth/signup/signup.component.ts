@@ -75,7 +75,6 @@ export class SignupComponent implements OnInit {
           '',
           [Validators.required, Validators.email, Validators.maxLength(100)],
         ],
-        // ⚠️ EMPLOYEE retiré : ce rôle est créé au bootstrap serveur, jamais via signup public
         role: ['CANDIDAT', Validators.required],
         password: [
           '',
@@ -143,9 +142,11 @@ export class SignupComponent implements OnInit {
   hasUpper(v: string): boolean {
     return /[A-Z]/.test(v || '');
   }
+
   hasNumber(v: string): boolean {
     return /[0-9]/.test(v || '');
   }
+
   hasSpecial(v: string): boolean {
     return /[!@#$%^&*]/.test(v || '');
   }
@@ -160,12 +161,7 @@ export class SignupComponent implements OnInit {
     return s;
   }
 
-  get pwdClass(): string {
-    const s = this.pwdStrength;
-    if (s <= 33) return 'weak';
-    if (s <= 66) return 'medium';
-    return 'strong';
-  }
+
 
   get pwdLabel(): string {
     const s = this.pwdStrength;
@@ -174,9 +170,19 @@ export class SignupComponent implements OnInit {
     return 'Fort';
   }
 
+  get pwdClass(): string {
+    const s = this.pwdStrength;
+    if (s <= 33) return 'faible';
+    if (s <= 66) return 'moyen';
+    return 'fort';
+  }
+
   onRegister(): void {
     this.form.markAllAsTouched();
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.notify.formInvalid();
+      return;
+    }
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -187,11 +193,10 @@ export class SignupComponent implements OnInit {
       .register({ nom, prenom, email, password, role })
       .subscribe({
         next: () => {
-          this.notify.toastSuccess('Compte créé ! Connexion en cours…');
+          this.notify.toastSuccess('Compte créé, connexion en cours');
           this.autoLoginAfterRegister(email, password);
         },
         error: (err: any) => {
-          console.log('Signup error:', err);
           this.isLoading = false;
 
           if (err.status === 201) {
@@ -211,7 +216,7 @@ export class SignupComponent implements OnInit {
 
   private autoLoginAfterRegister(email: string, password: string): void {
     this.authService.login(email, password).subscribe({
-      next: (loginRes) => {
+      next: (loginRes: any) => {
         this.authService.saveToken(loginRes.accessToken);
         this.authService.saveRefreshToken(loginRes.refreshToken);
         this.authService.saveUserInfo({
@@ -224,10 +229,10 @@ export class SignupComponent implements OnInit {
         });
 
         this.isLoading = false;
+        this.notify.toastSuccess('Bienvenue sur Hirely');
         this.router.navigate(['/callback']);
       },
-      error: (err: any) => {
-        console.log('Signup error:', err);
+      error: () => {
         this.isLoading = false;
         this.notify
           .warning(
@@ -242,5 +247,9 @@ export class SignupComponent implements OnInit {
 
   onGoogleSignup(): void {
     this.authService.loginWithGoogle();
+  }
+
+  onGitHubSignup(): void {
+    this.authService.loginWithGitHub();
   }
 }

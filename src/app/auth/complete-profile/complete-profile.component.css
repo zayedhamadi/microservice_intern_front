@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 
 *,
 *::before,
@@ -9,35 +9,35 @@
 }
 
 :host {
-    --primary: #4f46e5;
-    --primary-dark: #3730a3;
-    --primary-light: #eef2ff;
-    --accent: #f59e0b;
-    --success: #10b981;
-    --danger: #ef4444;
-    --text: #0f172a;
-    --muted: #64748b;
-    --muted-light: #94a3b8;
-    --border: #e2e8f0;
-    --border-focus: #c7d2fe;
-    --bg: #f8fafc;
-    --bg-2: #f1f5f9;
-    --white: #ffffff;
+    --primary: #2563EB;
+    --primary-dark: #1D4ED8;
+    --primary-light: #DBEAFE;
+    --accent: #D97706;
+    --success: #16A34A;
+    --danger: #DC2626;
+    --text: #0F172A;
+    --muted: #64748B;
+    --muted-light: #94A3B8;
+    --border: #E2E8F0;
+    --border-focus: #BFDBFE;
+    --bg: #F8FAFC;
+    --bg-2: #F1F5F9;
+    --white: #FFFFFF;
     --radius: 14px;
     --radius-sm: 8px;
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
-    --shadow-md: 0 4px 16px rgba(79, 70, 229, .10);
-    --shadow-lg: 0 8px 32px rgba(79, 70, 229, .14);
+    --shadow-md: 0 4px 16px rgba(37, 99, 235, .10);
+    --shadow-lg: 0 8px 32px rgba(37, 99, 235, .14);
 }
 
-/* ── Shell ── */
+
 .complete-wrapper {
     min-height: 100vh;
     background:
-        radial-gradient(1000px 500px at 90% -10%, rgba(79, 70, 229, .06), transparent),
-        radial-gradient(800px 400px at -10% 110%, rgba(16, 185, 129, .05), transparent),
+        radial-gradient(1000px 500px at 90% -10%, rgba(37, 99, 235, .06), transparent),
+        radial-gradient(800px 400px at -10% 110%, rgba(37, 99, 235, .04), transparent),
         var(--bg);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -56,7 +56,7 @@
     background: var(--white);
     border: 1.5px solid var(--border);
     color: var(--muted);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.8rem;
     font-weight: 600;
     padding: 8px 16px;
@@ -69,10 +69,10 @@
 .btn-logout:hover {
     border-color: var(--danger);
     color: var(--danger);
-    background: #fef2f2;
+    background: #FEF2F2;
 }
 
-/* ── Header ── */
+
 .progress-header {
     display: flex;
     align-items: center;
@@ -90,8 +90,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
     font-size: 1.1rem;
     color: var(--text);
     letter-spacing: -.02em;
@@ -128,7 +128,7 @@
     background: var(--primary);
     border-color: var(--primary);
     color: white;
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, .15);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .15);
 }
 
 .step.done .step-dot {
@@ -184,7 +184,7 @@
     color: var(--muted);
     font-size: 0.82rem;
     font-weight: 500;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     cursor: pointer;
     padding: 7px 16px;
     border-radius: 20px;
@@ -197,7 +197,7 @@
     background: var(--primary-light);
 }
 
-/* ── Content area ── */
+
 .complete-content {
     flex: 1;
     max-width: 900px;
@@ -212,7 +212,7 @@
 }
 
 .welcome-text h1 {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Sora', sans-serif;
     font-size: 2.2rem;
     font-weight: 800;
     color: var(--text);
@@ -226,7 +226,7 @@
     line-height: 1.6;
 }
 
-/* ── Role selection step ── */
+
 .role-step {
     max-width: 720px;
     margin: 0 auto;
@@ -265,7 +265,7 @@
 .role-card-big.selected {
     border-color: var(--primary);
     background: var(--primary-light);
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, .1), var(--shadow-md);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .1), var(--shadow-md);
 }
 
 .role-card-big.selected::after {
@@ -283,14 +283,14 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(79, 70, 229, .4);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, .4);
 }
 
 .role-icon {
     width: 58px;
     height: 58px;
     border-radius: 16px;
-    background: #f1f5ff;
+    background: #EFF6FF;
     border: 1.5px solid var(--border-focus);
     display: flex;
     align-items: center;
@@ -304,11 +304,11 @@
     background: var(--primary);
     border-color: var(--primary);
     color: white;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, .35);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, .35);
 }
 
 .role-card-big h3 {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Sora', sans-serif;
     font-size: 1.15rem;
     font-weight: 800;
     margin-bottom: 8px;
@@ -334,7 +334,7 @@
 }
 
 .role-card-big.selected ul {
-    border-top-color: rgba(79, 70, 229, .2);
+    border-top-color: rgba(37, 99, 235, .2);
 }
 
 .role-card-big ul li {
@@ -358,9 +358,9 @@
     margin-top: 8px;
 }
 
-/* ── Step headings ── */
+
 .step-content h2 {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Sora', sans-serif;
     font-size: 1.45rem;
     font-weight: 800;
     color: var(--text);
@@ -375,7 +375,7 @@
     line-height: 1.6;
 }
 
-/* ── Form Grid ── */
+
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -406,7 +406,7 @@ select {
     padding: 12px 14px;
     border: 1.5px solid var(--border);
     border-radius: var(--radius-sm);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
     color: var(--text);
     background: var(--white);
@@ -425,7 +425,7 @@ select:hover {
 .field textarea:focus,
 select:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, .12);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
 }
 
 .field textarea {
@@ -449,7 +449,7 @@ select.valid {
     border-color: var(--success);
 }
 
-/* Input with icon */
+
 .input-icon {
     position: relative;
     display: flex;
@@ -471,7 +471,7 @@ select.valid {
     width: 100%;
 }
 
-/* Gender selector */
+
 .gender-selector {
     display: flex;
     gap: 12px;
@@ -500,42 +500,42 @@ select.valid {
 
 .gender-opt:hover {
     border-color: var(--border-focus);
-    background: #f8f9ff;
+    background: #F8FAFF;
 }
 
 .gender-opt.sel {
     border-color: var(--primary);
     background: var(--primary-light);
     color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, .1);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
 }
 
 .gender-opt.error-border {
     border-color: var(--danger);
-    background: #fff5f5;
+    background: #FFF5F5;
 }
 
-/* Validation states */
+
 .field input.error,
 .field textarea.error {
     border-color: var(--danger);
-    background: #fff5f5;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, .08);
+    background: #FFF5F5;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, .08);
 }
 
 .field input.valid {
     border-color: var(--success);
-    background: #f0fdf8;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, .08);
+    background: #F0FDF4;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, .08);
 }
 
-/* Error messages */
+
 .field-error {
     display: flex;
     align-items: center;
     gap: 5px;
     font-size: 0.72rem;
-    color: #dc2626;
+    color: var(--danger);
     font-weight: 500;
     margin-top: 1px;
     animation: fadeIn .2s ease;
@@ -553,7 +553,7 @@ select.valid {
     font-variant-numeric: tabular-nums;
 }
 
-/* ── Photo upload ── */
+
 .photo-upload-section {
     display: flex;
     align-items: center;
@@ -583,7 +583,7 @@ select.valid {
 
 .photo-preview:hover {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, .1);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .1);
     transform: scale(1.02);
 }
 
@@ -609,7 +609,7 @@ select.valid {
 .upload-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(79, 70, 229, .75);
+    background: rgba(37, 99, 235, .75);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -657,7 +657,7 @@ select.valid {
     color: var(--danger);
     padding: 7px 16px;
     border-radius: 20px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
@@ -666,10 +666,10 @@ select.valid {
 }
 
 .btn-remove-photo:hover {
-    background: #fef2f2;
+    background: #FEF2F2;
 }
 
-/* CV upload */
+
 .cv-upload-section {
     display: flex;
     align-items: center;
@@ -703,7 +703,7 @@ select.valid {
     font-weight: 600;
 }
 
-/* ── Nav buttons ── */
+
 .nav-buttons {
     display: flex;
     justify-content: flex-end;
@@ -718,7 +718,7 @@ select.valid {
     background: var(--white);
     border: 1.5px solid var(--border);
     border-radius: 10px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -740,19 +740,19 @@ select.valid {
     color: white;
     border: none;
     border-radius: 10px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;
     transition: all .2s;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, .35);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, .35);
     letter-spacing: .01em;
 }
 
 .btn-next:hover,
 .btn-complete:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(79, 70, 229, .45);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, .45);
 }
 
 .btn-complete:disabled {
@@ -761,7 +761,7 @@ select.valid {
     transform: none;
 }
 
-/* ── Animations ── */
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -778,6 +778,12 @@ select.valid {
     animation: slideIn .35s cubic-bezier(.4, 0, .2, 1);
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .step-content {
+        animation: none;
+    }
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -790,7 +796,7 @@ select.valid {
     }
 }
 
-/* ── Responsive ── */
+
 @media (max-width: 768px) {
     .role-grid {
         grid-template-columns: 1fr;

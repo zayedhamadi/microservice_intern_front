@@ -105,8 +105,6 @@ export class ListUsersComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (users: any[]) => {
-          // Le backend filtre déjà etat_compte != 'INACTIF' côté SQL,
-          // pas besoin (et pas possible) de filtrer sur un champ 'status' inexistant.
           this.allUsers = users ?? [];
           console.log(
             '[ListUsers] Utilisateurs disponibles chargés :',

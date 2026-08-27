@@ -1,109 +1,127 @@
-/* =============================================
-   NAVBAR CONTAINER
-============================================= */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+:host {
+    --primary: #2563EB;
+    --primary-dark: #1D4ED8;
+    --primary-light: #DBEAFE;
+    --dark: #0F172A;
+    --success: #16A34A;
+    --danger: #DC2626;
+    --danger-bg: #FEF2F2;
+    --warning: #D97706;
+    --text: #0F172A;
+    --text-muted: #64748B;
+    --border: #E2E8F0;
+    --bg: #F8FAFC;
+    --white: #FFFFFF;
+    --radius: 10px;
+}
+
 .navbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 32px;
-    height: 64px;
-    background: #ffffff;
-    border-bottom: 1px solid #e8edf5;
-    box-shadow: 0 2px 10px rgba(74, 108, 247, 0.05);
+    height: 68px;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     position: sticky;
     top: 0;
     z-index: 1000;
+    font-family: 'Inter', sans-serif;
 }
 
 .navbar-left {
     display: flex;
     align-items: center;
-    gap: 28px;
+    gap: 36px;
 }
 
 .navbar-right {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
 }
 
-/* =============================================
-   LOGO
-============================================= */
 .logo {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 17px;
-    font-weight: 800;
-    color: #4a6cf7;
+    gap: 11px;
     text-decoration: none;
     cursor: pointer;
-    transition: opacity 0.2s ease;
 }
 
-.logo i {
-    font-size: 20px;
+.logo-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--dark), var(--primary));
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25);
 }
 
-.logo:hover {
-    opacity: 0.9;
+.logo-text {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--dark);
+    letter-spacing: -0.01em;
 }
 
-/* =============================================
-   NAVIGATION LINKS
-============================================= */
 .nav-links {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .nav-links a {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 14px;
+    padding: 9px 14px;
     border-radius: 8px;
     text-decoration: none;
-    color: #475569;
-    font-size: 13.5px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
     font-weight: 500;
-    transition: all 0.18s ease;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 
 .nav-links a i {
-    font-size: 14px;
-    color: #64748b;
-    transition: color 0.18s ease;
+    font-size: 13px;
+    color: var(--text-muted);
+    transition: color 0.15s ease;
 }
 
 .nav-links a:hover {
-    background: #f0f4ff;
-    color: #4a6cf7;
+    background: var(--bg);
+    color: var(--text);
 }
 
 .nav-links a:hover i {
-    color: #4a6cf7;
+    color: var(--text);
 }
 
 .nav-links a.nav-active {
-    background: #ede9fe;
-    color: #6d28d9;
+    background: var(--primary-light);
+    color: var(--primary-dark);
     font-weight: 600;
 }
 
 .nav-links a.nav-active i {
-    color: #6d28d9;
+    color: var(--primary-dark);
 }
 
-/* =============================================
-   ACTIONS DROITE & BOUTON NOTIFICATION
-============================================= */
 .user-menu-row {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
 }
 
 .notif-wrap {
@@ -118,28 +136,28 @@
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: #f8f9ff;
-    border: 1px solid #e2e8f0;
-    color: #475569;
-    font-size: 15px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .notif-btn:hover {
-    background: #eef1ff;
-    color: #4a6cf7;
-    border-color: #cbd5e1;
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary-dark);
 }
 
 .notif-badge {
     position: absolute;
     top: -2px;
     right: -2px;
-    background: #ef4444;
-    color: white;
-    font-size: 10px;
-    font-weight: 800;
+    background: var(--danger);
+    color: var(--white);
+    font-size: 9.5px;
+    font-weight: 700;
     min-width: 17px;
     height: 17px;
     border-radius: 20px;
@@ -147,12 +165,9 @@
     align-items: center;
     justify-content: center;
     padding: 0 4px;
-    box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);
+    border: 2px solid var(--white);
 }
 
-/* =============================================
-   MENU UTILISATEUR & AVATAR
-============================================= */
 .user-menu {
     position: relative;
 }
@@ -161,22 +176,23 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #4a6cf7, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, var(--dark), var(--primary));
+    color: var(--white);
+    font-family: 'Sora', sans-serif;
     font-weight: 700;
     font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 2px solid #e8edf5;
-    box-shadow: 0 2px 8px rgba(74, 108, 247, 0.2);
+    transition: box-shadow 0.15s ease;
+    border: 2px solid var(--white);
+    box-shadow: 0 0 0 1px var(--border);
     overflow: hidden;
 }
 
 .user-avatar:hover {
-    transform: scale(1.05);
+    box-shadow: 0 0 0 1px var(--primary);
 }
 
 .avatar-img {
@@ -186,18 +202,15 @@
     display: block;
 }
 
-/* =============================================
-   DROPDOWNS (NOTIFICATIONS & UTILISATEUR)
-============================================= */
 .user-dropdown,
 .notif-dropdown {
     position: absolute;
     right: 0;
-    top: 50px;
-    background: #ffffff;
+    top: 52px;
+    background: var(--white);
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-    border: 1px solid #edf2f7;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+    border: 1px solid var(--border);
     z-index: 1000;
     overflow: hidden;
     animation: fadeDown 0.15s ease;
@@ -206,7 +219,7 @@
 @keyframes fadeDown {
     from {
         opacity: 0;
-        transform: translateY(-8px);
+        transform: translateY(-6px);
     }
 
     to {
@@ -215,25 +228,25 @@
     }
 }
 
-/* Dropdown Utilisateur */
 .user-dropdown {
-    min-width: 250px;
+    min-width: 260px;
 }
 
 .dropdown-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 16px;
-    background: #f8fafc;
+    padding: 16px;
+    background: var(--bg);
 }
 
 .dropdown-avatar {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #4a6cf7, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, var(--dark), var(--primary));
+    color: var(--white);
+    font-family: 'Sora', sans-serif;
     font-weight: 700;
     font-size: 13px;
     display: flex;
@@ -249,16 +262,16 @@
 
 .dropdown-name {
     font-weight: 700;
-    font-size: 13px;
-    color: #1e293b;
+    font-size: 0.85rem;
+    color: var(--text);
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
 }
 
 .dropdown-email {
-    font-size: 11.5px;
-    color: #64748b;
+    font-size: 0.75rem;
+    color: var(--text-muted);
     margin-top: 1px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -267,80 +280,77 @@
 
 .dropdown-role {
     display: inline-block;
-    background: #ede9fe;
-    color: #6d28d9;
-    font-size: 9.5px;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    font-size: 0.62rem;
     font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 12px;
-    margin-top: 4px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-top: 6px;
     text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .dropdown-divider {
     height: 1px;
-    background: #f1f5f9;
+    background: var(--border);
 }
 
 .dropdown-links a {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 16px;
-    font-size: 13px;
+    padding: 11px 16px;
+    font-size: 0.85rem;
     font-weight: 500;
-    color: #475569;
+    color: var(--text);
     text-decoration: none;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease;
     cursor: pointer;
 }
 
 .dropdown-links a:hover {
-    background: #f8fafc;
-    color: #4a6cf7;
+    background: var(--bg);
 }
 
 .dropdown-links a i {
     width: 16px;
     font-size: 14px;
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .dropdown-links a.logout-link {
-    color: #ef4444;
+    color: var(--danger);
 }
 
 .dropdown-links a.logout-link i {
-    color: #ef4444;
+    color: var(--danger);
 }
 
 .dropdown-links a.logout-link:hover {
-    background: #fef2f2;
-    color: #dc2626;
+    background: var(--danger-bg);
 }
 
-/* =============================================
-   DROPDOWN NOTIFICATIONS
-============================================= */
 .notif-dropdown {
-    width: 320px;
+    width: 330px;
 }
 
 .notif-dropdown-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
+    padding: 13px 16px;
+    font-family: 'Sora', sans-serif;
     font-weight: 700;
-    font-size: 13.5px;
-    color: #1e293b;
-    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.85rem;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
 }
 
 .notif-clear-btn {
     background: none;
     border: none;
-    color: #94a3b8;
+    color: var(--text-muted);
     cursor: pointer;
     font-size: 12px;
     padding: 4px;
@@ -348,7 +358,7 @@
 }
 
 .notif-clear-btn:hover {
-    color: #ef4444;
+    color: var(--danger);
 }
 
 .notif-list {
@@ -361,26 +371,30 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    padding: 28px 16px;
-    color: #94a3b8;
-    font-size: 12.5px;
+    padding: 32px 16px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
 }
 
 .notif-item {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    padding: 10px 14px;
-    border-bottom: 1px solid #f8fafc;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--bg);
     transition: background 0.15s ease;
 }
 
+.notif-item:last-child {
+    border-bottom: none;
+}
+
 .notif-item:hover {
-    background: #f8fafc;
+    background: var(--bg);
 }
 
 .notif-item.notif-unread {
-    background: #f5f3ff;
+    background: var(--primary-light);
 }
 
 .notif-item-icon {
@@ -390,7 +404,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--white);
     font-size: 12px;
     flex-shrink: 0;
 }
@@ -401,21 +415,21 @@
 }
 
 .notif-item-text {
-    font-size: 12.5px;
-    color: #334155;
-    line-height: 1.35;
+    font-size: 0.8rem;
+    color: var(--text);
+    line-height: 1.4;
 }
 
 .notif-item-time {
-    font-size: 10.5px;
-    color: #94a3b8;
-    margin-top: 3px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 4px;
 }
 
 .notif-item-delete {
     background: none;
     border: none;
-    color: #cbd5e1;
+    color: var(--text-muted);
     cursor: pointer;
     font-size: 12px;
     padding: 2px 4px;
@@ -423,12 +437,9 @@
 }
 
 .notif-item-delete:hover {
-    color: #ef4444;
+    color: var(--danger);
 }
 
-/* =============================================
-   RESPONSIVE
-============================================= */
 @media (max-width: 900px) {
     .navbar {
         padding: 0 16px;
@@ -439,6 +450,10 @@
     }
 
     .nav-links a {
-        padding: 8px 10px;
+        padding: 9px 11px;
+    }
+
+    .navbar-left {
+        gap: 20px;
     }
 }

@@ -73,6 +73,7 @@ export class ResetPaswwordComponent implements OnInit {
   get pwd() {
     return this.form.get('newPassword')!;
   }
+
   get confirm() {
     return this.form.get('confirmPassword')!;
   }
@@ -129,10 +130,7 @@ export class ResetPaswwordComponent implements OnInit {
     this.errorMessage = '';
 
     if (this.form.invalid) {
-      this.notify.toast(
-        'warning',
-        'Veuillez corriger les erreurs du formulaire.',
-      );
+      this.notify.formInvalid();
       return;
     }
 
@@ -140,7 +138,7 @@ export class ResetPaswwordComponent implements OnInit {
       .confirm(
         'Réinitialiser le mot de passe ?',
         'Votre ancien mot de passe sera remplacé définitivement.',
-        'Oui, réinitialiser !',
+        'Oui, réinitialiser',
       )
       .then((confirmed) => {
         if (!confirmed) return;
@@ -156,7 +154,7 @@ export class ResetPaswwordComponent implements OnInit {
 
               this.notify
                 .success(
-                  'Mot de passe réinitialisé !',
+                  'Mot de passe réinitialisé',
                   res.message || 'Vous pouvez maintenant vous connecter.',
                 )
                 .then(() => this.router.navigate(['/signin']));

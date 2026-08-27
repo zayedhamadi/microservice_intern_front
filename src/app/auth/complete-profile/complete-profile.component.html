@@ -10,14 +10,15 @@
         </button>
     </div>
 
-    <!-- Progress Header -->
-<div class="progress-header">
+
+    <div class="progress-header">
     <div class="brand">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <path d="M8 8L16 4L24 8V16C24 21 16 28 16 28C16 28 8 21 8 16V8Z" fill="#4f46e5" />
-            <path d="M12 16L15 19L20 13" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2">
+            <rect x="3" y="7" width="18" height="13" rx="2" />
+            <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <path d="M3 13h18" />
         </svg>
-        <span>SkillExchange</span>
+        <span>Hirely</span>
     </div>
 
     <div class="steps" *ngIf="!needsRoleSelection()">
@@ -70,15 +71,15 @@
     <button class="skip-btn" *ngIf="!needsRoleSelection()" (click)="onSkip()">Passer →</button>
 </div>
 
-    <!-- Content -->
-    <div class="complete-content">
+
+<div class="complete-content">
         <div class="welcome-text">
             <h1>Bienvenue<span *ngIf="userName">, {{ userName }}</span> ! 👋</h1>
-            <p *ngIf="needsRoleSelection()">Dites-nous comment vous souhaitez utiliser SkillExchange</p>
+            <p *ngIf="needsRoleSelection()">Dites-nous comment vous souhaitez utiliser Hirely</p>
             <p *ngIf="!needsRoleSelection()">Complétez votre profil pour une meilleure expérience</p>
         </div>
 
-        <!-- ÉTAPE 0 — Choix du rôle (uniquement si connecté via Google sans rôle) -->
+
         <div class="step-content role-step" *ngIf="needsRoleSelection()">
             <div class="role-grid">
                 <label class="role-card-big" [class.selected]="selectedRole === Role.CANDIDAT"
@@ -142,9 +143,9 @@
             <p class="role-hint">Ce choix est définitif — vous pourrez ajuster le reste de votre profil plus tard.</p>
         </div>
 
-        <!-- Formulaire — étapes 1/2/3, uniquement une fois le rôle connu -->
+
         <form [formGroup]="form" novalidate *ngIf="!needsRoleSelection()">
-            <!-- ÉTAPE 1 — Infos personnelles -->
+
             <div class="step-content" *ngIf="currentStep === 1">
                 <h2>Informations personnelles</h2>
                 <p class="step-desc">Ces informations sont requises quel que soit votre rôle</p>
@@ -207,7 +208,7 @@
                 </div>
             </div>
 
-            <!-- ÉTAPE 2 — Photo & Bio -->
+
             <div class="step-content" *ngIf="currentStep === 2">
                 <h2>Parlez-nous de vous</h2>
                 <p class="step-desc">Optionnel — ajoutez une photo et une bio</p>
@@ -294,7 +295,7 @@
             <select formControlName="niveauEtude" [class.error]="showError('niveauEtude')"
                 [class.valid]="f('niveauEtude').valid && f('niveauEtude').dirty">
                 <option value="">-- Sélectionner --</option>
-                <option *ngFor="let n of niveauxEtude" [value]="n.value">{{ n.label }}</option>
+                <option *ngFor="let n of niveauxEtude; trackBy: trackByValue" [value]="n.value">{{ n.label }}</option>
             </select>
             <span class="field-error" *ngIf="showError('niveauEtude')">{{ getError('niveauEtude') }}</span>
         </div>
@@ -312,7 +313,7 @@
         </div>
     </div>
 </div>
-<!-- ÉTAPE CV — pour tous les rôles -->
+
 <div class="step-content" *ngIf="currentStep === cvStepIndex">
     <h2>Votre CV</h2>
     <p class="step-desc">Optionnel — vous pourrez l'ajouter ou le modifier plus tard depuis votre profil</p>
@@ -346,7 +347,7 @@
 </div>
         </form>
 
-        <!-- Navigation -->
+        
         <div class="nav-buttons" *ngIf="!needsRoleSelection()">
             <button class="btn-back" *ngIf="currentStep > 1" (click)="prevStep()">← Précédent</button>
             <button class="btn-next" *ngIf="currentStep < totalSteps" (click)="nextStep()">Suivant →</button>

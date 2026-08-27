@@ -1,19 +1,33 @@
-/* callback.component.css */
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
 
-/* ── Shell ── */
+:host {
+    --primary: #2563EB;
+    --primary-dark: #1D4ED8;
+    --primary-light: #DBEAFE;
+    --dark: #0F172A;
+    --success: #16A34A;
+    --danger: #DC2626;
+    --text: #0F172A;
+    --text-muted: #64748B;
+    --border: #E2E8F0;
+    --bg: #F8FAFC;
+    --white: #FFFFFF;
+    --radius: 10px;
+}
+
+
 .cb-wrap {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f8fafc;
-    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
     position: relative;
     overflow: hidden;
 }
 
-/* ── Decorative circles ── */
+
 .cb-bg-circle {
     position: absolute;
     border-radius: 50%;
@@ -23,7 +37,7 @@
 .c1 {
     width: 420px;
     height: 420px;
-    background: rgba(79, 70, 229, .05);
+    background: rgba(37, 99, 235, .05);
     top: -120px;
     right: -100px;
 }
@@ -31,7 +45,7 @@
 .c2 {
     width: 280px;
     height: 280px;
-    background: rgba(16, 185, 129, .05);
+    background: rgba(37, 99, 235, .04);
     bottom: -80px;
     left: -70px;
 }
@@ -39,17 +53,17 @@
 .c3 {
     width: 160px;
     height: 160px;
-    background: rgba(245, 158, 11, .04);
+    background: rgba(37, 99, 235, .035);
     top: 60%;
     left: 60%;
 }
 
-/* ── Card ── */
+
 .cb-card {
-    background: #ffffff;
-    border-radius: 24px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 8px 40px rgba(79, 70, 229, .10),
+    background: var(--white);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 40px rgba(37, 99, 235, .10),
         0 2px 8px rgba(0, 0, 0, .04);
     padding: 52px 48px 44px;
     display: flex;
@@ -60,6 +74,16 @@
     position: relative;
     z-index: 1;
     animation: fadeUp .45s cubic-bezier(.4, 0, .2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cb-card {
+        animation: none;
+    }
+
+    .cb-ring {
+        animation-duration: 2.4s;
+    }
 }
 
 @keyframes fadeUp {
@@ -74,21 +98,19 @@
     }
 }
 
-/* ── Logo ── */
 .cb-logo {
     width: 52px;
     height: 52px;
     border-radius: 14px;
-    background: #eef2ff;
-    border: 1.5px solid #c7d2fe;
+    background: var(--primary-light);
+    border: 1.5px solid #BFDBFE;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 32px;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, .15);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, .15);
 }
 
-/* ── Triple-ring spinner ── */
 .cb-spinner-wrap {
     position: relative;
     width: 76px;
@@ -105,21 +127,21 @@
 }
 
 .cb-ring-1 {
-    border-top-color: #4f46e5;
-    border-right-color: rgba(79, 70, 229, .15);
+    border-top-color: var(--primary);
+    border-right-color: rgba(37, 99, 235, .15);
 }
 
 .cb-ring-2 {
     inset: 9px;
-    border-top-color: #a5b4fc;
-    border-right-color: rgba(165, 180, 252, .15);
+    border-top-color: #93C5FD;
+    border-right-color: rgba(147, 197, 253, .15);
     animation-delay: -.45s;
     animation-duration: 1.7s;
 }
 
 .cb-ring-3 {
     inset: 18px;
-    border-top-color: #c7d2fe;
+    border-top-color: var(--primary-light);
     animation-delay: -.2s;
     animation-duration: 2.2s;
 }
@@ -128,7 +150,7 @@
     position: absolute;
     inset: 23px;
     border-radius: 50%;
-    background: #eef2ff;
+    background: var(--primary-light);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -142,24 +164,23 @@
 
 /* ── Text ── */
 .cb-title {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Sora', sans-serif;
     font-size: 1.3rem;
-    font-weight: 800;
-    color: #0f172a;
+    font-weight: 700;
+    color: var(--text);
     margin-bottom: 8px;
-    letter-spacing: -.025em;
+    letter-spacing: -.02em;
 }
 
 .cb-msg {
     font-size: 0.87rem;
-    color: #64748b;
+    color: var(--text-muted);
     line-height: 1.65;
     margin-bottom: 28px;
     min-height: 44px;
     transition: all .3s;
 }
 
-/* ── Steps ── */
 .cb-steps {
     display: flex;
     flex-direction: column;
@@ -173,11 +194,11 @@
     gap: 11px;
     padding: 11px 14px;
     border-radius: 10px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: var(--bg);
+    border: 1px solid var(--border);
     font-size: 0.82rem;
     font-weight: 500;
-    color: #94a3b8;
+    color: #94A3B8;
     transition: all .35s cubic-bezier(.4, 0, .2, 1);
 }
 
@@ -187,44 +208,43 @@
 }
 
 .cb-step.active {
-    background: #eef2ff;
-    border-color: #c7d2fe;
-    color: #4338ca;
+    background: var(--primary-light);
+    border-color: #BFDBFE;
+    color: var(--primary-dark);
     font-weight: 600;
 }
 
 .cb-step.done {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-    color: #059669;
+    background: #F0FDF4;
+    border-color: #BBF7D0;
+    color: var(--success);
 }
 
-/* Step dot */
 .cb-step-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #e2e8f0;
+    background: var(--border);
     flex-shrink: 0;
     transition: all .3s;
 }
 
 .cb-step.active .cb-step-dot {
-    background: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, .2);
+    background: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .2);
     animation: pulse 1s ease-in-out infinite;
 }
 
 .cb-step.done .cb-step-dot {
-    background: #10b981;
+    background: var(--success);
     animation: none;
     box-shadow: none;
 }
 
-/* Check icon */
+
 .cb-check {
     flex-shrink: 0;
-    color: #10b981;
+    color: var(--success);
     animation: popIn .3s cubic-bezier(.4, 0, .2, 1) both;
 }
 
@@ -252,18 +272,18 @@
     }
 }
 
-/* ── Brand ── */
+
 .cb-brand {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Sora', sans-serif;
     font-size: 0.7rem;
     font-weight: 700;
-    color: #cbd5e1;
+    color: #CBD5E1;
     margin-top: 24px;
     letter-spacing: .08em;
     text-transform: uppercase;
 }
 
-/* ── Responsive ── */
+
 @media (max-width: 480px) {
     .cb-card {
         width: calc(100vw - 32px);

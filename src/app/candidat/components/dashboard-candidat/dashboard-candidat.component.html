@@ -1,1 +1,216 @@
-<p>dashboard-candidat works!</p>
+<div class="candidat-dashboard">
+
+    <div class="section-header">
+        <div class="section-title-group">
+            <h2 class="section-title">Mon tableau de bord</h2>
+            <p class="section-sub">Suivi de vos candidatures et entretiens</p>
+        </div>
+        <div class="section-actions">
+            <button class="refresh-btn" title="Rafraîchir" (click)="refresh()" [class.spinning]="isLoading">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="state-banner state-error" *ngIf="errorMessage">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>{{ errorMessage }}</span>
+        <button class="retry-btn" (click)="refresh()">Réessayer</button>
+    </div>
+
+    <div class="state-banner state-loading" *ngIf="isLoading && !dashboard">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <span>Chargement de vos statistiques…</span>
+    </div>
+
+    <ng-container *ngIf="dashboard as d">
+
+        <div class="kpi-grid">
+
+            <div class="kpi-card kpi-blue" (click)="goToApplications()">
+                <div class="kpi-icon"><i class="fa-solid fa-file-lines"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Candidatures</div>
+                    <div class="kpi-value">{{ d.applications.total }}</div>
+                    <div class="kpi-trend">{{ d.applications.ceMois }} ce mois-ci</div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-file-lines"></i></div>
+            </div>
+
+            <div class="kpi-card kpi-purple">
+                <div class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">En cours</div>
+                    <div class="kpi-value">{{ d.applications.enCours }}</div>
+                    <div class="kpi-trend">sur {{ d.applications.total }} candidatures</div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+            </div>
+
+            <div class="kpi-card kpi-green">
+                <div class="kpi-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Acceptées</div>
+                    <div class="kpi-value">{{ d.applications.acceptees }}</div>
+                    <div class="kpi-trend up">{{ d.applications.tauxAcceptation | number:'1.0-1' }}% de réussite</div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+
+            <div class="kpi-card kpi-orange">
+                <div class="kpi-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Entretiens à venir</div>
+                    <div class="kpi-value">{{ d.interviews.aVenir }}</div>
+                    <div class="kpi-trend" [class.down]="d.interviews.dansLes7Jours > 0">
+                        {{ d.interviews.dansLes7Jours }} dans les 7 jours
+                    </div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-calendar-days"></i></div>
+            </div>
+
+            <div class="kpi-card kpi-red" *ngIf="d.applications.rejetees > 0">
+                <div class="kpi-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Rejetées</div>
+                    <div class="kpi-value">{{ d.applications.rejetees }}</div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+            </div>
+
+            <div class="kpi-card kpi-violet">
+                <div class="kpi-icon"><i class="fa-solid fa-award"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Certifications</div>
+                    <div class="kpi-value">{{ d.certifications.total }}</div>
+                </div>
+                <div class="kpi-bg-icon"><i class="fa-solid fa-award"></i></div>
+            </div>
+
+        </div>
+
+        <div class="charts-row row-2cols">
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Candidatures mensuelles</div>
+                        <div class="chart-sub">Évolution sur l'année en cours</div>
+                    </div>
+                </div>
+                <div class="chart-wrap" style="height:220px;">
+                    <canvas #lineChart></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Répartition des statuts</div>
+                        <div class="chart-sub">Toutes vos candidatures</div>
+                    </div>
+                </div>
+                <div class="chart-wrap" style="height:160px;">
+                    <canvas #doughnutChart></canvas>
+                </div>
+                <div class="donut-legend">
+                    <div class="donut-leg-item" *ngFor="let item of applicationsParStatutList">
+                        <span class="leg-dot" [style.background]="item.color"></span>
+                        <span class="leg-label">{{ item.label }}</span>
+                        <span class="leg-pct">{{ item.total }}</span>
+                    </div>
+                    <div class="empty-inline" *ngIf="applicationsParStatutList.length === 0">
+                        Aucune candidature pour le moment
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="charts-row row-bottom">
+
+            <div class="chart-card list-card">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Prochains entretiens</div>
+                        <div class="chart-sub">{{ d.interviews.prochains.length }} à venir</div>
+                    </div>
+                </div>
+
+                <div class="interview-list" *ngIf="d.interviews.prochains.length > 0; else noInterview">
+                    <div class="interview-item" *ngFor="let it of d.interviews.prochains" (click)="goToInterview(it)">
+                        <div class="interview-dot" [style.background]="interviewStatutColor(it.statut)"></div>
+                        <div class="interview-body">
+                            <div class="interview-title">{{ it.posteRecrutement || 'Entretien' }}</div>
+                            <div class="interview-meta">
+                                <i class="fa-regular fa-clock"></i>
+                                {{ it.dateEntretien | date:'dd/MM/yyyy à HH:mm' }}
+                                <span class="dot-sep">•</span>
+                                {{ interviewModeLabel(it.mode) }}
+                            </div>
+                        </div>
+                        <span class="badge badge-interview" [style.background]="interviewStatutColor(it.statut) + '20'"
+                            [style.color]="interviewStatutColor(it.statut)">
+                            {{ interviewStatutLabel(it.statut) }}
+                        </span>
+                    </div>
+                </div>
+                <ng-template #noInterview>
+                    <div class="empty-state">
+                        <i class="fa-regular fa-calendar"></i>
+                        <span>Aucun entretien planifié</span>
+                    </div>
+                </ng-template>
+            </div>
+
+            <div class="chart-card list-card">
+                <div class="chart-header">
+                    <div class="chart-header-content">
+                        <div>
+                            <div class="chart-title">Postes disponibles</div>
+                            <div class="chart-sub">{{ d.postes.totalOuverts }} postes ouverts</div>
+                        </div>
+                        <div class="link-active" (click)="goToPostesDisponibles()">Voir tout →</div>
+                    </div>
+                </div>
+
+                <div class="poste-list" *ngIf="d.postes.derniersPostes.length > 0; else noPoste">
+                    <div class="poste-item" *ngFor="let p of d.postes.derniersPostes" (click)="goToPoste(p)">
+                        <div class="poste-body">
+                            <div class="poste-title">{{ p.titre }}</div>
+                            <div class="poste-meta">
+                                <span *ngIf="p.departementNom">{{ p.departementNom }}</span>
+                                <span class="dot-sep" *ngIf="p.departementNom && p.lieu">•</span>
+                                <span *ngIf="p.lieu">{{ p.lieu }}</span>
+                                <span class="dot-sep" *ngIf="p.workType">•</span>
+                                <span *ngIf="p.workType">{{ workTypeLabel(p.workType) }}</span>
+                            </div>
+                        </div>
+                        <span class="badge badge-expiring" *ngIf="isExpiringSoon(p)">Expire bientôt</span>
+                    </div>
+                </div>
+                <ng-template #noPoste>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-briefcase"></i>
+                        <span>Aucun poste ouvert actuellement</span>
+                    </div>
+                </ng-template>
+            </div>
+
+        </div>
+
+        <div class="mini-stats-row" *ngIf="d.reprogrammations.total > 0 || d.applications.scoreMatchingMoyen">
+            <div class="mini-stat" *ngIf="d.reprogrammations.total > 0">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>{{ d.reprogrammations.total }} demande(s) de report — {{ d.reprogrammations.enAttente }} en
+                    attente</span>
+            </div>
+            <div class="mini-stat" *ngIf="d.applications.scoreMatchingMoyen">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span>Score de matching moyen : {{ d.applications.scoreMatchingMoyen | number:'1.0-1' }}</span>
+            </div>
+        </div>
+
+    </ng-container>
+
+</div>
