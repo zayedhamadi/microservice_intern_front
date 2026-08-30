@@ -42,3 +42,68 @@ testem.log
 Thumbs.db
 
 **/environment.ts
+**/environment.template.ts
+
+# =========================================================
+# Angular
+# =========================================================
+
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# =========================================================
+# Node
+# =========================================================
+
+/node_modules
+npm-debug.log*
+yarn-error.log*
+
+# =========================================================
+# IDE
+# =========================================================
+
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+.history/*
+
+# =========================================================
+# Angular / Misc
+# =========================================================
+
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# =========================================================
+# System
+# =========================================================
+
+.DS_Store
+Thumbs.db
+
+# =========================================================
+# Environment / secrets
+# =========================================================
+
+.env
+.env.*
+!.env.example

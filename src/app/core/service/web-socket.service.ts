@@ -26,8 +26,8 @@ export class WebSocketService implements OnDestroy {
   private reconnectAttempts = 0;
   private currentRole?: WsRole;
 
-  private readonly WS_URL = `ws://localhost:${environment.EMPLOYEE_PORT}/ws-admin`;
-
+  //  private readonly WS_URL = `ws://localhost:${environment.EMPLOYEE_PORT}/ws-admin`;
+  private readonly WS_URL = `ws://localhost:${environment.FRONTEND_PORT}/ws-admin`;
   connect(jwtToken?: string, role?: WsRole): void {
     if (this.client?.active) {
       if (role !== this.currentRole) {

@@ -1,5 +1,5 @@
 export const environment = {
-  production: false,
+  production: false,FRONTEND_PORT: 4200,
   apiUrl: 'http://localhost:8080',
   DISCOVERY_PORT: 8761,
   CONFIG_PORT: 8888,

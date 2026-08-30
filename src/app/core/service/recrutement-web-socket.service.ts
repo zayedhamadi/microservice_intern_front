@@ -27,8 +27,8 @@ export class RecrutementWebSocketService implements OnDestroy {
   private currentRole?: RecrutementWsRole;
   private currentKeycloakId?: string;
 
-  private readonly WS_URL = `ws://localhost:${environment.EMPLOYEE_PORT}/ws-recrutement`;
-
+  //private readonly WS_URL = `ws://localhost:${environment.EMPLOYEE_PORT}/ws-recrutement`;
+  private readonly WS_URL = `ws://localhost:${environment.FRONTEND_PORT}/ws-recrutement`;
   connect(
     jwtToken?: string,
     role?: RecrutementWsRole,
