@@ -1,21 +1,17 @@
 pipeline {
     agent any
-
     environment {
         IMAGE_NAME = "stage-frontend"
         IMAGE_TAG  = "${env.BUILD_NUMBER}"
     }
-
     stages {
-
         stage('Checkout') {
             steps {
                 git branch: 'dev',
-                    credentialsId: 'git_ssh',
+                    credentialsId: 'github-account',
                     url: 'https://github.com/zayedhamadi/microservice_intern_front.git'
             }
         }
-
         stage('Generate environment.ts') {
             steps {
                 withCredentials([string(credentialsId: 'keycloak-client-secret', variable: 'KC_SECRET')]) {
@@ -27,7 +23,6 @@ pipeline {
                 }
             }
         }
-
         stage('Install & Build') {
             steps {
                 script {
@@ -38,12 +33,17 @@ pipeline {
                 }
             }
         }
-       stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
                 script {
                     docker.image('sonarsource/sonar-scanner-cli').inside("--network stage-network") {
                         withSonarQubeEnv('sonarqube') {
-                            sh 'sonar-scanner'
+                            sh '''
+                                sonar-scanner \
+                                    -Dsonar.projectKey=stage-frontend \
+                                    -Dsonar.sources=src \
+                                    -Dsonar.exclusions=**/node_modules/**,**/dist/**
+                            '''
                         }
                     }
                 }
@@ -57,7 +57,6 @@ pipeline {
             }
         }
     }
-
     post {
         success { echo "Build reussi pour frontend #${env.BUILD_NUMBER}" }
         failure { echo "Echec du pipeline frontend #${env.BUILD_NUMBER}" }
