@@ -27,8 +27,9 @@ export class WebSocketService implements OnDestroy {
   private currentRole?: WsRole;
 
   //  private readonly WS_URL = `ws://localhost:${environment.EMPLOYEE_PORT}/ws-admin`;
-  private readonly WS_URL = `ws://localhost:${environment.FRONTEND_PORT}/ws-admin`;
-  connect(jwtToken?: string, role?: WsRole): void {
+  // private readonly WS_URL = `ws://localhost:${environment.FRONTEND_PORT}/ws-admin`;
+  private readonly WS_URL = `${environment.apiUrl.replace(/^http/, 'ws')}/ws-admin`;
+  /*connect(jwtToken?: string, role?: WsRole): void {
     if (this.client?.active) {
       if (role !== this.currentRole) {
         this.currentRole = role;
@@ -37,8 +38,20 @@ export class WebSocketService implements OnDestroy {
         this.subscribeToTopics(this.currentRole);
       }
       return;
+    }*/
+  connect(jwtToken?: string, role?: WsRole): void {
+    if (this.client?.active) {
+      if (role !== this.currentRole) {
+        this.currentRole = role;
+        this.subscriptions.forEach((s) => s.unsubscribe());
+        this.subscriptions = [];
+        if (this.client.connected) {
+          this.subscribeToTopics(this.currentRole);
+        }
+        // sinon : onConnect() s'en chargera avec this.currentRole déjà à jour
+      }
+      return;
     }
-
     this.currentRole = role;
     this.status$.next('CONNECTING');
 

@@ -28,8 +28,10 @@ export class RecrutementWebSocketService implements OnDestroy {
   private currentKeycloakId?: string;
 
   //private readonly WS_URL = `ws://localhost:${environment.EMPLOYEE_PORT}/ws-recrutement`;
-  private readonly WS_URL = `ws://localhost:${environment.FRONTEND_PORT}/ws-recrutement`;
-  connect(
+  //private readonly WS_URL = `ws://localhost:${environment.FRONTEND_PORT}/ws-recrutement`;
+
+  private readonly WS_URL = `${environment.apiUrl.replace(/^http/, 'ws')}/ws-recrutement`;
+  /*connect(
     jwtToken?: string,
     role?: RecrutementWsRole,
     keycloakId?: string,
@@ -43,8 +45,25 @@ export class RecrutementWebSocketService implements OnDestroy {
         this.subscribeToTopics(this.currentRole, this.currentKeycloakId);
       }
       return;
+    }*/
+  connect(
+    jwtToken?: string,
+    role?: RecrutementWsRole,
+    keycloakId?: string,
+  ): void {
+    if (this.client?.active) {
+      if (role !== this.currentRole || keycloakId !== this.currentKeycloakId) {
+        this.currentRole = role;
+        this.currentKeycloakId = keycloakId;
+        this.subscriptions.forEach((s) => s.unsubscribe());
+        this.subscriptions = [];
+        if (this.client.connected) {
+          this.subscribeToTopics(this.currentRole, this.currentKeycloakId);
+        }
+        // sinon : onConnect() s'en chargera avec les valeurs déjà à jour
+      }
+      return;
     }
-
     this.currentRole = role;
     this.currentKeycloakId = keycloakId;
     this.status$.next('CONNECTING');
