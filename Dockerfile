@@ -18,9 +18,7 @@ ENV NPM_CONFIG_FUND=false \
 
 COPY package.json package-lock.json ./
 
-RUN --mount=type=cache,target=/root/.npm,id=npm-frontend \
-    npm ci --legacy-peer-deps --include=dev
-
+RUN npm ci --legacy-peer-deps --include=dev --fetch-retries=5 --fetch-timeout=120000
 # ============================================================
 # SOURCE
 # ============================================================

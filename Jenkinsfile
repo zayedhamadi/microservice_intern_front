@@ -1,10 +1,22 @@
 pipeline {
     agent any
-    environment {
-        IMAGE_NAME = "stage-frontend"
-        IMAGE_TAG  = "${env.BUILD_NUMBER}"
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '15'))
+        skipDefaultCheckout(false)
     }
+
+    environment {
+        IMAGE_NAME   = "ghcr.io/zayedhamadi/frontend-microservice"
+        IMAGE_TAG    = "${env.GIT_COMMIT.take(7)}"
+        SONAR_SERVER = "sonarqube"
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
                 git branch: 'dev',
@@ -12,32 +24,38 @@ pipeline {
                     url: 'https://github.com/zayedhamadi/microservice_intern_front.git'
             }
         }
+
         stage('Generate environment.ts') {
             steps {
-                withCredentials([string(credentialsId: 'keycloak-client-secret', variable: 'KC_SECRET')]) {
+                withCredentials([string(credentialsId: 'keycloak_secret', variable: 'KC_SECRET')]) {
                     sh '''
+                        set -e
                         sed "s|__KEYCLOAK_CLIENT_SECRET__|$KC_SECRET|g" \
-                        src/app/core/environement/environment.template.ts \
-                        > src/app/core/environement/environment.ts
+                            src/app/core/environement/environment.template.ts \
+                            > src/app/core/environement/environment.ts
                     '''
                 }
             }
         }
+
         stage('Install & Build') {
             steps {
                 script {
                     docker.image('node:20-alpine').inside {
-                        sh 'npm ci'
+                        retry(2) {
+                            sh 'npm ci'
+                        }
                         sh 'npm run build -- --configuration=production'
                     }
                 }
             }
         }
+
         stage('SonarQube Analysis') {
             steps {
                 script {
                     docker.image('sonarsource/sonar-scanner-cli').inside("--network stage-network") {
-                        withSonarQubeEnv('sonarqube') {
+                        withSonarQubeEnv(SONAR_SERVER) {
                             sh '''
                                 sonar-scanner \
                                     -Dsonar.projectKey=stage-frontend \
@@ -49,16 +67,96 @@ pipeline {
                 }
             }
         }
-        stage('Build Docker Image') {
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Build Image') {
             steps {
                 script {
                     docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
                 }
             }
         }
+
+        stage('Trivy Scan') {
+            steps {
+                sh """
+                    trivy image \
+                        --exit-code 0 \
+                        --severity HIGH,CRITICAL \
+                        --format table \
+                        ${IMAGE_NAME}:${IMAGE_TAG}
+                """
+            }
+        }
+
+        stage('Push to GHCR') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'GHCR_SECRET', usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_PASS')]) {
+                    sh '''
+                        set -e
+                        echo "$GHCR_PASS" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+                    '''
+                    sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('Update hirely-devops') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'github-account', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+                    sh """
+                        set -e
+                        rm -rf hirely-devops-update
+                        git clone --depth 1 https://\$GIT_USER:\$GIT_TOKEN@github.com/zayedhamadi/hirely-devops.git hirely-devops-update
+                        cd hirely-devops-update/overlays/prod
+                        kustomize edit set image ${IMAGE_NAME}=${IMAGE_NAME}:${IMAGE_TAG}
+                        git config user.email "jenkins@hirely.local"
+                        git config user.name "Jenkins CI"
+                        git commit -am "chore: bump frontend to ${IMAGE_TAG}"
+                        git push origin main
+                    """
+                }
+            }
+        }
+
+        stage('Sync ArgoCD') {
+            steps {
+                withCredentials([string(credentialsId: 'argocd-token', variable: 'ARGOCD_TOKEN')]) {
+                    retry(2) {
+                        sh """
+                            argocd app sync hirely \
+                                --grpc-web \
+                                --server argocd.hirely.local \
+                                --auth-token \$ARGOCD_TOKEN \
+                                --insecure \
+                                --timeout 180
+                        """
+                    }
+                }
+            }
+        }
     }
+
     post {
-        success { echo "Build reussi pour frontend #${env.BUILD_NUMBER}" }
-        failure { echo "Echec du pipeline frontend #${env.BUILD_NUMBER}" }
+        always {
+            cleanWs(deleteDirs: true, notFailBuild: true)
+        }
+        success {
+            echo "Build et déploiement réussis pour frontend #${env.BUILD_NUMBER} (image ${IMAGE_TAG})"
+        }
+        failure {
+            emailext(
+                to: 'zayedh80@gmail.com',
+                subject: "Échec pipeline frontend #${env.BUILD_NUMBER}",
+                body: "Le build a échoué : ${env.BUILD_URL}console"
+            )
+        }
     }
 }
