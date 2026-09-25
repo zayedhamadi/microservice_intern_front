@@ -62,6 +62,10 @@ RUN test -f /app/dist/frontend-microservice/browser/index.html
 
 FROM nginxinc/nginx-unprivileged:1.27.5-alpine AS runtime
 
+USER root
+RUN apk update && apk upgrade --no-cache && rm -rf /var/cache/apk/*
+USER nginx
+
 ARG GIT_COMMIT=unknown
 ARG BUILD_DATE=unknown
 ARG APP_VERSION=unknown
