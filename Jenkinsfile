@@ -37,19 +37,19 @@ pipeline {
             }
         }
 
-        stage('Trivy FS Scan') {
-            steps {
-                sh """
-                    trivy fs \
-                        --exit-code 1 \
-                        --severity CRITICAL \
-                        --ignore-unfixed \
-                        --scanners vuln,secret \
-                        .
-                """
-            }
-        }
-
+       stage('Trivy FS Scan') {
+    steps {
+        sh """
+            trivy fs \
+                --exit-code 1 \
+                --severity CRITICAL \
+                --ignore-unfixed \
+                --scanners vuln,secret \
+                --ignorefile .trivyignore \
+                .
+        """
+    }
+}
         stage('Install & Build') {
             steps {
                 script {
