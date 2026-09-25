@@ -1,0 +1,5 @@
+# CVE-2026-27739 : SSRF/header injection dans @angular/ssr (server-side rendering).
+# Non exploitable : le frontend est buildé en mode browser-only (voir Dockerfile,
+# dist/browser/ uniquement copié vers nginx) — aucun serveur SSR ne tourne en prod.
+# Revoir si le SSR est activé un jour en production.
+CVE-2026-27739
