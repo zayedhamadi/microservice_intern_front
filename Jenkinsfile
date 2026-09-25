@@ -6,7 +6,6 @@ pipeline {
         disableConcurrentBuilds()
         timeout(time: 30, unit: 'MINUTES')
         buildDiscarder(logRotator(numToKeepStr: '15'))
-        skipDefaultCheckout(false)
     }
 
     environment {
@@ -38,13 +37,24 @@ pipeline {
             }
         }
 
+        stage('Trivy FS Scan') {
+            steps {
+                sh """
+                    trivy fs \
+                        --exit-code 1 \
+                        --severity CRITICAL \
+                        --ignore-unfixed \
+                        --scanners vuln,secret \
+                        .
+                """
+            }
+        }
+
         stage('Install & Build') {
             steps {
                 script {
                     docker.image('node:20-alpine').inside {
-                        retry(2) {
-                            sh 'npm ci'
-                        }
+                        retry(2) { sh 'npm ci' }
                         sh 'npm run build -- --configuration=production'
                     }
                 }
@@ -78,19 +88,17 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                script {
-                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
-                }
+                script { docker.build("${IMAGE_NAME}:${IMAGE_TAG}") }
             }
         }
 
-        stage('Trivy Scan') {
+        stage('Trivy Image Scan') {
             steps {
                 sh """
                     trivy image \
-                        --exit-code 0 \
-                        --severity HIGH,CRITICAL \
-                        --format table \
+                        --exit-code 1 \
+                        --severity CRITICAL \
+                        --ignore-unfixed \
                         ${IMAGE_NAME}:${IMAGE_TAG}
                 """
             }
@@ -119,10 +127,21 @@ pipeline {
                         kustomize edit set image ${IMAGE_NAME}=${IMAGE_NAME}:${IMAGE_TAG}
                         git config user.email "jenkins@hirely.local"
                         git config user.name "Jenkins CI"
-                        git commit -am "chore: bump frontend to ${IMAGE_TAG}"
+                        git diff --staged --quiet || git commit -am "chore: bump frontend to ${IMAGE_TAG}"
                         git push origin main
                     """
                 }
+            }
+        }
+
+        stage('Trivy Config Scan (K8s/IaC)') {
+            steps {
+                sh """
+                    trivy config \
+                        --exit-code 1 \
+                        --severity CRITICAL,HIGH \
+                        hirely-devops-update/kubernetes/
+                """
             }
         }
 
@@ -142,10 +161,31 @@ pipeline {
                 }
             }
         }
+
+        stage('Smoke Test') {
+            steps {
+                sh '''
+                    sleep 20
+                    chmod +x hirely-devops-update/scripts/smoke-test.sh
+                    hirely-devops-update/scripts/smoke-test.sh
+                '''
+            }
+        }
     }
 
     post {
         always {
+            sh '''
+                USAGE=$(df -P / | tail -1 | awk '{print $5}' | tr -d '%')
+                echo "Disk usage: ${USAGE}%"
+                if [ "$USAGE" -gt 75 ]; then
+                    echo "Seuil dépassé, nettoyage Docker..."
+                    docker image prune -af --filter "until=48h" || true
+                    docker builder prune -af --filter "until=48h" || true
+                else
+                    echo "Disque OK, pas de cleanup."
+                fi
+            '''
             cleanWs(deleteDirs: true, notFailBuild: true)
         }
         success {
