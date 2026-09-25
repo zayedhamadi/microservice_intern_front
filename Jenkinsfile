@@ -15,11 +15,10 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 git branch: 'dev',
-                    credentialsId: 'github-account',
+                    credentialsId: 'github_token',
                     url: 'https://github.com/zayedhamadi/microservice_intern_front.git'
             }
         }
@@ -37,19 +36,20 @@ pipeline {
             }
         }
 
-       stage('Trivy FS Scan') {
-    steps {
-        sh """
-            trivy fs \
-                --exit-code 1 \
-                --severity CRITICAL \
-                --ignore-unfixed \
-                --scanners vuln,secret \
-                --ignorefile .trivyignore \
-                .
-        """
-    }
-}
+        stage('Trivy FS Scan') {
+            steps {
+                sh """
+                    trivy fs \
+                        --exit-code 1 \
+                        --severity CRITICAL \
+                        --ignore-unfixed \
+                        --scanners vuln,secret \
+                        --ignorefile .trivyignore \
+                        .
+                """
+            }
+        }
+
         stage('Install & Build') {
             steps {
                 script {
@@ -118,7 +118,7 @@ pipeline {
 
         stage('Update hirely-devops') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'github-account', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: 'github_token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
                     sh """
                         set -e
                         rm -rf hirely-devops-update
@@ -177,13 +177,9 @@ pipeline {
         always {
             sh '''
                 USAGE=$(df -P / | tail -1 | awk '{print $5}' | tr -d '%')
-                echo "Disk usage: ${USAGE}%"
                 if [ "$USAGE" -gt 75 ]; then
-                    echo "Seuil dépassé, nettoyage Docker..."
                     docker image prune -af --filter "until=48h" || true
                     docker builder prune -af --filter "until=48h" || true
-                else
-                    echo "Disque OK, pas de cleanup."
                 fi
             '''
             cleanWs(deleteDirs: true, notFailBuild: true)
