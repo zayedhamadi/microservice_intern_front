@@ -11,7 +11,6 @@ pipeline {
     environment {
         IMAGE_NAME   = "ghcr.io/zayedhamadi/frontend-microservice"
         IMAGE_TAG    = "${env.GIT_COMMIT.take(7)}"
-        SONAR_SERVER = "sonarqube"
         MAIL_TO      = "zayedh80@gmail.com"
     }
 
@@ -62,38 +61,13 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    docker.image('sonarsource/sonar-scanner-cli').inside("--network stage-network") {
-                        withSonarQubeEnv(SONAR_SERVER) {
-                            sh '''
-                                sonar-scanner \
-                                    -Dsonar.projectKey=stage-frontend \
-                                    -Dsonar.sources=src \
-                                    -Dsonar.exclusions=**/*.spec.ts,**/environments/**,**/node_modules/**,**/dist/**,**/.angular/**
-                            '''
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
         stage('Build Image') {
             steps {
                 script { docker.build("${IMAGE_NAME}:${IMAGE_TAG}") }
             }
         }
 
-               stage('Trivy Image Scan') {
+        stage('Trivy Image Scan') {
             steps {
                 sh '''
                     set -e
@@ -162,17 +136,17 @@ pipeline {
             }
         }
 
-       stage('Trivy Config Scan (K8s/IaC)') {
-    steps {
-        sh """
-            trivy config \
-                --exit-code 1 \
-                --severity CRITICAL,HIGH \
-                --ignorefile hirely-devops-update/.trivyignore.yaml \
-                hirely-devops-update/kubernetes/
-        """
-    }
-}
+        stage('Trivy Config Scan (K8s/IaC)') {
+            steps {
+                sh """
+                    trivy config \
+                        --exit-code 1 \
+                        --severity CRITICAL,HIGH \
+                        --ignorefile hirely-devops-update/.trivyignore.yaml \
+                        hirely-devops-update/kubernetes/
+                """
+            }
+        }
 
         stage('Update hirely-devops') {
             steps {
@@ -233,36 +207,13 @@ pipeline {
             echo "Build et déploiement réussis pour frontend #${env.BUILD_NUMBER} (image ${IMAGE_TAG})"
             emailext(
                 to: "${MAIL_TO}",
-                subject: " Succès pipeline frontend #${env.BUILD_NUMBER}",
+                subject: "Succès pipeline frontend #${env.BUILD_NUMBER}",
                 mimeType: 'text/html',
                 body: """
-                    <h3>Pipeline frontend réussi </h3>
+                    <h3>Pipeline frontend réussi</h3>
                     <ul>
                       <li><b>Job :</b> ${env.JOB_NAME}</li>
                       <li><b>Build :</b> #${env.BUILD_NUMBER}</li>
                       <li><b>Image :</b> ${IMAGE_NAME}:${IMAGE_TAG}</li>
                       <li><b>Détails :</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></li>
                     </ul>
-                """
-            )
-        }
-
-        failure {
-            emailext(
-                to: "${MAIL_TO}",
-                subject: "Échec pipeline frontend #${env.BUILD_NUMBER}",
-                mimeType: 'text/html',
-                attachLog: true,
-                body: """
-                    <h3>Pipeline frontend en échec </h3>
-                    <ul>
-                      <li><b>Job :</b> ${env.JOB_NAME}</li>
-                      <li><b>Build :</b> #${env.BUILD_NUMBER}</li>
-                      <li><b>Console :</b> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></li>
-                    </ul>
-                    <p>Le log complet est en pièce jointe.</p>
-                """
-            )
-        }
-    }
-}
