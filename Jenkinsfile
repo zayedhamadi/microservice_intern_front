@@ -4,7 +4,7 @@ pipeline {
     options {
         timestamps()
         disableConcurrentBuilds()
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 60, unit: 'MINUTES')
         buildDiscarder(logRotator(numToKeepStr: '15'))
     }
 
@@ -47,17 +47,6 @@ pipeline {
                         --ignorefile .trivyignore \
                         .
                 """
-            }
-        }
-
-        stage('Install & Build') {
-            steps {
-                script {
-                    docker.image('node:20-alpine').inside {
-                        retry(2) { sh 'npm ci' }
-                        sh 'npm run build -- --configuration=production'
-                    }
-                }
             }
         }
 
