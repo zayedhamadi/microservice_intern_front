@@ -71,7 +71,7 @@ pipeline {
                                 sonar-scanner \
                                     -Dsonar.projectKey=stage-frontend \
                                     -Dsonar.sources=src \
-                                    -Dsonar.exclusions=**/node_modules/**,**/dist/**
+                                    -Dsonar.exclusions=**/*.spec.ts,**/environments/**,**/node_modules/**,**/dist/**,**/.angular/**
                             '''
                         }
                     }
