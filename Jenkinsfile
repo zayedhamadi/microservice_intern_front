@@ -217,3 +217,26 @@ pipeline {
                       <li><b>Image :</b> ${IMAGE_NAME}:${IMAGE_TAG}</li>
                       <li><b>Détails :</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></li>
                     </ul>
+                """
+            )
+        }
+
+        failure {
+            emailext(
+                to: "${MAIL_TO}",
+                subject: "Échec pipeline frontend #${env.BUILD_NUMBER}",
+                mimeType: 'text/html',
+                attachLog: true,
+                body: """
+                    <h3>Pipeline frontend en échec</h3>
+                    <ul>
+                      <li><b>Job :</b> ${env.JOB_NAME}</li>
+                      <li><b>Build :</b> #${env.BUILD_NUMBER}</li>
+                      <li><b>Console :</b> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></li>
+                    </ul>
+                    <p>Le log complet est en pièce jointe.</p>
+                """
+            )
+        }
+    }
+}
