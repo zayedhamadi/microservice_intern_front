@@ -12,6 +12,7 @@ pipeline {
         IMAGE_NAME   = "ghcr.io/zayedhamadi/frontend-microservice"
         IMAGE_TAG    = "${env.GIT_COMMIT.take(7)}"
         SONAR_SERVER = "sonarqube"
+        MAIL_TO      = "zayedh80@gmail.com"
     }
 
     stages {
@@ -116,31 +117,41 @@ pipeline {
             }
         }
 
-        stage('Update hirely-devops') {
+        stage('Clone hirely-devops') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github_token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
-                    sh """
+                    sh '''
                         set -e
                         rm -rf hirely-devops-update
-                        git clone --depth 1 https://\$GIT_USER:\$GIT_TOKEN@github.com/zayedhamadi/hirely-devops.git hirely-devops-update
-                        cd hirely-devops-update/overlays/prod
-                        kustomize edit set image ${IMAGE_NAME}=${IMAGE_NAME}:${IMAGE_TAG}
-                        git config user.email "jenkins@hirely.local"
-                        git config user.name "Jenkins CI"
-                        git diff --staged --quiet || git commit -am "chore: bump frontend to ${IMAGE_TAG}"
-                        git push origin main
-                    """
+                        git clone --depth 1 https://$GIT_USER:$GIT_TOKEN@github.com/zayedhamadi/hirely-devops.git hirely-devops-update
+                    '''
                 }
             }
         }
 
-        stage('Trivy Config Scan (K8s/IaC)') {
+       stage('Trivy Config Scan (K8s/IaC)') {
+    steps {
+        sh """
+            trivy config \
+                --exit-code 1 \
+                --severity CRITICAL,HIGH \
+                --ignorefile hirely-devops-update/.trivyignore.yaml \
+                hirely-devops-update/kubernetes/
+        """
+    }
+}
+
+        stage('Update hirely-devops') {
             steps {
                 sh """
-                    trivy config \
-                        --exit-code 1 \
-                        --severity CRITICAL,HIGH \
-                        hirely-devops-update/kubernetes/
+                    set -e
+                    cd hirely-devops-update/overlays/prod
+                    kustomize edit set image ${IMAGE_NAME}=${IMAGE_NAME}:${IMAGE_TAG}
+                    git config user.email "jenkins@hirely.local"
+                    git config user.name "Jenkins CI"
+                    git add -A
+                    git diff --cached --quiet || git commit -m "chore: bump frontend to ${IMAGE_TAG}"
+                    git push origin main
                 """
             }
         }
@@ -149,14 +160,14 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'argocd-token', variable: 'ARGOCD_TOKEN')]) {
                     retry(2) {
-                        sh """
+                        sh '''
                             argocd app sync hirely \
                                 --grpc-web \
                                 --server argocd.hirely.local \
-                                --auth-token \$ARGOCD_TOKEN \
+                                --auth-token $ARGOCD_TOKEN \
                                 --insecure \
                                 --timeout 180
-                        """
+                        '''
                     }
                 }
             }
@@ -184,14 +195,40 @@ pipeline {
             '''
             cleanWs(deleteDirs: true, notFailBuild: true)
         }
+
         success {
             echo "Build et déploiement réussis pour frontend #${env.BUILD_NUMBER} (image ${IMAGE_TAG})"
+            emailext(
+                to: "${MAIL_TO}",
+                subject: " Succès pipeline frontend #${env.BUILD_NUMBER}",
+                mimeType: 'text/html',
+                body: """
+                    <h3>Pipeline frontend réussi </h3>
+                    <ul>
+                      <li><b>Job :</b> ${env.JOB_NAME}</li>
+                      <li><b>Build :</b> #${env.BUILD_NUMBER}</li>
+                      <li><b>Image :</b> ${IMAGE_NAME}:${IMAGE_TAG}</li>
+                      <li><b>Détails :</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></li>
+                    </ul>
+                """
+            )
         }
+
         failure {
             emailext(
-                to: 'zayedh80@gmail.com',
+                to: "${MAIL_TO}",
                 subject: "Échec pipeline frontend #${env.BUILD_NUMBER}",
-                body: "Le build a échoué : ${env.BUILD_URL}console"
+                mimeType: 'text/html',
+                attachLog: true,
+                body: """
+                    <h3>Pipeline frontend en échec </h3>
+                    <ul>
+                      <li><b>Job :</b> ${env.JOB_NAME}</li>
+                      <li><b>Build :</b> #${env.BUILD_NUMBER}</li>
+                      <li><b>Console :</b> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></li>
+                    </ul>
+                    <p>Le log complet est en pièce jointe.</p>
+                """
             )
         }
     }
