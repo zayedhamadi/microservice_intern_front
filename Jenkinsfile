@@ -93,15 +93,48 @@ pipeline {
             }
         }
 
-        stage('Trivy Image Scan') {
+               stage('Trivy Image Scan') {
             steps {
-                sh """
+                sh '''
+                    set -e
+                    mkdir -p reports
+
+                    # 1) Rapport HTML : liste les failles HIGH et CRITICAL, ne bloque jamais
+                    trivy image \
+                        --exit-code 0 \
+                        --severity HIGH,CRITICAL \
+                        --ignore-unfixed \
+                        --format template \
+                        --template "@ci/trivy-html.tpl" \
+                        --output reports/trivy-frontend.html \
+                        $IMAGE_NAME:$IMAGE_TAG
+
+                    sed -i \
+                        -e "s|__SERVICE__|frontend|g" \
+                        -e "s|__IMAGE__|$IMAGE_NAME:$IMAGE_TAG|g" \
+                        -e "s|__BUILD__|$BUILD_NUMBER|g" \
+                        -e "s|__DATE__|$(date '+%d/%m/%Y %H:%M')|g" \
+                        reports/trivy-frontend.html
+
+                    # 2) Porte de sécurité : bloque seulement les failles CRITICAL
                     trivy image \
                         --exit-code 1 \
                         --severity CRITICAL \
                         --ignore-unfixed \
-                        ${IMAGE_NAME}:${IMAGE_TAG}
-                """
+                        $IMAGE_NAME:$IMAGE_TAG
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'reports/*.html', allowEmptyArchive: true
+                    emailext(
+                        to: "${MAIL_TO}",
+                        subject: "Rapport Trivy frontend #${env.BUILD_NUMBER}",
+                        mimeType: 'text/html',
+                        attachmentsPattern: 'reports/*.html',
+                        body: "<p>Rapport de sécurité Trivy pour <b>frontend</b>, build #${env.BUILD_NUMBER}.</p><p>Ouvre la pièce jointe dans ton navigateur.</p>"
+                    )
+                }
             }
         }
 
